@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #FF6B00;
+  --color-primary-light: #FF8A33;
+  --color-primary-dark: #E05E00;
+  --color-secondary: #1A1A2E;
+  --color-secondary-light: #2D2D4A;
+  --color-accent: #FFB800;
+  --color-accent-light: #FFCB40;
+  --color-surface: #F8F9FA;
+  --color-surface-dark: #F0F1F3;
+  --font-sans: "Inter", "Cairo", system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-secondary);
+  background-color: #ffffff;
+}
+
+/* Gradient utilities */
+.gradient-primary {
+  background: linear-gradient(135deg, #FF6B00, #FFB800);
+}
+
+.gradient-hero {
+  background: linear-gradient(135deg, #1A1A2E 0%, #2D2D4A 50%, #3D1F00 100%);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #FF6B00, #FFB800);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #FF6B00;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #E05E00;
+}

@@ -1,0 +1,243 @@
+version: "3.9"
+
+services:
+  # ─── Infrastructure ───
+  postgres:
+    image: postgres:16-alpine
+    container_name: ignify-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ignify-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: ignify-redis
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD:-}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ignify-net
+
+  minio:
+    image: minio/minio:latest
+    container_name: ignify-minio
+    restart: always
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - ignify-net
+
+  # ─── Backend Services ───
+  backend:
+    build:
+      context: ../../services/backend
+      dockerfile: Dockerfile
+    container_name: ignify-backend
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ignify-net
+
+  agno-runtime:
+    build:
+      context: ../../services/agno-runtime
+      dockerfile: Dockerfile
+    container_name: ignify-agno
+    restart: always
+    env_file:
+      - .env
+    networks:
+      - ignify-net
+
+  worker:
+    build:
+      context: ../../services/backend
+      dockerfile: Dockerfile
+    container_name: ignify-worker
+    restart: always
+    command: celery -A app.worker worker --loglevel=info --concurrency=4
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ignify-net
+
+  # ─── Frontend ───
+  dashboard:
+    build:
+      context: ../../dashboard
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: https://${APP_HOST}/api
+        NEXT_PUBLIC_APP_NAME: Ignify
+    container_name: ignify-dashboard
+    restart: always
+    networks:
+      - ignify-net
+
+  website:
+    build:
+      context: ../../website
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: https://${APP_HOST}/api
+        NEXT_PUBLIC_APP_NAME: Ignify
+        NEXT_PUBLIC_DASHBOARD_URL: https://${APP_HOST}/app
+    container_name: ignify-website
+    restart: always
+    networks:
+      - ignify-net
+
+  # ─── Channel Connectors ───
+  whatsapp-connector:
+    build:
+      context: ../../services/whatsapp-connector
+      dockerfile: Dockerfile
+    container_name: ignify-whatsapp
+    restart: always
+    environment:
+      BACKEND_URL: http://backend:8000
+      PORT: 3001
+    volumes:
+      - whatsapp_sessions:/app/sessions
+    networks:
+      - ignify-net
+
+  messenger-connector:
+    build:
+      context: ../../services/messenger-connector
+      dockerfile: Dockerfile
+    container_name: ignify-messenger
+    restart: always
+    environment:
+      BACKEND_URL: http://backend:8000
+      PORT: 3003
+      MESSENGER_VERIFY_TOKEN: ${MESSENGER_VERIFY_TOKEN}
+    networks:
+      - ignify-net
+
+  instagram-connector:
+    build:
+      context: ../../services/instagram-connector
+      dockerfile: Dockerfile
+    container_name: ignify-instagram
+    restart: always
+    environment:
+      BACKEND_URL: http://backend:8000
+      PORT: 3006
+      META_APP_SECRET: ${META_APP_SECRET}
+    networks:
+      - ignify-net
+
+  email-connector:
+    build:
+      context: ../../services/email-connector
+      dockerfile: Dockerfile
+    container_name: ignify-email
+    restart: always
+    environment:
+      BACKEND_URL: http://backend:8000
+      PORT: 3004
+    networks:
+      - ignify-net
+
+  slack-connector:
+    build:
+      context: ../../services/slack-connector
+      dockerfile: Dockerfile
+    container_name: ignify-slack
+    restart: always
+    environment:
+      BACKEND_URL: http://backend:8000
+      PORT: 3005
+    networks:
+      - ignify-net
+
+  snapchat-connector:
+    build:
+      context: ../../services/snapchat-connector
+      dockerfile: Dockerfile
+    container_name: ignify-snapchat
+    restart: always
+    environment:
+      BACKEND_URL: http://backend:8000
+      PORT: 3007
+      SNAPCHAT_APP_ID: ${SNAPCHAT_APP_ID}
+      SNAPCHAT_APP_SECRET: ${SNAPCHAT_APP_SECRET}
+    networks:
+      - ignify-net
+
+  youtube-connector:
+    build:
+      context: ../../services/youtube-connector
+      dockerfile: Dockerfile
+    container_name: ignify-youtube
+    restart: always
+    environment:
+      BACKEND_URL: http://backend:8000
+      PORT: 3008
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+    networks:
+      - ignify-net
+
+  # ─── Gateway ───
+  gateway:
+    image: nginx:alpine
+    container_name: ignify-gateway
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - letsencrypt_data:/etc/letsencrypt
+    depends_on:
+      - backend
+      - dashboard
+      - website
+    networks:
+      - ignify-net
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  whatsapp_sessions:
+  letsencrypt_data:
+
+networks:
+  ignify-net:
+    driver: bridge

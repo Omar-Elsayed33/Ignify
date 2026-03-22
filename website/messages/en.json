@@ -1,0 +1,402 @@
+{
+  "nav": {
+    "features": "Features",
+    "pricing": "Pricing",
+    "about": "About",
+    "contact": "Contact",
+    "login": "Login",
+    "register": "Start Free Trial",
+    "language": "AR"
+  },
+  "hero": {
+    "title": "Ignite Your Marketing",
+    "titleHighlight": "with AI",
+    "subtitle": "The all-in-one AI-powered marketing platform that creates content, manages campaigns, optimizes ads, and drives growth — so you can focus on what matters most.",
+    "cta_primary": "Start Free Trial",
+    "cta_secondary": "Watch Demo",
+    "badge": "Trusted by 500+ businesses worldwide"
+  },
+  "features": {
+    "title": "Everything You Need to",
+    "titleHighlight": "Dominate Marketing",
+    "subtitle": "Six powerful modules working together to transform your marketing from guesswork into a data-driven growth engine.",
+    "content_engine": {
+      "title": "Content Engine",
+      "description": "Generate blog posts, social captions, email copy, and landing pages in seconds. Our AI understands your brand voice and creates content that converts."
+    },
+    "creative_studio": {
+      "title": "Creative Studio",
+      "description": "Design stunning visuals, banners, and social media graphics without a designer. AI-powered templates that match your brand identity perfectly."
+    },
+    "ads_orchestrator": {
+      "title": "Ads Orchestrator",
+      "description": "Launch, manage, and optimize ad campaigns across Google, Meta, TikTok, and more from a single dashboard. AI auto-optimizes for maximum ROAS."
+    },
+    "seo_intelligence": {
+      "title": "SEO Intelligence",
+      "description": "Dominate search rankings with AI-driven keyword research, content optimization, technical audits, and competitor analysis — all automated."
+    },
+    "social_media": {
+      "title": "Social Media Hub",
+      "description": "Schedule, publish, and analyze posts across all platforms. AI suggests the best times, hashtags, and content formats for maximum engagement."
+    },
+    "lead_crm": {
+      "title": "Lead CRM",
+      "description": "Capture, score, and nurture leads automatically. AI identifies your hottest prospects and triggers personalized outreach at the perfect moment."
+    }
+  },
+  "stats": {
+    "businesses": "500+",
+    "businesses_label": "Businesses Powered",
+    "content": "10M+",
+    "content_label": "Content Pieces Created",
+    "impressions": "50M+",
+    "impressions_label": "Ad Impressions Managed",
+    "uptime": "99.9%",
+    "uptime_label": "Platform Uptime"
+  },
+  "how_it_works": {
+    "title": "How It",
+    "titleHighlight": "Works",
+    "subtitle": "Get started in minutes, not months. Three simple steps to transform your marketing.",
+    "step1": {
+      "number": "01",
+      "title": "Connect",
+      "description": "Link your existing marketing channels, social accounts, and ad platforms. Ignify syncs everything in minutes and analyzes your current performance."
+    },
+    "step2": {
+      "number": "02",
+      "title": "Create",
+      "description": "Let AI generate optimized content, creatives, and campaigns tailored to your audience. Review, tweak, and approve — or let autopilot handle it all."
+    },
+    "step3": {
+      "number": "03",
+      "title": "Grow",
+      "description": "Watch your metrics soar as AI continuously optimizes every campaign, piece of content, and ad dollar. Real-time analytics show you exactly what's working."
+    }
+  },
+  "testimonials": {
+    "title": "Loved by",
+    "titleHighlight": "Marketers Everywhere",
+    "subtitle": "See how businesses like yours are achieving incredible results with Ignify.",
+    "t1": {
+      "quote": "Ignify replaced our entire marketing stack. We went from 5 different tools to one platform, and our results actually improved by 340%. The AI content engine alone saves us 40 hours per week.",
+      "name": "Sarah Chen",
+      "role": "Head of Marketing",
+      "company": "TechVault Inc."
+    },
+    "t2": {
+      "quote": "The ads orchestrator is a game-changer. We cut our cost per acquisition by 60% in the first month. The AI knows exactly when and where to allocate budget for maximum impact.",
+      "name": "Marcus Rodriguez",
+      "role": "Growth Director",
+      "company": "ScaleUp Digital"
+    },
+    "t3": {
+      "quote": "As a small business owner, I couldn't afford a marketing team. Ignify gives me enterprise-level marketing capabilities at a fraction of the cost. Our revenue doubled in 3 months.",
+      "name": "Aisha Patel",
+      "role": "Founder & CEO",
+      "company": "BrightLeaf Studio"
+    }
+  },
+  "cta": {
+    "title": "Ready to Ignite",
+    "titleHighlight": "Your Growth?",
+    "subtitle": "Join 500+ businesses already using Ignify to transform their marketing. Start your free 14-day trial today — no credit card required.",
+    "button": "Start Free Trial",
+    "note": "Free 14-day trial. No credit card required."
+  },
+  "features_page": {
+    "title": "Powerful Modules for",
+    "titleHighlight": "Every Marketing Need",
+    "subtitle": "Ten integrated modules that cover every aspect of modern marketing. Each one is powerful alone — together, they're unstoppable.",
+    "modules": {
+      "content_engine": {
+        "title": "Content Engine",
+        "description": "Generate high-converting marketing content at scale with AI that understands your brand voice, audience, and goals.",
+        "bullets": [
+          "Blog posts and articles optimized for SEO",
+          "Email campaigns with personalized variations",
+          "Landing page copy that converts visitors",
+          "Product descriptions and ad copy",
+          "Multi-language content generation",
+          "Brand voice learning and consistency"
+        ]
+      },
+      "creative_studio": {
+        "title": "Creative Studio",
+        "description": "Design professional marketing visuals without any design skills. AI creates on-brand graphics in seconds.",
+        "bullets": [
+          "Social media graphics and stories",
+          "Display ad banners in all sizes",
+          "Email headers and templates",
+          "Infographics and data visualizations",
+          "Brand kit management",
+          "Automatic resizing for every platform"
+        ]
+      },
+      "ads_orchestrator": {
+        "title": "Ads Orchestrator",
+        "description": "Manage all your paid advertising from one intelligent dashboard. AI optimizes bids, budgets, and targeting in real-time.",
+        "bullets": [
+          "Google, Meta, TikTok, LinkedIn ad management",
+          "AI-powered bid optimization",
+          "Automatic A/B testing and winner selection",
+          "Cross-platform budget allocation",
+          "Real-time ROAS tracking",
+          "Audience discovery and lookalike creation"
+        ]
+      },
+      "seo_intelligence": {
+        "title": "SEO Intelligence",
+        "description": "Climb search rankings with AI that handles keyword research, on-page optimization, and technical SEO automatically.",
+        "bullets": [
+          "AI keyword research and clustering",
+          "On-page optimization recommendations",
+          "Technical SEO auditing and fixes",
+          "Competitor gap analysis",
+          "Backlink monitoring and opportunities",
+          "Rank tracking and reporting"
+        ]
+      },
+      "social_media": {
+        "title": "Social Media Hub",
+        "description": "Plan, schedule, publish, and analyze social media content across all platforms from a unified calendar.",
+        "bullets": [
+          "Multi-platform scheduling and publishing",
+          "AI-suggested posting times",
+          "Hashtag research and recommendations",
+          "Engagement analytics and reporting",
+          "Community management inbox",
+          "Competitor social monitoring"
+        ]
+      },
+      "lead_crm": {
+        "title": "Lead CRM",
+        "description": "Capture leads from every channel and let AI score, segment, and nurture them through automated workflows.",
+        "bullets": [
+          "Multi-channel lead capture",
+          "AI-powered lead scoring",
+          "Automated nurture sequences",
+          "Pipeline management and forecasting",
+          "Contact enrichment and insights",
+          "Conversion attribution tracking"
+        ]
+      },
+      "analytics": {
+        "title": "Analytics Dashboard",
+        "description": "Unified analytics across all marketing channels. AI surfaces insights and recommendations you'd never find manually.",
+        "bullets": [
+          "Cross-channel performance dashboards",
+          "AI-generated insights and alerts",
+          "Custom report builder",
+          "Attribution modeling",
+          "Revenue tracking and forecasting",
+          "Executive summary reports"
+        ]
+      },
+      "email_marketing": {
+        "title": "Email Marketing",
+        "description": "Send personalized email campaigns at scale. AI optimizes subject lines, send times, and content for each recipient.",
+        "bullets": [
+          "Drag-and-drop email builder",
+          "AI subject line optimization",
+          "Behavioral trigger campaigns",
+          "List segmentation and management",
+          "A/B testing automation",
+          "Deliverability monitoring"
+        ]
+      },
+      "workflow_automation": {
+        "title": "Workflow Automation",
+        "description": "Build complex marketing workflows without code. AI suggests optimizations and handles repetitive tasks automatically.",
+        "bullets": [
+          "Visual workflow builder",
+          "Multi-channel automation triggers",
+          "Conditional logic and branching",
+          "Third-party integrations",
+          "Template library for common workflows",
+          "Performance tracking per workflow"
+        ]
+      },
+      "brand_manager": {
+        "title": "Brand Manager",
+        "description": "Ensure brand consistency across all channels and teams. AI monitors every piece of content for brand compliance.",
+        "bullets": [
+          "Brand guidelines repository",
+          "Tone of voice monitoring",
+          "Asset management library",
+          "Brand consistency scoring",
+          "Team collaboration tools",
+          "Approval workflows"
+        ]
+      }
+    }
+  },
+  "pricing_page": {
+    "title": "Simple, Transparent",
+    "titleHighlight": "Pricing",
+    "subtitle": "Choose the plan that fits your business. All plans include a 14-day free trial.",
+    "monthly": "Monthly",
+    "annually": "Annually",
+    "save": "Save 20%",
+    "popular": "Most Popular",
+    "starter": {
+      "name": "Starter",
+      "price": "$49",
+      "period": "/month",
+      "description": "Perfect for small businesses and solopreneurs getting started with AI marketing.",
+      "features": [
+        "3 marketing channels",
+        "5,000 AI content generations/mo",
+        "Basic analytics dashboard",
+        "Email marketing (up to 5,000 contacts)",
+        "Social media scheduling (3 accounts)",
+        "Community support",
+        "1 user seat"
+      ],
+      "cta": "Start Free Trial"
+    },
+    "professional": {
+      "name": "Professional",
+      "price": "$149",
+      "period": "/month",
+      "description": "For growing businesses that need the full power of AI-driven marketing.",
+      "features": [
+        "All marketing channels",
+        "Unlimited AI content generations",
+        "Advanced analytics & reporting",
+        "Email marketing (up to 50,000 contacts)",
+        "Social media scheduling (10 accounts)",
+        "Ads orchestrator with AI optimization",
+        "SEO intelligence suite",
+        "Lead CRM (up to 10,000 contacts)",
+        "Priority support",
+        "5 user seats"
+      ],
+      "cta": "Start Free Trial"
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "price": "Custom",
+      "period": "",
+      "description": "For large organizations needing custom solutions, dedicated support, and enterprise security.",
+      "features": [
+        "Everything in Professional",
+        "Unlimited users and contacts",
+        "Custom AI model training",
+        "White-label options",
+        "Dedicated account manager",
+        "Custom integrations & API access",
+        "SLA guarantee (99.99% uptime)",
+        "On-premise deployment option",
+        "Advanced security & compliance",
+        "Custom onboarding & training"
+      ],
+      "cta": "Contact Sales"
+    },
+    "faq_title": "Frequently Asked Questions",
+    "faq": {
+      "q1": "Can I switch plans at any time?",
+      "a1": "Yes, you can upgrade or downgrade your plan at any time. Changes take effect at the start of your next billing cycle, and we'll prorate any differences.",
+      "q2": "What happens after the free trial?",
+      "a2": "After your 14-day free trial, you'll be asked to choose a plan. If you don't select one, your account will be paused (not deleted) — you can reactivate anytime.",
+      "q3": "Do you offer refunds?",
+      "a3": "Yes, we offer a 30-day money-back guarantee on all plans. If you're not satisfied, contact our support team for a full refund.",
+      "q4": "Can I use Ignify for multiple brands?",
+      "a4": "Yes! The Professional plan supports multiple brand profiles, and the Enterprise plan offers unlimited brand management with separate workspaces.",
+      "q5": "What payment methods do you accept?",
+      "a5": "We accept all major credit cards, PayPal, and bank transfers for annual plans. Enterprise customers can also pay via invoice.",
+      "q6": "Is my data secure?",
+      "a6": "Absolutely. We use bank-level encryption, are SOC 2 Type II certified, and comply with GDPR and CCPA. Your data is never used to train our AI models."
+    }
+  },
+  "about_page": {
+    "title": "About",
+    "titleHighlight": "Ignify",
+    "subtitle": "We're on a mission to democratize marketing intelligence and make world-class marketing accessible to every business.",
+    "story_title": "Our Story",
+    "story_p1": "Ignify was born from a simple observation: marketing has become impossibly complex. Small and mid-sized businesses are expected to master SEO, social media, paid ads, email marketing, content creation, and CRM — all while actually running their business.",
+    "story_p2": "We built Ignify to change that. By combining cutting-edge AI with an intuitive platform, we've created a marketing co-pilot that handles the complexity so businesses can focus on what they do best — serving their customers and growing their vision.",
+    "story_p3": "Since our founding, we've helped over 500 businesses transform their marketing, generating millions of content pieces and managing billions in ad spend. But we're just getting started.",
+    "mission_title": "Our Mission",
+    "mission_text": "To empower every business with AI-driven marketing tools that level the playing field, turning marketing from a bottleneck into a growth engine.",
+    "vision_title": "Our Vision",
+    "vision_text": "A world where every business, regardless of size or budget, has access to the same marketing intelligence as the biggest brands on the planet.",
+    "values_title": "Our Values",
+    "values": {
+      "innovation": {
+        "title": "Relentless Innovation",
+        "description": "We push the boundaries of what AI can do for marketing. Every week, we ship improvements that make our customers more successful."
+      },
+      "simplicity": {
+        "title": "Radical Simplicity",
+        "description": "Powerful doesn't have to mean complicated. We obsess over making complex marketing tasks feel effortless and intuitive."
+      },
+      "transparency": {
+        "title": "Total Transparency",
+        "description": "No hidden fees, no black-box algorithms. We show you exactly how our AI works and why it makes the recommendations it does."
+      },
+      "customer": {
+        "title": "Customer Obsession",
+        "description": "Every feature we build, every decision we make starts with one question: will this help our customers grow faster?"
+      }
+    },
+    "team_title": "Meet the",
+    "team_titleHighlight": "Team",
+    "team_subtitle": "A passionate team of marketers, engineers, and AI researchers united by a single goal: making your marketing brilliant."
+  },
+  "contact_page": {
+    "title": "Get In",
+    "titleHighlight": "Touch",
+    "subtitle": "Have a question, need a demo, or want to explore how Ignify can transform your marketing? We'd love to hear from you.",
+    "form_title": "Send us a message",
+    "name_label": "Full Name",
+    "name_placeholder": "John Smith",
+    "email_label": "Email Address",
+    "email_placeholder": "john@company.com",
+    "company_label": "Company Name",
+    "company_placeholder": "Your company",
+    "interest_label": "I'm interested in",
+    "interest_options": {
+      "general": "General Inquiry",
+      "demo": "Request a Demo",
+      "pricing": "Pricing Question",
+      "support": "Technical Support",
+      "partnership": "Partnership Opportunity"
+    },
+    "message_label": "Message",
+    "message_placeholder": "Tell us about your marketing goals and how we can help...",
+    "submit": "Send Message",
+    "info_title": "Other ways to reach us",
+    "email": "hello@ignify.ai",
+    "phone": "+1 (555) 123-4567",
+    "address": "123 Innovation Drive, San Francisco, CA 94105",
+    "hours": "Monday - Friday, 9:00 AM - 6:00 PM PST",
+    "demo_title": "Book a Demo",
+    "demo_text": "See Ignify in action with a personalized walkthrough. Our team will show you exactly how Ignify can work for your business.",
+    "demo_cta": "Schedule Demo"
+  },
+  "footer": {
+    "description": "The AI-powered marketing platform that helps businesses create, optimize, and scale their marketing effortlessly.",
+    "product": "Product",
+    "company": "Company",
+    "support": "Support",
+    "legal": "Legal",
+    "features": "Features",
+    "pricing": "Pricing",
+    "integrations": "Integrations",
+    "changelog": "Changelog",
+    "about": "About",
+    "careers": "Careers",
+    "blog": "Blog",
+    "press": "Press",
+    "help_center": "Help Center",
+    "documentation": "Documentation",
+    "community": "Community",
+    "status": "Status",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "cookies": "Cookie Policy",
+    "copyright": "Ignify. All rights reserved."
+  }
+}

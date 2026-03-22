@@ -1,0 +1,20 @@
+{
+  "name": "ignify-whatsapp-connector",
+  "version": "1.0.0",
+  "description": "Ignify WhatsApp Connector via Baileys",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.0",
+    "express": "^4.21.0",
+    "axios": "^1.7.0",
+    "qrcode": "^1.5.4",
+    "pino": "^9.5.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}

@@ -1,0 +1,7 @@
+__pycache__
+*.pyc
+.venv
+venv
+.git
+*.md
+alembic/versions/__pycache__

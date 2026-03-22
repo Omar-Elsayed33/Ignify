@@ -1,0 +1,19 @@
+{
+  "name": "ignify-youtube-connector",
+  "version": "1.0.0",
+  "description": "Ignify YouTube Comments Connector",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "axios": "^1.7.0",
+    "googleapis": "^140.0.0",
+    "pino": "^9.5.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
