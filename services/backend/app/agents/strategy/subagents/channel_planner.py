@@ -3,7 +3,7 @@ from __future__ import annotations
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from app.agents.base import BaseSubAgent
-from app.agents.strategy.subagents._helpers import parse_json_response
+from app.agents.strategy.subagents._helpers import parse_json_response, lang_directive
 
 
 class ChannelPlanner(BaseSubAgent):
@@ -12,14 +12,18 @@ class ChannelPlanner(BaseSubAgent):
     system_prompt = (
         "Pick the top 3-5 marketing channels (Instagram, TikTok, FB, Google, WhatsApp, SEO, Email) "
         "ranked by fit for this business and audience. "
-        "Return JSON array of {channel, priority, rationale, posting_frequency_per_week, budget_share_pct}."
+        "Return JSON array of {channel, priority, rationale, posting_frequency_per_week, budget_share_pct}. "
+        "Match the user's requested language exactly."
     )
 
     async def execute(self, state):
         bp = state.get("business_profile", {})
         personas = state.get("personas", [])
         lang = state.get("language", "ar")
-        user = f"Language: {lang}\nBusiness: {bp}\nPersonas: {personas}\n\nReturn channel plan JSON."
+        user = (
+            lang_directive(lang) + "\n\n"
+            f"Language: {lang}\nBusiness: {bp}\nPersonas: {personas}\n\nReturn channel plan JSON."
+        )
         resp = await self.llm.ainvoke([
             SystemMessage(content=self.system_prompt),
             HumanMessage(content=user),

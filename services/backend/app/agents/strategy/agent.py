@@ -12,6 +12,7 @@ from app.agents.strategy.subagents.channel_planner import ChannelPlanner
 from app.agents.strategy.subagents.content_calendar import ContentCalendar
 from app.agents.strategy.subagents.kpi_setter import KPISetter
 from app.agents.strategy.subagents.market_analyzer import MarketAnalyzer
+from app.agents.strategy.subagents.ad_strategist import AdStrategist
 
 
 @register_agent
@@ -40,17 +41,22 @@ class StrategyAgent(BaseAgent):
         async def run_kpis(state):
             return await KPISetter(state["tenant_id"]).execute(state)
 
+        async def run_ads(state):
+            return await AdStrategist(state["tenant_id"]).execute(state)
+
         g.add_node("market", run_market)
         g.add_node("audience", run_audience)
         g.add_node("channels", run_channels)
         g.add_node("calendar", run_calendar)
         g.add_node("kpis", run_kpis)
+        g.add_node("ads", run_ads)
 
         g.set_entry_point("market")
         g.add_edge("market", "audience")
         g.add_edge("audience", "channels")
         g.add_edge("channels", "calendar")
         g.add_edge("calendar", "kpis")
-        g.add_edge("kpis", END)
+        g.add_edge("kpis", "ads")
+        g.add_edge("ads", END)
 
         return g.compile(checkpointer=get_checkpointer())

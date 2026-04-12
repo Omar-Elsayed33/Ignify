@@ -100,6 +100,7 @@ async def _persist_plan(
         calendar=final_state.get("calendar", []),
         kpis=final_state.get("kpis", []),
         market_analysis=final_state.get("market_analysis", {}),
+        ad_strategy=final_state.get("ad_strategy", {}),
         status="draft",
         version=1,
     )

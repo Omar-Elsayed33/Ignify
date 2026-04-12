@@ -25,10 +25,10 @@ export default function Footer() {
     {
       title: t("solutionsCol"),
       links: [
-        { label: t("solutions_ecommerce"), href: "/solutions#ecommerce" },
-        { label: t("solutions_restaurants"), href: "/solutions#restaurants" },
-        { label: t("solutions_clinics"), href: "/solutions#clinics" },
-        { label: t("solutions_realestate"), href: "/solutions#realestate" },
+        { label: t("solutions_ecommerce"), href: "/solutions", hash: "ecommerce" },
+        { label: t("solutions_restaurants"), href: "/solutions", hash: "restaurants" },
+        { label: t("solutions_clinics"), href: "/solutions", hash: "clinics" },
+        { label: t("solutions_realestate"), href: "/solutions", hash: "realestate" },
       ],
     },
     {
@@ -86,9 +86,9 @@ export default function Footer() {
               <ul className="space-y-3">
                 {col.links.map((link) => (
                   <li key={link.label}>
-                    {link.href.startsWith("/") && !link.href.includes("#") ? (
+                    {link.href.startsWith("/") ? (
                       <Link
-                        href={link.href}
+                        href={"hash" in link && link.hash ? { pathname: link.href, hash: link.hash } : link.href}
                         className="text-sm text-on-surface/60 hover:text-primary transition-colors"
                       >
                         {link.label}

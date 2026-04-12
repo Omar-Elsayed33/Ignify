@@ -3,7 +3,7 @@ from __future__ import annotations
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from app.agents.base import BaseSubAgent
-from app.agents.strategy.subagents._helpers import parse_json_response
+from app.agents.strategy.subagents._helpers import parse_json_response, lang_directive
 
 
 class AudienceProfiler(BaseSubAgent):
@@ -11,7 +11,8 @@ class AudienceProfiler(BaseSubAgent):
     model_tier = "balanced"
     system_prompt = (
         "Build 3 detailed buyer personas for the business. "
-        "Return STRICT JSON array. Each persona: {name, age_range, role, goals[], pains[], channels[], objections[]}."
+        "Return STRICT JSON array. Each persona: {name, age_range, role, goals[], pains[], channels[], objections[]}. "
+        "Match the user's requested language exactly."
     )
 
     async def execute(self, state):
@@ -19,6 +20,7 @@ class AudienceProfiler(BaseSubAgent):
         lang = state.get("language", "ar")
         market = state.get("market_analysis", {})
         user = (
+            lang_directive(lang) + "\n\n"
             f"Language: {lang}\n"
             f"Business: {bp}\n"
             f"Market context: {market.get('summary', '')}\n\n"

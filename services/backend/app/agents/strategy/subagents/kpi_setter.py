@@ -3,7 +3,7 @@ from __future__ import annotations
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from app.agents.base import BaseSubAgent
-from app.agents.strategy.subagents._helpers import parse_json_response
+from app.agents.strategy.subagents._helpers import parse_json_response, lang_directive
 
 
 class KPISetter(BaseSubAgent):
@@ -11,7 +11,8 @@ class KPISetter(BaseSubAgent):
     model_tier = "fast"
     system_prompt = (
         "Define 5-8 measurable KPIs (SMART) for the plan. "
-        "Return JSON array of {metric, target, unit, timeframe_days, channel}."
+        "Return JSON array of {metric, target, unit, timeframe_days, channel}. "
+        "Match the user's requested language exactly."
     )
 
     async def execute(self, state):
@@ -20,6 +21,7 @@ class KPISetter(BaseSubAgent):
         period = state.get("period_days", 30)
         lang = state.get("language", "ar")
         user = (
+            lang_directive(lang) + "\n\n"
             f"Language: {lang}\nPeriod: {period} days\n"
             f"Business: {bp}\nChannels: {channels}\n\n"
             "Return KPIs JSON array."

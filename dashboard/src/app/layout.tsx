@@ -6,14 +6,6 @@ export const metadata: Metadata = {
   description: "The all-in-one AI marketing platform",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
-  );
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return children;
 }

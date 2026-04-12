@@ -4,14 +4,35 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import DashboardHeader from "@/components/DashboardHeader";
+import PageHeader from "@/components/PageHeader";
+import Card from "@/components/Card";
+import Button from "@/components/Button";
+import InsightChip from "@/components/InsightChip";
+import Badge from "@/components/Badge";
+import { Input } from "@/components/FormField";
 import { api, BASE_URL, getAccessToken } from "@/lib/api";
-import { AlertCircle, Check, Loader2, Sparkles, X } from "lucide-react";
+import { AlertCircle, Check, Loader2, RefreshCw, Sparkles, X } from "lucide-react";
 import { clsx } from "clsx";
+import Link from "next/link";
 
 interface GenerateForm {
   title: string;
   period_days: 30 | 60 | 90;
   language: "ar" | "en" | "both";
+}
+
+interface ReadinessField {
+  key: string;
+  label_en: string;
+  label_ar: string;
+  severity: "required" | "recommended";
+}
+
+interface ReadinessResponse {
+  ok: boolean;
+  missing: ReadinessField[];
+  warnings: ReadinessField[];
+  onboarding_url: string;
 }
 
 interface MarketingPlan {
@@ -55,9 +76,65 @@ interface SSEEvent {
   message?: string;
 }
 
+// Select styled to match FormField aesthetic.
+function StyledSelect({
+  label,
+  value,
+  onChange,
+  children,
+}: {
+  label: string;
+  value: string | number;
+  onChange: (v: string) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block space-y-1.5">
+      <span className="font-headline text-xs font-semibold uppercase tracking-widest text-on-surface-variant">
+        {label}
+      </span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-xl bg-surface-container-low px-4 py-2.5 text-sm text-on-surface outline-none transition-all focus:ring-2 focus:ring-primary/30"
+      >
+        {children}
+      </select>
+    </label>
+  );
+}
+
 export default function NewPlanPage() {
   const t = useTranslations("plans");
+  const tR = useTranslations("plansReadiness");
   const router = useRouter();
+
+  const [readiness, setReadiness] = useState<ReadinessResponse | null>(null);
+  const [readinessLoading, setReadinessLoading] = useState(true);
+  const [locale, setLocale] = useState<"ar" | "en">("en");
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      const l = document.documentElement.lang;
+      setLocale(l === "ar" ? "ar" : "en");
+    }
+  }, []);
+
+  const loadReadiness = async () => {
+    setReadinessLoading(true);
+    try {
+      const r = await api.get<ReadinessResponse>("/api/v1/plans/readiness");
+      setReadiness(r);
+    } catch {
+      setReadiness({ ok: true, missing: [], warnings: [], onboarding_url: "/onboarding/business" });
+    } finally {
+      setReadinessLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadReadiness();
+  }, []);
 
   const [form, setForm] = useState<GenerateForm>({
     title: "",
@@ -73,14 +150,12 @@ export default function NewPlanPage() {
 
   const abortRef = useRef<AbortController | null>(null);
 
-  // Cancel stream on unmount
   useEffect(() => {
     return () => {
       abortRef.current?.abort();
     };
   }, []);
 
-  // Timer tick while generating
   useEffect(() => {
     if (!generating || globalStart === null) return;
     const id = setInterval(() => setTickMs(Date.now() - globalStart), 200);
@@ -110,7 +185,6 @@ export default function NewPlanPage() {
     } else if (ev.type === "error") {
       setError(ev.message || t("errorGenerate"));
       setGenerating(false);
-      // Mark any running node as failed
       setNodes((prev) => {
         const next = { ...prev };
         for (const k of NODE_KEYS) {
@@ -155,7 +229,6 @@ export default function NewPlanPage() {
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
-        // SSE event frames are separated by blank line
         const parts = buffer.split("\n\n");
         buffer = parts.pop() || "";
         for (const frame of parts) {
@@ -165,7 +238,7 @@ export default function NewPlanPage() {
                 const ev = JSON.parse(line.slice(6)) as SSEEvent;
                 handleEvent(ev);
               } catch {
-                // ignore malformed line
+                // ignore
               }
             }
           }
@@ -180,7 +253,6 @@ export default function NewPlanPage() {
 
   async function runFallback() {
     setUsingFallback(true);
-    // Animate pseudo-steps since no stream
     NODE_KEYS.forEach((k, i) => {
       setTimeout(() => {
         setNodes((prev) => ({
@@ -202,7 +274,18 @@ export default function NewPlanPage() {
       });
       router.push(`/plans/${plan.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("errorGenerate"));
+      const anyErr = err as { status?: number; data?: { detail?: { missing?: ReadinessField[]; warnings?: ReadinessField[]; onboarding_url?: string } } };
+      if (anyErr?.status === 422 && anyErr?.data?.detail?.missing) {
+        setReadiness({
+          ok: false,
+          missing: anyErr.data.detail.missing,
+          warnings: anyErr.data.detail.warnings || [],
+          onboarding_url: anyErr.data.detail.onboarding_url || "/onboarding/business",
+        });
+        setError(null);
+      } else {
+        setError(err instanceof Error ? err.message : t("errorGenerate"));
+      }
       setGenerating(false);
     }
   }
@@ -241,33 +324,121 @@ export default function NewPlanPage() {
     <div>
       <DashboardHeader title={t("form.title")} />
 
-      <div className="p-6">
-        <div className="mx-auto max-w-2xl">
+      <div className="p-8">
+        <div className="mx-auto max-w-3xl space-y-8">
+          <PageHeader
+            eyebrow="AI · STRATEGY"
+            title={t("form.title")}
+            description={t("subtitle")}
+          />
+
           {error && (
-            <div className="mb-4 flex items-center gap-3 rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              {error}
-            </div>
+            <Card padding="sm" className="flex items-center gap-3 !bg-error-container">
+              <AlertCircle className="h-4 w-4 shrink-0 text-on-error-container" />
+              <span className="text-sm font-medium text-on-error-container">{error}</span>
+            </Card>
           )}
 
-          {generating ? (
-            <div className="rounded-xl border border-border bg-surface p-8">
-              <div className="mb-6 flex flex-col items-center text-center">
-                <div className="mb-4 rounded-full bg-primary/10 p-4">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          {readinessLoading ? (
+            <Card padding="lg" className="flex items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </Card>
+          ) : readiness && !readiness.ok && !generating ? (
+            <Card padding="lg" className="space-y-5">
+              <div className="space-y-2">
+                <InsightChip icon={AlertCircle}>{tR("title")}</InsightChip>
+                <h2 className="font-headline text-2xl font-bold tracking-tight text-on-surface">
+                  {tR("title")}
+                </h2>
+                <p className="text-sm text-on-surface-variant">{tR("subtitle")}</p>
+              </div>
+
+              <div>
+                <h3 className="mb-3 font-headline text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                  {tR("requiredSection")}
+                </h3>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {readiness.missing.map((f) => (
+                    <div
+                      key={`m-${f.key}`}
+                      className="flex items-center justify-between gap-3 rounded-xl bg-error-container px-4 py-3 text-sm"
+                    >
+                      <div className="flex items-center gap-2">
+                        <X className="h-4 w-4 shrink-0 text-on-error-container" />
+                        <span className="font-medium text-on-error-container">
+                          {locale === "ar" ? f.label_ar : f.label_en}
+                        </span>
+                      </div>
+                      <Link
+                        href={readiness.onboarding_url}
+                        className="brand-gradient-bg rounded-full px-3 py-1 text-xs font-bold text-white shadow-soft"
+                      >
+                        {tR("fillThis")}
+                      </Link>
+                    </div>
+                  ))}
                 </div>
-                <h3 className="text-lg font-semibold text-text-primary">
+              </div>
+
+              {readiness.warnings.length > 0 && (
+                <div>
+                  <h3 className="mb-3 font-headline text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                    {tR("optionalSection")}
+                  </h3>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {readiness.warnings.map((f) => (
+                      <div
+                        key={`w-${f.key}`}
+                        className="flex items-center justify-between gap-3 rounded-xl bg-surface-container-low px-4 py-3 text-sm"
+                      >
+                        <div className="flex items-center gap-2">
+                          <AlertCircle className="h-4 w-4 shrink-0 text-amber-600" />
+                          <span className="font-medium text-on-surface">
+                            {locale === "ar" ? f.label_ar : f.label_en}
+                          </span>
+                        </div>
+                        <Link
+                          href={readiness.onboarding_url}
+                          className="rounded-full bg-surface-container-highest px-3 py-1 text-xs font-bold text-on-surface-variant"
+                        >
+                          {tR("fillThis")}
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={loadReadiness}
+                  leadingIcon={<RefreshCw className="h-4 w-4" />}
+                >
+                  {tR("refresh")}
+                </Button>
+              </div>
+            </Card>
+          ) : generating ? (
+            <Card padding="lg" className="space-y-6">
+              <div className="flex flex-col items-center text-center">
+                <div className="brand-gradient-bg mb-4 flex h-16 w-16 items-center justify-center rounded-2xl shadow-soft">
+                  <Loader2 className="h-8 w-8 animate-spin text-white" />
+                </div>
+                <h3 className="font-headline text-xl font-bold tracking-tight text-on-surface">
                   {t("form.generating")}
                 </h3>
-                <p className="mt-1 text-sm text-text-secondary">{form.title}</p>
-                <p className="mt-2 text-xs text-text-muted">
+                <p className="mt-1 text-sm text-on-surface-variant">{form.title}</p>
+                <p className="mt-3 font-headline text-xs font-semibold uppercase tracking-widest text-on-surface-variant">
                   {t("generating.elapsed")}: {(tickMs / 1000).toFixed(1)}
                   {t("generating.seconds")}
                 </p>
                 {usingFallback && (
-                  <p className="mt-2 text-xs text-warning">
+                  <Badge tone="warning" className="mt-3">
                     {t("generating.stream.fallback")}
-                  </p>
+                  </Badge>
                 )}
               </div>
 
@@ -284,62 +455,59 @@ export default function NewPlanPage() {
                     <div
                       key={key}
                       className={clsx(
-                        "rounded-lg border px-4 py-3 text-sm transition-colors",
-                        n.status === "done" &&
-                          "border-success/30 bg-success/5 text-success",
-                        n.status === "running" &&
-                          "border-primary/30 bg-primary/5 text-primary",
-                        n.status === "failed" &&
-                          "border-error/30 bg-error/5 text-error",
-                        n.status === "pending" &&
-                          "border-border bg-background text-text-muted"
+                        "rounded-2xl bg-surface-container-lowest p-4 shadow-soft transition-all",
+                        n.status === "running" && "ring-2 ring-primary/30"
                       )}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-4">
                         <div
                           className={clsx(
-                            "flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
-                            n.status === "done" && "bg-success text-white",
-                            n.status === "running" && "bg-primary text-white",
-                            n.status === "failed" && "bg-error text-white",
-                            n.status === "pending" && "bg-border text-text-muted"
+                            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-headline text-sm font-bold",
+                            n.status === "done" && "bg-emerald-100 text-emerald-600",
+                            n.status === "running" && "brand-gradient-bg text-white",
+                            n.status === "failed" && "bg-error-container text-on-error-container",
+                            n.status === "pending" && "bg-surface-container-high text-on-surface-variant"
                           )}
                         >
                           {n.status === "done" ? (
-                            <Check className="h-3.5 w-3.5" />
+                            <Check className="h-5 w-5" />
                           ) : n.status === "running" ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            <Loader2 className="h-5 w-5 animate-spin" />
                           ) : n.status === "failed" ? (
-                            <X className="h-3.5 w-3.5" />
+                            <X className="h-5 w-5" />
                           ) : (
-                            <span className="text-xs font-medium">
-                              {NODE_KEYS.indexOf(key) + 1}
-                            </span>
+                            NODE_KEYS.indexOf(key) + 1
                           )}
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center justify-between gap-2">
-                            <span className="font-medium">
+                            <span className="font-headline text-sm font-bold text-on-surface">
                               {t(`generating.nodes.${key}`)}
                             </span>
                             {elapsedSec && (
-                              <span className="text-xs opacity-70">
+                              <span className="text-xs font-semibold text-on-surface-variant">
                                 {elapsedSec}
                                 {t("generating.seconds")}
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-text-muted">
+                          <p className="text-xs text-on-surface-variant">
                             {t(`generating.nodes.${key}Desc`)}
                           </p>
                           {n.status === "done" && n.summary && (
-                            <p className="mt-1 text-xs opacity-80">
+                            <p className="mt-2 text-xs text-on-surface-variant/80">
                               {typeof n.summary === "string"
                                 ? n.summary
                                 : Object.entries(n.summary)
                                     .map(([k, v]) => `${k}: ${String(v)}`)
                                     .join(" · ")}
                             </p>
+                          )}
+                          {/* gradient progress bar when running */}
+                          {n.status === "running" && (
+                            <div className="mt-3 h-1 overflow-hidden rounded-full bg-surface-container-high">
+                              <div className="brand-gradient-bg h-full w-1/2 animate-pulse rounded-full" />
+                            </div>
                           )}
                         </div>
                       </div>
@@ -348,92 +516,67 @@ export default function NewPlanPage() {
                 })}
               </div>
 
-              <div className="mt-6 flex justify-end">
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-hover"
-                >
+              <div className="flex justify-end">
+                <Button type="button" variant="secondary" onClick={handleCancel}>
                   {t("actions.view")}
-                </button>
+                </Button>
               </div>
-            </div>
+            </Card>
           ) : (
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-5 rounded-xl border border-border bg-surface p-6"
-            >
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-text-primary">
-                  {t("form.titleLabel")}
-                </label>
-                <input
-                  type="text"
+            <Card padding="lg">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <Input
+                  label={t("form.titleLabel")}
                   required
                   placeholder={t("form.titlePlaceholder")}
                   value={form.title}
                   onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
-              </div>
 
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-text-primary">
-                  {t("form.periodDays")}
-                </label>
-                <select
-                  value={form.period_days}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      period_days: Number(e.target.value) as 30 | 60 | 90,
-                    }))
-                  }
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                >
-                  <option value={30}>{t("form.period30")}</option>
-                  <option value={60}>{t("form.period60")}</option>
-                  <option value={90}>{t("form.period90")}</option>
-                </select>
-              </div>
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                  <StyledSelect
+                    label={t("form.periodDays")}
+                    value={form.period_days}
+                    onChange={(v) =>
+                      setForm((f) => ({ ...f, period_days: Number(v) as 30 | 60 | 90 }))
+                    }
+                  >
+                    <option value={30}>{t("form.period30")}</option>
+                    <option value={60}>{t("form.period60")}</option>
+                    <option value={90}>{t("form.period90")}</option>
+                  </StyledSelect>
 
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-text-primary">
-                  {t("form.language")}
-                </label>
-                <select
-                  value={form.language}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      language: e.target.value as GenerateForm["language"],
-                    }))
-                  }
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                >
-                  <option value="ar">{t("form.languageAr")}</option>
-                  <option value="en">{t("form.languageEn")}</option>
-                  <option value="both">{t("form.languageBoth")}</option>
-                </select>
-              </div>
+                  <StyledSelect
+                    label={t("form.language")}
+                    value={form.language}
+                    onChange={(v) =>
+                      setForm((f) => ({ ...f, language: v as GenerateForm["language"] }))
+                    }
+                  >
+                    <option value="ar">{t("form.languageAr")}</option>
+                    <option value="en">{t("form.languageEn")}</option>
+                    <option value="both">{t("form.languageBoth")}</option>
+                  </StyledSelect>
+                </div>
 
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => router.push("/plans")}
-                  className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-hover"
-                >
-                  {t("actions.view")}
-                </button>
-                <button
-                  type="submit"
-                  className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark"
-                >
-                  <Sparkles className="h-4 w-4" />
-                  {t("form.submit")}
-                </button>
-              </div>
-            </form>
+                <div className="flex justify-end gap-3 pt-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => router.push("/plans")}
+                  >
+                    {t("actions.view")}
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    leadingIcon={<Sparkles className="h-4 w-4" />}
+                  >
+                    {t("form.submit")}
+                  </Button>
+                </div>
+              </form>
+            </Card>
           )}
         </div>
       </div>

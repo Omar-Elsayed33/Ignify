@@ -64,10 +64,10 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-surface">
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-30 bg-on-surface/30 backdrop-blur-sm lg:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -82,14 +82,14 @@ export default function DashboardLayout({
       )}
 
       <main className="lg:ps-64">
-        <div className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-surface px-4 lg:hidden">
+        <div className="sticky top-0 z-20 flex h-14 items-center gap-3 bg-surface/80 px-4 backdrop-blur-xl lg:hidden">
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="rounded-md p-1.5 text-text-secondary hover:bg-surface-hover"
+            className="rounded-xl p-2 text-on-surface-variant hover:bg-surface-container-low"
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
-          <span className="text-lg font-bold text-primary">Ignify</span>
+          <span className="font-headline text-lg font-bold brand-gradient-text">Ignify</span>
         </div>
 
         <QuotaBanner />

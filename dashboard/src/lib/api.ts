@@ -88,7 +88,15 @@ async function request<T>(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new ApiError(response.status, errorData.detail || errorData.message || "Request failed", errorData);
+    const raw = errorData.detail ?? errorData.message ?? "Request failed";
+    // FastAPI HTTPException(detail={...}) nests an object; coerce safely to string.
+    const msg =
+      typeof raw === "string"
+        ? raw
+        : typeof raw?.detail === "string"
+          ? raw.detail
+          : `HTTP ${response.status}`;
+    throw new ApiError(response.status, msg, errorData);
   }
 
   if (response.status === 204) {

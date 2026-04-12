@@ -24,12 +24,16 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
+  Area,
+  AreaChart,
 } from "recharts";
 
 import DashboardHeader from "@/components/DashboardHeader";
+import PageHeader from "@/components/PageHeader";
+import Card from "@/components/Card";
+import Button from "@/components/Button";
+import InsightChip from "@/components/InsightChip";
 import { api, BASE_URL, getAccessToken } from "@/lib/api";
-
-// ── Types matching backend schemas ─────────────────────────────────────────
 
 interface KPICard {
   key: string;
@@ -174,354 +178,377 @@ export default function AnalyticsOverviewPage() {
     <div>
       <DashboardHeader title={t("title")} />
 
-      <div className="p-6">
-        {/* Period selector */}
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-text-secondary">
-              {t("period.label")}:
-            </span>
-            <div className="inline-flex rounded-lg border border-border bg-surface p-1">
-              {(["7d", "30d", "90d"] as Period[]).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPeriod(p)}
-                  className={
-                    "rounded-md px-3 py-1.5 text-sm font-medium transition-colors " +
-                    (period === p
-                      ? "bg-primary text-white"
-                      : "text-text-secondary hover:bg-surface-hover")
+      <div className="p-8">
+        <div className="space-y-8">
+          <PageHeader
+            eyebrow="ANALYTICS"
+            title={t("title")}
+            actions={
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex rounded-full bg-surface-container-low p-1">
+                  {(["7d", "30d", "90d"] as Period[]).map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => setPeriod(p)}
+                      className={
+                        "rounded-full px-3 py-1 font-headline text-xs font-bold transition-all " +
+                        (period === p
+                          ? "brand-gradient-bg text-white shadow-soft"
+                          : "text-on-surface-variant")
+                      }
+                    >
+                      {t(`period.${p}`)}
+                    </button>
+                  ))}
+                </div>
+                <div className="inline-flex rounded-full bg-surface-container-low p-1 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setPdfLang("en")}
+                    className={
+                      "rounded-full px-3 py-1 font-bold " +
+                      (pdfLang === "en" ? "brand-gradient-bg text-white" : "text-on-surface-variant")
+                    }
+                  >
+                    EN
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPdfLang("ar")}
+                    className={
+                      "rounded-full px-3 py-1 font-bold " +
+                      (pdfLang === "ar" ? "brand-gradient-bg text-white" : "text-on-surface-variant")
+                    }
+                  >
+                    AR
+                  </button>
+                </div>
+                <Button
+                  variant="secondary"
+                  onClick={handleDownloadWeeklyPdf}
+                  disabled={pdfLoading}
+                  leadingIcon={
+                    pdfLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Download className="h-4 w-4" />
+                    )
                   }
                 >
-                  {t(`period.${p}`)}
-                </button>
+                  {pdfLoading ? tAdmin("report.downloading") : tAdmin("report.download")}
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handleGenerateReport}
+                  disabled={reportLoading || loading}
+                  leadingIcon={
+                    reportLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4" />
+                    )
+                  }
+                >
+                  {reportLoading ? t("report.generating") : t("report.generate")}
+                </Button>
+              </div>
+            }
+          />
+
+          {error && (
+            <Card padding="sm" className="flex items-center gap-3 !bg-error-container">
+              <AlertCircle className="h-4 w-4 shrink-0 text-on-error-container" />
+              <span className="text-sm font-medium text-on-error-container">{error}</span>
+            </Card>
+          )}
+
+          {/* KPI Cards with gradient numbers */}
+          {loading ? (
+            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-32 animate-pulse rounded-2xl bg-surface-container-low"
+                />
               ))}
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="inline-flex rounded-lg border border-border bg-surface p-1 text-xs">
-              <button
-                type="button"
-                onClick={() => setPdfLang("en")}
-                className={
-                  "rounded px-2 py-1 " +
-                  (pdfLang === "en" ? "bg-primary text-white" : "text-text-secondary")
-                }
-              >
-                EN
-              </button>
-              <button
-                type="button"
-                onClick={() => setPdfLang("ar")}
-                className={
-                  "rounded px-2 py-1 " +
-                  (pdfLang === "ar" ? "bg-primary text-white" : "text-text-secondary")
-                }
-              >
-                AR
-              </button>
-            </div>
-            <button
-              onClick={handleDownloadWeeklyPdf}
-              disabled={pdfLoading}
-              className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-text-primary hover:bg-surface-hover disabled:opacity-60"
-            >
-              {pdfLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Download className="h-4 w-4" />
-              )}
-              {pdfLoading ? tAdmin("report.downloading") : tAdmin("report.download")}
-            </button>
-          <button
-            onClick={handleGenerateReport}
-            disabled={reportLoading || loading}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark disabled:opacity-60"
-          >
-            {reportLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Sparkles className="h-4 w-4" />
-            )}
-            {reportLoading ? t("report.generating") : t("report.generate")}
-          </button>
-          </div>
-        </div>
-
-        {error && (
-          <div className="mb-6 flex items-center gap-2 rounded-lg border border-error/20 bg-error/10 px-4 py-3 text-sm text-error">
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            {error}
-          </div>
-        )}
-
-        {/* KPI Cards */}
-        {loading ? (
-          <div className="mb-6 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-28 animate-pulse rounded-xl border border-border bg-surface"
-              />
-            ))}
-          </div>
-        ) : data ? (
-          <div className="mb-6 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-            {data.kpis.map((k) => {
-              const Icon = KPI_ICONS[k.key] || BarChart3;
-              const deltaUp = (k.delta_pct ?? 0) >= 0;
-              return (
-                <div
-                  key={k.key}
-                  className="rounded-xl border border-border bg-surface p-5 shadow-sm"
-                >
-                  <div className="mb-3 flex items-center justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                      <Icon className="h-5 w-5 text-primary" />
-                    </div>
-                    {k.delta_pct !== null && (
-                      <span
-                        className={
-                          "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold " +
-                          (deltaUp
-                            ? "bg-success/10 text-success"
-                            : "bg-error/10 text-error")
-                        }
-                        title={deltaUp ? t("kpi.deltaUp") : t("kpi.deltaDown")}
-                      >
-                        {deltaUp ? (
-                          <ArrowUpRight className="h-3 w-3" />
-                        ) : (
-                          <ArrowDownRight className="h-3 w-3" />
-                        )}
-                        {Math.abs(k.delta_pct).toFixed(1)}%
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs font-medium uppercase tracking-wider text-text-muted">
-                    {kpiLabel(k)}
-                  </p>
-                  <p className="mt-1 text-2xl font-bold text-text-primary">
-                    {formatNumber(k.value)}
-                    {k.unit && (
-                      <span className="ms-1 text-base font-medium text-text-secondary">
-                        {k.unit}
-                      </span>
-                    )}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        ) : null}
-
-        {/* Charts */}
-        {!loading && data && (
-          <div className="mb-6 grid gap-6 lg:grid-cols-2">
-            <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-              <h3 className="mb-4 text-sm font-semibold text-text-primary">
-                {t("charts.reachOverTime")}
-              </h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={data.reach_trend}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-                    <XAxis dataKey="date" stroke="#94A3B8" fontSize={11} />
-                    <YAxis stroke="#94A3B8" fontSize={11} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#fff",
-                        border: "1px solid #E2E8F0",
-                        borderRadius: "8px",
-                        fontSize: "12px",
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="value"
-                      stroke="#FF6B00"
-                      strokeWidth={2}
-                      dot={{ fill: "#FF6B00", r: 3 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-              <h3 className="mb-4 text-sm font-semibold text-text-primary">
-                {t("charts.engagementOverTime")}
-              </h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={data.engagement_trend}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-                    <XAxis dataKey="date" stroke="#94A3B8" fontSize={11} />
-                    <YAxis stroke="#94A3B8" fontSize={11} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#fff",
-                        border: "1px solid #E2E8F0",
-                        borderRadius: "8px",
-                        fontSize: "12px",
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="value"
-                      stroke="#0EA5E9"
-                      strokeWidth={2}
-                      dot={{ fill: "#0EA5E9", r: 3 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Top Posts & Leads by Source */}
-        {!loading && data && (
-          <div className="mb-6 grid gap-6 lg:grid-cols-2">
-            <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-              <h3 className="mb-4 text-sm font-semibold text-text-primary">
-                {t("topPosts.title")}
-              </h3>
-              {data.top_posts.length === 0 ? (
-                <p className="py-8 text-center text-sm text-text-muted">
-                  {t("topPosts.empty")}
-                </p>
-              ) : (
-                <ul className="space-y-3">
-                  {data.top_posts.map((p, i) => (
-                    <li
-                      key={p.id}
-                      className="flex items-start gap-3 rounded-lg border border-border/50 p-3"
-                    >
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                        {i + 1}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="line-clamp-2 text-sm text-text-primary">
-                          {p.caption || "—"}
-                        </p>
-                        <div className="mt-1 flex items-center gap-3 text-xs text-text-muted">
-                          <span className="rounded bg-surface-hover px-2 py-0.5 font-medium">
-                            {p.platform}
-                          </span>
-                          <span>
-                            {t("kpi.reach")}: {formatNumber(p.reach)}
-                          </span>
-                          <span>
-                            {t("kpi.engagement")}: {formatNumber(p.engagement)}
-                          </span>
-                        </div>
+          ) : data ? (
+            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+              {data.kpis.map((k) => {
+                const Icon = KPI_ICONS[k.key] || BarChart3;
+                const deltaUp = (k.delta_pct ?? 0) >= 0;
+                return (
+                  <Card key={k.key} padding="lg" className="space-y-4">
+                    <div className="flex items-start justify-between">
+                      <div className="brand-gradient-bg flex h-11 w-11 items-center justify-center rounded-xl shadow-soft">
+                        <Icon className="h-5 w-5 text-white" />
                       </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
+                      {k.delta_pct !== null && (
+                        <span
+                          className={
+                            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold " +
+                            (deltaUp
+                              ? "bg-emerald-50 text-emerald-600"
+                              : "bg-error-container text-on-error-container")
+                          }
+                        >
+                          {deltaUp ? (
+                            <ArrowUpRight className="h-3 w-3" />
+                          ) : (
+                            <ArrowDownRight className="h-3 w-3" />
+                          )}
+                          {Math.abs(k.delta_pct).toFixed(1)}%
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-headline text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                        {kpiLabel(k)}
+                      </p>
+                      <p className="brand-gradient-text mt-2 font-headline text-4xl font-bold tracking-tight">
+                        {formatNumber(k.value)}
+                        {k.unit && (
+                          <span className="ms-1 text-base font-semibold text-on-surface-variant">
+                            {k.unit}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </Card>
+                );
+              })}
             </div>
+          ) : null}
 
-            <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-              <h3 className="mb-4 text-sm font-semibold text-text-primary">
-                {t("leadsBySource.title")}
-              </h3>
-              {leadsSourceData.length === 0 ? (
-                <p className="py-8 text-center text-sm text-text-muted">
-                  {t("leadsBySource.empty")}
-                </p>
-              ) : (
+          {/* Charts with gradient fill */}
+          {!loading && data && (
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card padding="lg">
+                <div className="mb-4 flex items-center gap-2">
+                  <InsightChip icon={TrendingUp}>TREND</InsightChip>
+                  <h3 className="font-headline text-base font-bold tracking-tight text-on-surface">
+                    {t("charts.reachOverTime")}
+                  </h3>
+                </div>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={leadsSourceData} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-                      <XAxis
-                        type="number"
-                        stroke="#94A3B8"
-                        fontSize={11}
-                        allowDecimals={false}
-                      />
-                      <YAxis
-                        type="category"
-                        dataKey="source"
-                        stroke="#94A3B8"
-                        fontSize={11}
-                        width={90}
-                      />
+                    <AreaChart data={data.reach_trend}>
+                      <defs>
+                        <linearGradient id="reachFill" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.4} />
+                          <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ebe6f5" />
+                      <XAxis dataKey="date" stroke="#8b8497" fontSize={11} />
+                      <YAxis stroke="#8b8497" fontSize={11} />
                       <Tooltip
                         contentStyle={{
                           backgroundColor: "#fff",
-                          border: "1px solid #E2E8F0",
-                          borderRadius: "8px",
+                          border: "none",
+                          borderRadius: "12px",
                           fontSize: "12px",
+                          boxShadow: "0 8px 24px rgba(124, 58, 237, 0.15)",
                         }}
                       />
-                      <Bar
-                        dataKey="count"
-                        fill="#FF6B00"
-                        radius={[0, 4, 4, 0]}
+                      <Area
+                        type="monotone"
+                        dataKey="value"
+                        stroke="#7c3aed"
+                        strokeWidth={2.5}
+                        fill="url(#reachFill)"
                       />
-                    </BarChart>
+                    </AreaChart>
                   </ResponsiveContainer>
                 </div>
+              </Card>
+
+              <Card padding="lg">
+                <div className="mb-4 flex items-center gap-2">
+                  <InsightChip icon={TrendingUp}>ENGAGEMENT</InsightChip>
+                  <h3 className="font-headline text-base font-bold tracking-tight text-on-surface">
+                    {t("charts.engagementOverTime")}
+                  </h3>
+                </div>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={data.engagement_trend}>
+                      <defs>
+                        <linearGradient id="engFill" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#ec4899" stopOpacity={0.4} />
+                          <stop offset="100%" stopColor="#ec4899" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ebe6f5" />
+                      <XAxis dataKey="date" stroke="#8b8497" fontSize={11} />
+                      <YAxis stroke="#8b8497" fontSize={11} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#fff",
+                          border: "none",
+                          borderRadius: "12px",
+                          fontSize: "12px",
+                          boxShadow: "0 8px 24px rgba(236, 72, 153, 0.15)",
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="value"
+                        stroke="#ec4899"
+                        strokeWidth={2.5}
+                        fill="url(#engFill)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {/* Top Posts & Leads by Source */}
+          {!loading && data && (
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card padding="lg">
+                <div className="mb-4 flex items-center gap-2">
+                  <InsightChip>TOP</InsightChip>
+                  <h3 className="font-headline text-base font-bold tracking-tight text-on-surface">
+                    {t("topPosts.title")}
+                  </h3>
+                </div>
+                {data.top_posts.length === 0 ? (
+                  <p className="py-8 text-center text-sm text-on-surface-variant">
+                    {t("topPosts.empty")}
+                  </p>
+                ) : (
+                  <ul className="space-y-4">
+                    {data.top_posts.map((p, i) => (
+                      <li
+                        key={p.id}
+                        className="flex items-start gap-3 rounded-xl bg-surface-container-low p-4"
+                      >
+                        <span className="brand-gradient-bg flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-headline text-xs font-bold text-white shadow-soft">
+                          {i + 1}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="line-clamp-2 text-sm text-on-surface">
+                            {p.caption || "—"}
+                          </p>
+                          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-on-surface-variant">
+                            <span className="rounded-full bg-surface-container-lowest px-2 py-0.5 font-headline text-[10px] font-bold uppercase">
+                              {p.platform}
+                            </span>
+                            <span>
+                              {t("kpi.reach")}: {formatNumber(p.reach)}
+                            </span>
+                            <span>
+                              {t("kpi.engagement")}: {formatNumber(p.engagement)}
+                            </span>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Card>
+
+              <Card padding="lg">
+                <div className="mb-4 flex items-center gap-2">
+                  <InsightChip>SOURCES</InsightChip>
+                  <h3 className="font-headline text-base font-bold tracking-tight text-on-surface">
+                    {t("leadsBySource.title")}
+                  </h3>
+                </div>
+                {leadsSourceData.length === 0 ? (
+                  <p className="py-8 text-center text-sm text-on-surface-variant">
+                    {t("leadsBySource.empty")}
+                  </p>
+                ) : (
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={leadsSourceData} layout="vertical">
+                        <defs>
+                          <linearGradient id="barFill" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stopColor="#7c3aed" />
+                            <stop offset="100%" stopColor="#ec4899" />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#ebe6f5" />
+                        <XAxis type="number" stroke="#8b8497" fontSize={11} allowDecimals={false} />
+                        <YAxis type="category" dataKey="source" stroke="#8b8497" fontSize={11} width={90} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "#fff",
+                            border: "none",
+                            borderRadius: "12px",
+                            fontSize: "12px",
+                            boxShadow: "0 8px 24px rgba(124, 58, 237, 0.15)",
+                          }}
+                        />
+                        <Bar dataKey="count" fill="url(#barFill)" radius={[0, 8, 8, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </Card>
+            </div>
+          )}
+
+          {/* AI Report */}
+          {(report || reportError) && (
+            <Card padding="lg" className="space-y-5">
+              <div className="flex items-center gap-2">
+                <InsightChip icon={Sparkles}>AI INSIGHT</InsightChip>
+                <h3 className="font-headline text-lg font-bold tracking-tight text-on-surface">
+                  {t("report.summary")}
+                </h3>
+              </div>
+
+              {reportError && (
+                <div className="flex items-center gap-2 rounded-xl bg-error-container px-3 py-2 text-sm text-on-error-container">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  {reportError}
+                </div>
               )}
-            </div>
-          </div>
-        )}
 
-        {/* AI Report */}
-        {(report || reportError) && (
-          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <div className="mb-4 flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              <h3 className="text-base font-semibold text-text-primary">
-                {t("report.summary")}
-              </h3>
-            </div>
+              {report && (
+                <div className="space-y-5">
+                  <p className="whitespace-pre-line text-sm leading-relaxed text-on-surface-variant">
+                    {report.summary}
+                  </p>
 
-            {reportError && (
-              <div className="mb-4 flex items-center gap-2 rounded-lg border border-error/20 bg-error/10 px-3 py-2 text-sm text-error">
-                <AlertCircle className="h-4 w-4 shrink-0" />
-                {reportError}
-              </div>
-            )}
+                  {report.insights.length > 0 && (
+                    <div>
+                      <h4 className="mb-3 font-headline text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                        {t("report.insights")}
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {report.insights.map((s, i) => (
+                          <InsightChip key={i}>{s}</InsightChip>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-            {report && (
-              <div className="space-y-6">
-                <p className="whitespace-pre-line text-sm leading-relaxed text-text-secondary">
-                  {report.summary}
-                </p>
-
-                {report.insights.length > 0 && (
-                  <div>
-                    <h4 className="mb-2 text-sm font-semibold text-text-primary">
-                      {t("report.insights")}
-                    </h4>
-                    <ul className="list-inside list-disc space-y-1 text-sm text-text-secondary">
-                      {report.insights.map((s, i) => (
-                        <li key={i}>{s}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {report.recommendations.length > 0 && (
-                  <div>
-                    <h4 className="mb-2 text-sm font-semibold text-text-primary">
-                      {t("report.recommendations")}
-                    </h4>
-                    <ul className="list-inside list-disc space-y-1 text-sm text-text-secondary">
-                      {report.recommendations.map((s, i) => (
-                        <li key={i}>{s}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+                  {report.recommendations.length > 0 && (
+                    <div>
+                      <h4 className="mb-3 font-headline text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                        {t("report.recommendations")}
+                      </h4>
+                      <ul className="space-y-2 text-sm leading-relaxed text-on-surface-variant">
+                        {report.recommendations.map((s, i) => (
+                          <li key={i} className="flex gap-2">
+                            <span className="brand-gradient-text font-bold">•</span>
+                            <span>{s}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </Card>
+          )}
+        </div>
       </div>
     </div>
   );

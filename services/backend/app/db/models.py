@@ -970,6 +970,7 @@ class MarketingPlan(Base):
     calendar: Mapped[Optional[list[Any]]] = mapped_column(JSON, default=list)
     kpis: Mapped[Optional[list[Any]]] = mapped_column(JSON, default=list)
     market_analysis: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, default=dict)
+    ad_strategy: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, default=dict, nullable=True)
     status: Mapped[str] = mapped_column(String(32), default="draft", nullable=False)
     version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     created_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)

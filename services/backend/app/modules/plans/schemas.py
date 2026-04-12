@@ -29,6 +29,7 @@ class PlanResponse(BaseModel):
     calendar: list[Any] = []
     kpis: list[Any] = []
     market_analysis: dict[str, Any] = {}
+    ad_strategy: dict[str, Any] | None = None
     created_at: datetime
     updated_at: datetime
 

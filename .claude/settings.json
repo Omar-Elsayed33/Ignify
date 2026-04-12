@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls d:/Ignify/website/src/app/[locale])"
+    ]
+  }
+}

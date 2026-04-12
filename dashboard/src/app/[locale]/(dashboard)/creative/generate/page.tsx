@@ -3,6 +3,11 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import DashboardHeader from "@/components/DashboardHeader";
+import PageHeader from "@/components/PageHeader";
+import Card from "@/components/Card";
+import Button from "@/components/Button";
+import InsightChip from "@/components/InsightChip";
+import { Textarea } from "@/components/FormField";
 import { api } from "@/lib/api";
 import { AlertCircle, Loader2, Sparkles, Check, Download, ImagePlus, Link2 } from "lucide-react";
 import { clsx } from "clsx";
@@ -27,6 +32,33 @@ interface GenerateResponse {
 }
 
 const STEP_KEYS = ["prompt", "brand", "render"] as const;
+
+function StyledSelect({
+  label,
+  value,
+  onChange,
+  children,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block space-y-1.5">
+      <span className="font-headline text-xs font-semibold uppercase tracking-widest text-on-surface-variant">
+        {label}
+      </span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-xl bg-surface-container-low px-4 py-2.5 text-sm text-on-surface outline-none transition-all focus:ring-2 focus:ring-primary/30"
+      >
+        {children}
+      </select>
+    </label>
+  );
+}
 
 export default function CreativeGeneratePage() {
   const t = useTranslations("creativeGen");
@@ -139,27 +171,31 @@ export default function CreativeGeneratePage() {
     <div>
       <DashboardHeader title={t("title")} />
 
-      <div className="p-6">
-        <div className="mx-auto max-w-4xl">
-          <p className="mb-6 text-sm text-text-secondary">{t("subtitle")}</p>
+      <div className="p-8">
+        <div className="mx-auto max-w-6xl space-y-8">
+          <PageHeader
+            eyebrow="AI · CREATIVE ENGINE"
+            title={t("title")}
+            description={t("subtitle")}
+          />
 
           {error && (
-            <div className="mb-4 flex items-center gap-3 rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              {error}
-            </div>
+            <Card padding="sm" className="flex items-center gap-3 !bg-error-container">
+              <AlertCircle className="h-4 w-4 shrink-0 text-on-error-container" />
+              <span className="text-sm font-medium text-on-error-container">{error}</span>
+            </Card>
           )}
 
           {generating ? (
-            <div className="rounded-xl border border-border bg-surface p-8">
-              <div className="mb-6 flex flex-col items-center text-center">
-                <div className="mb-4 rounded-full bg-primary/10 p-4">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <Card padding="lg" className="mx-auto max-w-2xl space-y-6">
+              <div className="flex flex-col items-center text-center">
+                <div className="brand-gradient-bg mb-4 flex h-16 w-16 items-center justify-center rounded-2xl shadow-soft">
+                  <Loader2 className="h-8 w-8 animate-spin text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-text-primary">
+                <h3 className="font-headline text-xl font-bold tracking-tight text-on-surface">
                   {t("form.generating")}
                 </h3>
-                <p className="mt-1 text-sm text-text-secondary">{form.idea}</p>
+                <p className="mt-1 text-sm text-on-surface-variant">{form.idea}</p>
               </div>
 
               <div className="space-y-3">
@@ -170,75 +206,80 @@ export default function CreativeGeneratePage() {
                     <div
                       key={key}
                       className={clsx(
-                        "flex items-center gap-3 rounded-lg border px-4 py-3 text-sm transition-colors",
-                        done && "border-success/30 bg-success/5 text-success",
-                        active && "border-primary/30 bg-primary/5 text-primary",
-                        !done && !active && "border-border bg-background text-text-muted"
+                        "flex items-center gap-4 rounded-2xl bg-surface-container-lowest p-4 shadow-soft transition-all",
+                        active && "ring-2 ring-primary/30"
                       )}
                     >
                       <div
                         className={clsx(
-                          "flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
-                          done && "bg-success text-white",
-                          active && "bg-primary text-white",
-                          !done && !active && "bg-border text-text-muted"
+                          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-headline text-sm font-bold",
+                          done && "bg-emerald-100 text-emerald-600",
+                          active && "brand-gradient-bg text-white",
+                          !done && !active && "bg-surface-container-high text-on-surface-variant"
                         )}
                       >
                         {done ? (
-                          <Check className="h-3.5 w-3.5" />
+                          <Check className="h-5 w-5" />
                         ) : active ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          <Loader2 className="h-5 w-5 animate-spin" />
                         ) : (
-                          <span className="text-xs font-medium">{idx + 1}</span>
+                          idx + 1
                         )}
                       </div>
-                      <span className="font-medium">{t(`steps.${key}`)}</span>
+                      <span className="font-headline text-sm font-bold text-on-surface">
+                        {t(`steps.${key}`)}
+                      </span>
                     </div>
                   );
                 })}
               </div>
-            </div>
+            </Card>
           ) : result ? (
-            <div className="rounded-xl border border-border bg-surface p-6">
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-text-primary">
-                  {t("result.title")}
-                </h3>
+            <Card padding="lg" className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <InsightChip>RENDERED</InsightChip>
+                  <h3 className="font-headline text-xl font-bold tracking-tight text-on-surface">
+                    {t("result.title")}
+                  </h3>
+                </div>
                 <div className="flex gap-2">
                   {result.creative_id && (
-                    <button
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={openAttach}
-                      className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-text-secondary hover:bg-surface-hover"
+                      leadingIcon={<Link2 className="h-4 w-4" />}
                     >
-                      <Link2 className="h-4 w-4" />
                       Attach to Content
-                    </button>
+                    </Button>
                   )}
-                  <button
+                  <Button
+                    variant="primary"
+                    size="sm"
                     onClick={handleRegenerate}
-                    className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-text-secondary hover:bg-surface-hover"
+                    leadingIcon={<Sparkles className="h-4 w-4" />}
                   >
-                    <Sparkles className="h-4 w-4" />
                     {t("result.regenerate")}
-                  </button>
+                  </Button>
                 </div>
               </div>
 
               {attachOpen && (
-                <div className="mb-4 rounded-lg border border-border bg-background p-3">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-xs font-medium text-text-secondary">
-                      Choose a draft content post:
+                <Card variant="flat" padding="md" className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-headline text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                      Choose a draft content post
                     </span>
                     <button
                       onClick={() => setAttachOpen(false)}
-                      className="text-xs text-text-muted hover:text-text-primary"
+                      className="text-xs font-semibold text-on-surface-variant hover:text-primary"
                     >
                       Close
                     </button>
                   </div>
                   {draftPosts.length === 0 ? (
-                    <p className="text-xs text-text-muted">No draft posts.</p>
+                    <p className="text-xs text-on-surface-variant">No draft posts.</p>
                   ) : (
                     <div className="max-h-40 space-y-1 overflow-auto">
                       {draftPosts.map((p) => (
@@ -246,58 +287,52 @@ export default function CreativeGeneratePage() {
                           key={p.id}
                           onClick={() => attachToPost(p.id)}
                           disabled={attachingId === p.id}
-                          className="flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs hover:bg-surface disabled:opacity-40"
+                          className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-start text-xs font-medium hover:bg-surface-container-lowest disabled:opacity-40"
                         >
                           <span className="truncate">{p.title}</span>
                           {attachingId === p.id ? (
                             <Loader2 className="h-3 w-3 animate-spin" />
                           ) : attachDone === p.id ? (
-                            <Check className="h-3 w-3 text-success" />
+                            <Check className="h-3 w-3 text-emerald-600" />
                           ) : null}
                         </button>
                       ))}
                     </div>
                   )}
-                </div>
+                </Card>
               )}
 
               {result.prompt && (
-                <p className="mb-4 rounded-lg bg-background px-3 py-2 text-xs text-text-muted">
-                  {result.prompt}
-                </p>
+                <div className="rounded-xl bg-surface-container-low p-4">
+                  <p className="text-xs leading-relaxed text-on-surface-variant">
+                    {result.prompt}
+                  </p>
+                </div>
               )}
 
               {result.image_urls.length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-background p-10 text-center">
-                  <ImagePlus className="mb-3 h-10 w-10 text-text-muted" />
-                  <p className="text-sm text-text-secondary">
-                    {t("errors.noToken")}
-                  </p>
+                <div className="flex flex-col items-center justify-center rounded-2xl bg-surface-container-low p-12 text-center">
+                  <ImagePlus className="mb-3 h-10 w-10 text-on-surface-variant" />
+                  <p className="text-sm text-on-surface-variant">{t("errors.noToken")}</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   {result.image_urls.map((url, idx) => {
                     const isSelected = selected === url;
                     return (
                       <div
                         key={`${url}-${idx}`}
                         className={clsx(
-                          "group relative overflow-hidden rounded-lg border transition-all",
-                          isSelected
-                            ? "border-primary ring-2 ring-primary/30"
-                            : "border-border"
+                          "group relative overflow-hidden rounded-2xl shadow-soft transition-all",
+                          isSelected && "ring-2 ring-primary"
                         )}
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={url}
-                          alt={`variation ${idx + 1}`}
-                          className="h-auto w-full"
-                        />
-                        <div className="absolute inset-x-0 bottom-0 flex gap-2 bg-gradient-to-t from-black/70 to-transparent p-3 opacity-0 transition-opacity group-hover:opacity-100">
+                        <img src={url} alt={`variation ${idx + 1}`} className="h-auto w-full" />
+                        <div className="brand-gradient-bg absolute inset-x-0 bottom-0 flex gap-2 p-3 opacity-0 transition-opacity group-hover:opacity-100">
                           <button
                             onClick={() => handleDownload(url)}
-                            className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-white/90 px-3 py-1.5 text-xs font-medium text-gray-900 hover:bg-white"
+                            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-white/95 px-3 py-2 text-xs font-bold text-on-surface hover:bg-white"
                           >
                             <Download className="h-3.5 w-3.5" />
                             {t("result.download")}
@@ -305,10 +340,10 @@ export default function CreativeGeneratePage() {
                           <button
                             onClick={() => setSelected(url)}
                             className={clsx(
-                              "flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium",
+                              "flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold",
                               isSelected
-                                ? "bg-primary text-white"
-                                : "bg-primary/90 text-white hover:bg-primary"
+                                ? "bg-white text-primary"
+                                : "bg-black/20 text-white hover:bg-black/30"
                             )}
                           >
                             <Check className="h-3.5 w-3.5" />
@@ -320,98 +355,71 @@ export default function CreativeGeneratePage() {
                   })}
                 </div>
               )}
-            </div>
+            </Card>
           ) : (
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-5 rounded-xl border border-border bg-surface p-6"
-            >
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-text-primary">
-                  {t("form.idea")}
-                </label>
-                <textarea
-                  required
-                  rows={4}
-                  placeholder={t("form.ideaPlaceholder")}
-                  value={form.idea}
-                  onChange={(e) => setForm((f) => ({ ...f, idea: e.target.value }))}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-text-primary">
-                    {t("form.style")}
-                  </label>
-                  <select
+            <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
+              {/* Form */}
+              <Card padding="lg">
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <Textarea
+                    label={t("form.idea")}
+                    required
+                    rows={5}
+                    placeholder={t("form.ideaPlaceholder")}
+                    value={form.idea}
+                    onChange={(e) => setForm((f) => ({ ...f, idea: e.target.value }))}
+                  />
+                  <StyledSelect
+                    label={t("form.style")}
                     value={form.style}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, style: e.target.value as Style }))
-                    }
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    onChange={(v) => setForm((f) => ({ ...f, style: v as Style }))}
                   >
                     <option value="photo">{t("form.stylePhoto")}</option>
                     <option value="illustration">{t("form.styleIllustration")}</option>
                     <option value="3d">{t("form.style3d")}</option>
                     <option value="minimal">{t("form.styleMinimal")}</option>
                     <option value="anime">{t("form.styleAnime")}</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-text-primary">
-                    {t("form.dimensions")}
-                  </label>
-                  <select
+                  </StyledSelect>
+                  <StyledSelect
+                    label={t("form.dimensions")}
                     value={form.dimensions}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        dimensions: e.target.value as Dimension,
-                      }))
-                    }
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    onChange={(v) => setForm((f) => ({ ...f, dimensions: v as Dimension }))}
                   >
                     <option value="1:1">{t("form.dim_1_1")}</option>
                     <option value="9:16">{t("form.dim_9_16")}</option>
                     <option value="16:9">{t("form.dim_16_9")}</option>
                     <option value="4:5">{t("form.dim_4_5")}</option>
-                  </select>
-                </div>
-              </div>
+                  </StyledSelect>
+                  <StyledSelect
+                    label={t("form.language")}
+                    value={form.language}
+                    onChange={(v) => setForm((f) => ({ ...f, language: v as Language }))}
+                  >
+                    <option value="ar">Arabic</option>
+                    <option value="en">English</option>
+                    <option value="both">Both</option>
+                  </StyledSelect>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="lg"
+                    className="w-full"
+                    leadingIcon={<Sparkles className="h-4 w-4" />}
+                  >
+                    {t("form.submit")}
+                  </Button>
+                </form>
+              </Card>
 
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-text-primary">
-                  {t("form.language")}
-                </label>
-                <select
-                  value={form.language}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      language: e.target.value as Language,
-                    }))
-                  }
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                >
-                  <option value="ar">Arabic</option>
-                  <option value="en">English</option>
-                  <option value="both">Both</option>
-                </select>
-              </div>
-
-              <div className="flex justify-end pt-2">
-                <button
-                  type="submit"
-                  className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark"
-                >
-                  <Sparkles className="h-4 w-4" />
-                  {t("form.submit")}
-                </button>
-              </div>
-            </form>
+              {/* Gallery placeholder */}
+              <Card variant="flat" padding="lg" className="flex min-h-[400px] flex-col items-center justify-center space-y-3 text-center">
+                <InsightChip>GALLERY</InsightChip>
+                <ImagePlus className="h-12 w-12 text-on-surface-variant" />
+                <p className="max-w-xs text-sm font-medium text-on-surface-variant">
+                  Describe your creative idea on the left. Generated variations appear here.
+                </p>
+              </Card>
+            </div>
           )}
         </div>
       </div>

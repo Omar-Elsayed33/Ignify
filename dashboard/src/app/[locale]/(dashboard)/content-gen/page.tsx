@@ -4,6 +4,11 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import DashboardHeader from "@/components/DashboardHeader";
+import PageHeader from "@/components/PageHeader";
+import Card from "@/components/Card";
+import Button from "@/components/Button";
+import InsightChip from "@/components/InsightChip";
+import { Textarea } from "@/components/FormField";
 import { api } from "@/lib/api";
 import {
   AlertCircle,
@@ -64,6 +69,33 @@ const CHANNELS: Channel[] = [
   "email",
 ];
 
+function StyledSelect({
+  label,
+  value,
+  onChange,
+  children,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block space-y-1.5">
+      <span className="font-headline text-xs font-semibold uppercase tracking-widest text-on-surface-variant">
+        {label}
+      </span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-xl bg-surface-container-low px-4 py-2.5 text-sm text-on-surface outline-none transition-all focus:ring-2 focus:ring-primary/30"
+      >
+        {children}
+      </select>
+    </label>
+  );
+}
+
 export default function ContentGenPage() {
   const t = useTranslations("contentGen");
   const tpl = useTranslations("contentTemplates");
@@ -88,7 +120,6 @@ export default function ContentGenPage() {
   const [showTplMenu, setShowTplMenu] = useState(false);
 
   useEffect(() => {
-    // Prefill from sessionStorage if user came from templates page
     try {
       const raw = sessionStorage.getItem("ignify:contentTemplate");
       if (raw) {
@@ -116,17 +147,18 @@ export default function ContentGenPage() {
   }, []);
 
   function applyTemplate(id: string) {
-    const t = templates.find((x) => x.id === id);
-    if (!t) return;
+    const tp = templates.find((x) => x.id === id);
+    if (!tp) return;
     setForm((f) => ({
       ...f,
-      brief: t.brief_template || f.brief,
-      target: (t.type as Target) || f.target,
-      channel: (t.channel as Channel) || f.channel,
-      language: (t.language as Language) || f.language,
+      brief: tp.brief_template || f.brief,
+      target: (tp.type as Target) || f.target,
+      channel: (tp.channel as Channel) || f.channel,
+      language: (tp.language as Language) || f.language,
     }));
     setShowTplMenu(false);
   }
+
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeStep, setActiveStep] = useState(0);
@@ -181,24 +213,28 @@ export default function ContentGenPage() {
     <div>
       <DashboardHeader title={t("title")} />
 
-      <div className="p-6">
-        <div className="mx-auto max-w-3xl">
-          <p className="mb-6 text-sm text-text-secondary">{t("subtitle")}</p>
+      <div className="p-8">
+        <div className="mx-auto max-w-5xl space-y-8">
+          <PageHeader
+            eyebrow="AI · CONTENT ENGINE"
+            title={t("title")}
+            description={t("subtitle")}
+          />
 
           {error && (
-            <div className="mb-4 flex items-center gap-3 rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              {error}
-            </div>
+            <Card padding="sm" className="flex items-center gap-3 !bg-error-container">
+              <AlertCircle className="h-4 w-4 shrink-0 text-on-error-container" />
+              <span className="text-sm font-medium text-on-error-container">{error}</span>
+            </Card>
           )}
 
           {generating ? (
-            <div className="rounded-xl border border-border bg-surface p-8">
-              <div className="mb-6 flex flex-col items-center text-center">
-                <div className="mb-4 rounded-full bg-primary/10 p-4">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <Card padding="lg" className="mx-auto max-w-2xl space-y-6">
+              <div className="flex flex-col items-center text-center">
+                <div className="brand-gradient-bg mb-4 flex h-16 w-16 items-center justify-center rounded-2xl shadow-soft">
+                  <Loader2 className="h-8 w-8 animate-spin text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-text-primary">
+                <h3 className="font-headline text-xl font-bold tracking-tight text-on-surface">
                   {t("form.generating")}
                 </h3>
               </div>
@@ -211,229 +247,218 @@ export default function ContentGenPage() {
                     <div
                       key={key}
                       className={clsx(
-                        "flex items-center gap-3 rounded-lg border px-4 py-3 text-sm transition-colors",
-                        done && "border-success/30 bg-success/5 text-success",
-                        active && "border-primary/30 bg-primary/5 text-primary",
-                        !done &&
-                          !active &&
-                          "border-border bg-background text-text-muted"
+                        "flex items-center gap-4 rounded-2xl bg-surface-container-lowest p-4 shadow-soft transition-all",
+                        active && "ring-2 ring-primary/30"
                       )}
                     >
                       <div
                         className={clsx(
-                          "flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
-                          done && "bg-success text-white",
-                          active && "bg-primary text-white",
-                          !done && !active && "bg-border text-text-muted"
+                          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-headline text-sm font-bold",
+                          done && "bg-emerald-100 text-emerald-600",
+                          active && "brand-gradient-bg text-white",
+                          !done && !active && "bg-surface-container-high text-on-surface-variant"
                         )}
                       >
                         {done ? (
-                          <Check className="h-3.5 w-3.5" />
+                          <Check className="h-5 w-5" />
                         ) : active ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          <Loader2 className="h-5 w-5 animate-spin" />
                         ) : (
-                          <span className="text-xs font-medium">{idx + 1}</span>
+                          idx + 1
                         )}
                       </div>
-                      <span className="font-medium">{t(`steps.${key}`)}</span>
+                      <span className="font-headline text-sm font-bold text-on-surface">
+                        {t(`steps.${key}`)}
+                      </span>
                     </div>
                   );
                 })}
               </div>
-            </div>
+            </Card>
           ) : result ? (
-            <div className="space-y-4 rounded-xl border border-border bg-surface p-6">
+            <Card padding="lg" className="space-y-6">
               <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">
-                    {t("result.title")}
-                  </p>
+                <div className="min-w-0 flex-1 space-y-2">
+                  <InsightChip>{t("result.title")}</InsightChip>
                   {result.title && (
-                    <h2 className="mt-1 text-xl font-semibold text-text-primary">
+                    <h2 className="font-headline text-2xl font-bold tracking-tight text-on-surface">
                       {result.title}
                     </h2>
                   )}
                 </div>
                 <div className="flex shrink-0 gap-2">
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
+                    size="sm"
                     onClick={handleCopy}
-                    className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-hover"
+                    leadingIcon={
+                      copied ? (
+                        <Check className="h-3.5 w-3.5 text-emerald-600" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5" />
+                      )
+                    }
                   >
-                    {copied ? (
-                      <Check className="h-3.5 w-3.5 text-success" />
-                    ) : (
-                      <Copy className="h-3.5 w-3.5" />
-                    )}
                     {copied ? t("result.copied") : t("result.copy")}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="primary"
+                    size="sm"
                     onClick={() => router.push(`/content/${result.content_item_id}`)}
-                    className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-dark"
+                    leadingIcon={<Edit3 className="h-3.5 w-3.5" />}
                   >
-                    <Edit3 className="h-3.5 w-3.5" />
                     {t("result.edit")}
-                  </button>
+                  </Button>
                 </div>
               </div>
 
-              <div className="rounded-lg border border-border bg-background p-4">
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-text-primary">
+              <div className="rounded-2xl bg-surface-container-low p-5">
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-on-surface">
                   {result.final}
                 </p>
               </div>
 
               {result.hashtags && result.hashtags.length > 0 && (
-                <div>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-text-muted">
+                <div className="space-y-3">
+                  <h4 className="font-headline text-xs font-bold uppercase tracking-widest text-on-surface-variant">
                     {t("result.hashtags")}
-                  </p>
+                  </h4>
                   <div className="flex flex-wrap gap-2">
                     {result.hashtags.map((tag, i) => (
-                      <span
-                        key={i}
-                        className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
-                      >
+                      <InsightChip key={i}>
                         {tag.startsWith("#") ? tag : `#${tag}`}
-                      </span>
+                      </InsightChip>
                     ))}
                   </div>
                 </div>
               )}
 
-              <div className="flex justify-end pt-2">
-                <button
+              <div className="flex justify-end">
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={handleReset}
-                  className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-hover"
+                  leadingIcon={<RefreshCw className="h-4 w-4" />}
                 >
-                  <RefreshCw className="h-4 w-4" />
                   {t("result.regenerate")}
-                </button>
+                </Button>
               </div>
-            </div>
+            </Card>
           ) : (
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-5 rounded-xl border border-border bg-surface p-6"
-            >
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-text-primary">
-                  {t("form.brief")}
-                </label>
-                <textarea
-                  required
-                  rows={5}
-                  placeholder={t("form.briefPlaceholder")}
-                  value={form.brief}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, brief: e.target.value }))
-                  }
-                  className="w-full resize-y rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              </div>
+            <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+              {/* Composer */}
+              <Card padding="lg">
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <Textarea
+                    label={t("form.brief")}
+                    required
+                    rows={6}
+                    placeholder={t("form.briefPlaceholder")}
+                    value={form.brief}
+                    onChange={(e) => setForm((f) => ({ ...f, brief: e.target.value }))}
+                  />
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-text-primary">
-                    {t("form.target")}
-                  </label>
-                  <select
-                    value={form.target}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, target: e.target.value as Target }))
-                    }
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  >
-                    {TARGETS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {t(`form.${opt.labelKey}`)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <StyledSelect
+                      label={t("form.target")}
+                      value={form.target}
+                      onChange={(v) => setForm((f) => ({ ...f, target: v as Target }))}
+                    >
+                      {TARGETS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {t(`form.${opt.labelKey}`)}
+                        </option>
+                      ))}
+                    </StyledSelect>
+                    <StyledSelect
+                      label={t("form.channel")}
+                      value={form.channel}
+                      onChange={(v) => setForm((f) => ({ ...f, channel: v as Channel }))}
+                    >
+                      {CHANNELS.map((c) => (
+                        <option key={c} value={c}>
+                          {c.charAt(0).toUpperCase() + c.slice(1)}
+                        </option>
+                      ))}
+                    </StyledSelect>
+                    <StyledSelect
+                      label={t("form.language")}
+                      value={form.language}
+                      onChange={(v) => setForm((f) => ({ ...f, language: v as Language }))}
+                    >
+                      <option value="ar">{t("form.languageAr")}</option>
+                      <option value="en">{t("form.languageEn")}</option>
+                      <option value="both">{t("form.languageBoth")}</option>
+                    </StyledSelect>
+                  </div>
 
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-text-primary">
-                    {t("form.channel")}
-                  </label>
-                  <select
-                    value={form.channel}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, channel: e.target.value as Channel }))
-                    }
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  >
-                    {CHANNELS.map((c) => (
-                      <option key={c} value={c}>
-                        {c.charAt(0).toUpperCase() + c.slice(1)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-text-primary">
-                    {t("form.language")}
-                  </label>
-                  <select
-                    value={form.language}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        language: e.target.value as Language,
-                      }))
-                    }
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  >
-                    <option value="ar">{t("form.languageAr")}</option>
-                    <option value="en">{t("form.languageEn")}</option>
-                    <option value="both">{t("form.languageBoth")}</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-2">
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowTplMenu((v) => !v)}
-                    className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-hover"
-                  >
-                    <FileText className="h-4 w-4" />
-                    {tpl("loadFromTemplate")}
-                  </button>
-                  {showTplMenu && (
-                    <div className="absolute bottom-full z-10 mb-1 max-h-56 w-64 overflow-y-auto rounded-lg border border-border bg-surface shadow-lg">
-                      {templates.length === 0 ? (
-                        <div className="px-3 py-2 text-sm text-text-muted">
-                          {tpl("empty")}
+                  <div className="flex items-center justify-between pt-2">
+                    <div className="relative">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setShowTplMenu((v) => !v)}
+                        leadingIcon={<FileText className="h-4 w-4" />}
+                      >
+                        {tpl("loadFromTemplate")}
+                      </Button>
+                      {showTplMenu && (
+                        <div className="absolute bottom-full z-10 mb-2 max-h-56 w-64 overflow-y-auto rounded-2xl bg-surface-container-lowest p-2 shadow-soft">
+                          {templates.length === 0 ? (
+                            <div className="px-3 py-2 text-sm text-on-surface-variant">
+                              {tpl("empty")}
+                            </div>
+                          ) : (
+                            templates.map((x) => (
+                              <button
+                                key={x.id}
+                                type="button"
+                                onClick={() => applyTemplate(x.id)}
+                                className="block w-full rounded-lg px-3 py-2 text-start text-sm font-medium transition-colors hover:bg-surface-container-low"
+                              >
+                                {x.name}
+                              </button>
+                            ))
+                          )}
                         </div>
-                      ) : (
-                        templates.map((x) => (
-                          <button
-                            key={x.id}
-                            type="button"
-                            onClick={() => applyTemplate(x.id)}
-                            className="block w-full px-3 py-2 text-start text-sm hover:bg-surface-hover"
-                          >
-                            {x.name}
-                          </button>
-                        ))
                       )}
                     </div>
-                  )}
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      leadingIcon={<Sparkles className="h-4 w-4" />}
+                    >
+                      {t("form.submit")}
+                    </Button>
+                  </div>
+                </form>
+              </Card>
+
+              {/* Preview panel */}
+              <Card variant="flat" padding="lg" className="h-fit space-y-4">
+                <InsightChip>PREVIEW</InsightChip>
+                <h3 className="font-headline text-lg font-bold tracking-tight text-on-surface">
+                  {t("subtitle")}
+                </h3>
+                <div className="space-y-3 text-xs font-medium text-on-surface-variant">
+                  <div className="flex items-center justify-between">
+                    <span className="font-headline uppercase tracking-widest">Channel</span>
+                    <span>{form.channel}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-headline uppercase tracking-widest">Format</span>
+                    <span>{form.target}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-headline uppercase tracking-widest">Language</span>
+                    <span>{form.language}</span>
+                  </div>
                 </div>
-                <button
-                  type="submit"
-                  className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark"
-                >
-                  <Sparkles className="h-4 w-4" />
-                  {t("form.submit")}
-                </button>
-              </div>
-            </form>
+              </Card>
+            </div>
           )}
         </div>
       </div>

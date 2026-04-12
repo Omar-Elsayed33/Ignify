@@ -1102,6 +1102,15 @@
     "errorGenerate": "Failed to generate plan",
     "errorApprove": "Failed to approve plan"
   },
+  "plansReadiness": {
+    "title": "Complete your business profile first",
+    "subtitle": "We need a few details about your business before we can generate a tailored marketing plan.",
+    "requiredSection": "Required information",
+    "optionalSection": "Optional but recommended",
+    "fillThis": "Fill this in",
+    "refresh": "Re-check",
+    "readyToGenerate": "Your profile is ready. You can now generate a plan."
+  },
   "contentGen": {
     "title": "AI Content Generator",
     "subtitle": "Generate on-brand marketing content for any channel in seconds",

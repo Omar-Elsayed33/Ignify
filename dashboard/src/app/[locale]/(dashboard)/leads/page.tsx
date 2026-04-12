@@ -5,13 +5,17 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useLocale } from "next-intl";
 import DashboardHeader from "@/components/DashboardHeader";
+import PageHeader from "@/components/PageHeader";
+import Card from "@/components/Card";
+import Button from "@/components/Button";
+import InsightChip from "@/components/InsightChip";
 import Modal from "@/components/Modal";
+import { Input, Textarea } from "@/components/FormField";
 import { api } from "@/lib/api";
 import {
   AlertCircle,
   Loader2,
   Plus,
-  Users,
   X,
   Sparkles,
   Phone,
@@ -59,36 +63,11 @@ interface Activity {
 
 const STAGES: Stage[] = ["new", "contacted", "qualified", "proposal", "won", "lost"];
 
-const stageStyles: Record<Stage, { bar: string; badge: string; dot: string }> = {
-  new: { bar: "bg-info", badge: "bg-info/10 text-info", dot: "bg-info" },
-  contacted: { bar: "bg-accent", badge: "bg-accent/10 text-accent", dot: "bg-accent" },
-  qualified: { bar: "bg-primary", badge: "bg-primary/10 text-primary", dot: "bg-primary" },
-  proposal: { bar: "bg-purple-500", badge: "bg-purple-500/10 text-purple-500", dot: "bg-purple-500" },
-  won: { bar: "bg-success", badge: "bg-success/10 text-success", dot: "bg-success" },
-  lost: { bar: "bg-error", badge: "bg-error/10 text-error", dot: "bg-error" },
-};
-
-const sourceStyles: Record<string, string> = {
-  whatsapp: "bg-emerald-500/10 text-emerald-600",
-  messenger: "bg-blue-500/10 text-blue-600",
-  instagram: "bg-pink-500/10 text-pink-600",
-  facebook: "bg-blue-600/10 text-blue-700",
-  website: "bg-slate-500/10 text-slate-600",
-  ads: "bg-orange-500/10 text-orange-600",
-  manual: "bg-gray-500/10 text-gray-600",
-  other: "bg-gray-400/10 text-gray-500",
-};
-
 function ScoreBadge({ score }: { score: number | null }) {
   if (score === null || score === undefined) return null;
-  const tone =
-    score >= 80
-      ? "bg-success/10 text-success"
-      : score >= 50
-        ? "bg-accent/10 text-accent"
-        : "bg-error/10 text-error";
   return (
-    <span className={clsx("rounded-full px-2 py-0.5 text-[10px] font-semibold", tone)}>
+    <span className="inline-flex items-center gap-1 rounded-full bg-tertiary-fixed px-2 py-0.5 font-headline text-[10px] font-bold text-on-tertiary-fixed-variant">
+      <Sparkles className="h-2.5 w-2.5" />
       {score}
     </span>
   );
@@ -127,7 +106,6 @@ export default function LeadsKanbanPage() {
       setLoading(true);
       setError(null);
       const data = await api.get<KanbanColumn[]>("/api/v1/leads/kanban");
-      // Ensure all stages present
       const map = new Map<Stage, Lead[]>();
       data.forEach((c) => map.set(c.stage as Stage, c.leads));
       setColumns(STAGES.map((s) => ({ stage: s, leads: map.get(s) ?? [] })));
@@ -166,7 +144,6 @@ export default function LeadsKanbanPage() {
   }
 
   async function moveLead(leadId: string, toStage: Stage) {
-    // Optimistic update
     setColumns((prev) => {
       const next = prev.map((c) => ({ ...c, leads: [...c.leads] }));
       let moved: Lead | null = null;
@@ -228,7 +205,6 @@ export default function LeadsKanbanPage() {
         `/api/v1/leads/${drawerLead.id}/qualify`
       );
       setDrawerLead({ ...drawerLead, score: r.score });
-      // refresh activities & kanban
       const data = await api.get<Activity[]>(`/api/v1/leads/${drawerLead.id}/activities`);
       setActivities(data);
       fetchKanban();
@@ -243,38 +219,40 @@ export default function LeadsKanbanPage() {
     <div>
       <DashboardHeader title={t("title")} />
 
-      <div className="p-6">
-        {error && (
-          <div className="mb-4 flex items-center gap-3 rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            {error}
-          </div>
-        )}
+      <div className="p-8">
+        <div className="space-y-8">
+          <PageHeader
+            eyebrow="PIPELINE"
+            title={t("title")}
+            description={t("subtitle")}
+            actions={
+              <Button
+                onClick={() => setAddOpen(true)}
+                leadingIcon={<Plus className="h-4 w-4" />}
+              >
+                {t("form.new")}
+              </Button>
+            }
+          />
 
-        <div className="mb-5 flex items-center justify-between">
-          <p className="text-sm text-text-muted">{t("subtitle")}</p>
-          <button
-            onClick={() => setAddOpen(true)}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark"
-          >
-            <Plus className="h-4 w-4" />
-            {t("form.new")}
-          </button>
-        </div>
+          {error && (
+            <Card padding="sm" className="flex items-center gap-3 !bg-error-container">
+              <AlertCircle className="h-4 w-4 shrink-0 text-on-error-container" />
+              <span className="text-sm font-medium text-on-error-container">{error}</span>
+            </Card>
+          )}
 
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <div className="flex gap-4 pb-4" style={{ minWidth: "max-content" }}>
-              {columns.map((col) => {
-                const style = stageStyles[col.stage];
-                return (
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <div className="flex gap-4 pb-4" style={{ minWidth: "max-content" }}>
+                {columns.map((col) => (
                   <div
                     key={col.stage}
-                    className="flex w-[280px] shrink-0 flex-col rounded-xl bg-background/50 p-2"
+                    className="flex w-[300px] shrink-0 flex-col rounded-2xl bg-surface-container-low p-3"
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {
                       e.preventDefault();
@@ -283,20 +261,17 @@ export default function LeadsKanbanPage() {
                       setDragLeadId(null);
                     }}
                   >
-                    <div className="mb-3 flex items-center justify-between px-2">
-                      <div className="flex items-center gap-2">
-                        <span className={clsx("h-2.5 w-2.5 rounded-full", style.dot)} />
-                        <p className="text-sm font-semibold text-text-primary">
-                          {t(`kanban.${col.stage}`)}
-                        </p>
-                      </div>
-                      <span className={clsx("rounded-full px-2 py-0.5 text-xs font-semibold", style.badge)}>
+                    <div className="mb-4 flex items-center justify-between px-1">
+                      <span className="brand-gradient-bg inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-headline text-[10px] font-bold uppercase tracking-widest text-white shadow-soft">
+                        {t(`kanban.${col.stage}`)}
+                      </span>
+                      <span className="rounded-full bg-surface-container-lowest px-2 py-0.5 font-headline text-xs font-bold text-on-surface-variant">
                         {col.leads.length}
                       </span>
                     </div>
-                    <div className="flex flex-col gap-2 min-h-[100px]">
+                    <div className="flex min-h-[100px] flex-col gap-3">
                       {col.leads.length === 0 ? (
-                        <div className="rounded-lg border border-dashed border-border/60 px-3 py-8 text-center text-xs text-text-muted">
+                        <div className="rounded-xl bg-surface-container-lowest/50 px-3 py-10 text-center text-xs font-medium text-on-surface-variant">
                           —
                         </div>
                       ) : (
@@ -312,43 +287,38 @@ export default function LeadsKanbanPage() {
                             onDragEnd={() => setDragLeadId(null)}
                             onClick={() => openDrawer(lead)}
                             className={clsx(
-                              "group cursor-grab rounded-lg border border-border bg-surface p-3 shadow-sm transition-all hover:shadow-md active:cursor-grabbing",
+                              "group cursor-grab rounded-2xl bg-surface-container-lowest p-4 shadow-soft transition-all hover:-translate-y-0.5 hover:bg-surface-bright active:cursor-grabbing",
                               dragLeadId === lead.id && "opacity-50"
                             )}
                           >
                             <div className="flex items-start justify-between gap-2">
-                              <p className="text-sm font-medium text-text-primary line-clamp-1">
+                              <p className="font-headline line-clamp-1 text-sm font-bold text-on-surface">
                                 {lead.name}
                               </p>
                               <ScoreBadge score={lead.score} />
                             </div>
-                            <div className="mt-1.5 space-y-0.5">
+                            <div className="mt-2 space-y-1">
                               {lead.phone && (
-                                <div className="flex items-center gap-1 text-xs text-text-muted">
+                                <div className="flex items-center gap-1.5 text-xs text-on-surface-variant">
                                   <Phone className="h-3 w-3" />
                                   <span className="truncate">{lead.phone}</span>
                                 </div>
                               )}
                               {lead.email && (
-                                <div className="flex items-center gap-1 text-xs text-text-muted">
+                                <div className="flex items-center gap-1.5 text-xs text-on-surface-variant">
                                   <Mail className="h-3 w-3" />
                                   <span className="truncate">{lead.email}</span>
                                 </div>
                               )}
                             </div>
-                            <div className="mt-2 flex items-center justify-between">
-                              <span
-                                className={clsx(
-                                  "rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize",
-                                  sourceStyles[lead.source] ?? sourceStyles.other
-                                )}
-                              >
+                            <div className="mt-3 flex items-center justify-between">
+                              <span className="rounded-full bg-surface-container-low px-2 py-0.5 font-headline text-[10px] font-bold uppercase text-on-surface-variant">
                                 {t.has(`source.${lead.source}`) ? t(`source.${lead.source}`) : lead.source}
                               </span>
                               <Link
                                 href={`/${locale}/leads/${lead.id}`}
                                 onClick={(e) => e.stopPropagation()}
-                                className="text-[11px] text-primary opacity-0 transition-opacity group-hover:opacity-100 hover:underline"
+                                className="font-headline text-[11px] font-bold text-primary opacity-0 transition-opacity group-hover:opacity-100 hover:underline"
                               >
                                 {t("card.viewDetails")}
                               </Link>
@@ -358,64 +328,49 @@ export default function LeadsKanbanPage() {
                       )}
                     </div>
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Add Modal */}
       <Modal open={addOpen} onOpenChange={setAddOpen} title={t("form.new")}>
         <form onSubmit={handleCreate} className="space-y-4">
           {formError && (
-            <div className="flex items-center gap-2 rounded-lg bg-error/10 px-3 py-2 text-sm text-error">
+            <div className="flex items-center gap-2 rounded-xl bg-error-container px-3 py-2 text-sm text-on-error-container">
               <AlertCircle className="h-4 w-4 shrink-0" />
               {formError}
             </div>
           )}
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-text-primary">
-              {t("form.name")}
-            </label>
-            <input
-              required
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+          <Input
+            label={t("form.name")}
+            required
+            value={form.name}
+            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label={t("form.phone")}
+              value={form.phone}
+              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+            />
+            <Input
+              label={t("form.email")}
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-text-primary">
-                {t("form.phone")}
-              </label>
-              <input
-                value={form.phone}
-                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-text-primary">
-                {t("form.email")}
-              </label>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-text-primary">
+          <label className="block space-y-1.5">
+            <span className="font-headline text-xs font-semibold uppercase tracking-widest text-on-surface-variant">
               {t("form.source")}
-            </label>
+            </span>
             <select
               value={form.source}
               onChange={(e) => setForm((f) => ({ ...f, source: e.target.value as Source }))}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+              className="w-full rounded-xl bg-surface-container-low px-4 py-2.5 text-sm text-on-surface outline-none transition-all focus:ring-2 focus:ring-primary/30"
             >
               <option value="manual">{t("source.manual")}</option>
               <option value="whatsapp">{t("source.whatsapp")}</option>
@@ -425,34 +380,25 @@ export default function LeadsKanbanPage() {
               <option value="ads">Ads</option>
               <option value="other">{t("source.other")}</option>
             </select>
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-text-primary">
-              {t("form.notes")}
-            </label>
-            <textarea
-              rows={3}
-              value={form.notes}
-              onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
-            />
-          </div>
+          </label>
+          <Textarea
+            label={t("form.notes")}
+            rows={3}
+            value={form.notes}
+            onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+          />
           <div className="flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => setAddOpen(false)}
-              className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-hover"
-            >
+            <Button type="button" variant="secondary" onClick={() => setAddOpen(false)}>
               {tPage("cancel")}
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               disabled={submitting}
-              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark disabled:opacity-60"
+              leadingIcon={submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : undefined}
             >
-              {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
               {t("form.submit")}
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>
@@ -464,62 +410,59 @@ export default function LeadsKanbanPage() {
             className="flex-1 bg-black/30 backdrop-blur-sm"
             onClick={() => setDrawerLead(null)}
           />
-          <div className="w-full max-w-md overflow-y-auto bg-surface shadow-2xl">
-            <div className="sticky top-0 flex items-center justify-between border-b border-border bg-surface px-5 py-4">
+          <div className="w-full max-w-md overflow-y-auto bg-surface-container-lowest shadow-2xl">
+            <div className="sticky top-0 flex items-center justify-between bg-surface-container-lowest px-6 py-5">
               <div>
-                <p className="text-base font-semibold text-text-primary">{drawerLead.name}</p>
-                <p className="text-xs text-text-muted capitalize">
-                  {t(`kanban.${drawerLead.status}`)}
+                <InsightChip>{t(`kanban.${drawerLead.status}`)}</InsightChip>
+                <p className="font-headline mt-2 text-xl font-bold tracking-tight text-on-surface">
+                  {drawerLead.name}
                 </p>
               </div>
               <button
                 onClick={() => setDrawerLead(null)}
-                className="rounded-lg p-1.5 text-text-muted hover:bg-surface-hover"
+                className="rounded-xl p-2 text-on-surface-variant transition-colors hover:bg-surface-container-low"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="space-y-5 p-5">
-              <div className="space-y-2 rounded-xl border border-border p-4">
+            <div className="space-y-5 p-6">
+              <Card variant="flat" padding="md" className="space-y-2">
                 {drawerLead.phone && (
                   <div className="flex items-center gap-2 text-sm">
-                    <Phone className="h-4 w-4 text-text-muted" />
+                    <Phone className="h-4 w-4 text-on-surface-variant" />
                     <span>{drawerLead.phone}</span>
                   </div>
                 )}
                 {drawerLead.email && (
                   <div className="flex items-center gap-2 text-sm">
-                    <Mail className="h-4 w-4 text-text-muted" />
+                    <Mail className="h-4 w-4 text-on-surface-variant" />
                     <span>{drawerLead.email}</span>
                   </div>
                 )}
-                <div className="flex items-center justify-between pt-1">
-                  <span
-                    className={clsx(
-                      "rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize",
-                      sourceStyles[drawerLead.source] ?? sourceStyles.other
-                    )}
-                  >
+                <div className="flex items-center justify-between pt-2">
+                  <span className="rounded-full bg-surface-container-lowest px-2 py-0.5 font-headline text-[10px] font-bold uppercase text-on-surface-variant">
                     {t.has(`source.${drawerLead.source}`) ? t(`source.${drawerLead.source}`) : drawerLead.source}
                   </span>
                   {drawerLead.score !== null && <ScoreBadge score={drawerLead.score} />}
                 </div>
-              </div>
+              </Card>
 
               <div className="flex gap-2">
-                <button
+                <Button
                   onClick={qualifyLead}
                   disabled={qualifying}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-white hover:bg-primary-dark disabled:opacity-60"
+                  className="flex-1"
+                  leadingIcon={
+                    qualifying ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4" />
+                    )
+                  }
                 >
-                  {qualifying ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Sparkles className="h-4 w-4" />
-                  )}
                   {qualifying ? t("actions.qualifying") : t("actions.qualify")}
-                </button>
+                </Button>
                 <select
                   value={drawerLead.status}
                   onChange={(e) => {
@@ -527,7 +470,7 @@ export default function LeadsKanbanPage() {
                     moveLead(drawerLead.id, s);
                     setDrawerLead({ ...drawerLead, status: s });
                   }}
-                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                  className="rounded-xl bg-surface-container-low px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
                 >
                   {STAGES.map((s) => (
                     <option key={s} value={s}>
@@ -538,24 +481,23 @@ export default function LeadsKanbanPage() {
               </div>
 
               <div>
-                <p className="mb-2 text-sm font-semibold text-text-primary">
+                <h3 className="mb-3 font-headline text-base font-bold tracking-tight text-on-surface">
                   {t("activities.title")}
-                </p>
-                <div className="mb-3 space-y-2">
-                  <textarea
+                </h3>
+                <div className="mb-4 space-y-2">
+                  <Textarea
                     rows={2}
                     value={noteText}
                     onChange={(e) => setNoteText(e.target.value)}
                     placeholder={t("activities.addNote")}
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
                   />
-                  <button
+                  <Button
                     onClick={addNote}
                     disabled={!noteText.trim()}
-                    className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-dark disabled:opacity-60"
+                    size="sm"
                   >
                     {t("activities.addNote")}
-                  </button>
+                  </Button>
                 </div>
 
                 {loadingActivities ? (
@@ -563,26 +505,26 @@ export default function LeadsKanbanPage() {
                     <Loader2 className="h-5 w-5 animate-spin text-primary" />
                   </div>
                 ) : activities.length === 0 ? (
-                  <p className="py-4 text-center text-xs text-text-muted">
+                  <p className="py-4 text-center text-xs text-on-surface-variant">
                     {t("activities.empty")}
                   </p>
                 ) : (
-                  <ul className="space-y-2">
+                  <ul className="space-y-3">
                     {activities.map((a) => (
                       <li
                         key={a.id}
-                        className="rounded-lg border border-border bg-background/40 p-3"
+                        className="rounded-xl bg-surface-container-low p-4"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-semibold uppercase tracking-wide text-primary">
+                          <span className="font-headline text-[10px] font-bold uppercase tracking-widest text-primary">
                             {t.has(`activity.${a.activity_type}`) ? t(`activity.${a.activity_type}`) : a.activity_type}
                           </span>
-                          <span className="text-[10px] text-text-muted">
+                          <span className="text-[10px] text-on-surface-variant">
                             {new Date(a.created_at).toLocaleString(locale === "ar" ? "ar" : "en")}
                           </span>
                         </div>
                         {a.description && (
-                          <p className="mt-1 whitespace-pre-wrap text-xs text-text-secondary">
+                          <p className="mt-1.5 whitespace-pre-wrap text-xs leading-relaxed text-on-surface-variant">
                             {a.description}
                           </p>
                         )}

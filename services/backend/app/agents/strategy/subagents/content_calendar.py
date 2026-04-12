@@ -3,7 +3,7 @@ from __future__ import annotations
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from app.agents.base import BaseSubAgent
-from app.agents.strategy.subagents._helpers import parse_json_response
+from app.agents.strategy.subagents._helpers import parse_json_response, lang_directive
 
 
 class ContentCalendar(BaseSubAgent):
@@ -12,7 +12,8 @@ class ContentCalendar(BaseSubAgent):
     system_prompt = (
         "Create a content calendar for the requested period. "
         "Return JSON array of items: {day, channel, format, topic, hook, cta, hashtags[]}. "
-        "Distribute across recommended channels; balance education, entertainment, promotion."
+        "Distribute across recommended channels; balance education, entertainment, promotion. "
+        "Match the user's requested language exactly."
     )
 
     async def execute(self, state):
@@ -21,6 +22,7 @@ class ContentCalendar(BaseSubAgent):
         period = state.get("period_days", 30)
         lang = state.get("language", "ar")
         user = (
+            lang_directive(lang) + "\n\n"
             f"Language: {lang}\nPeriod: {period} days\n"
             f"Business: {bp}\nChannels: {channels}\n\n"
             "Return calendar JSON array (one item per scheduled post)."

@@ -28,6 +28,7 @@ from app.modules.plans.service import (
     generate_plan,
     regenerate_plan_section,
 )
+from app.modules.plans.validators import validate_business_profile
 from pydantic import BaseModel
 
 
@@ -36,7 +37,7 @@ class _RegenerateSectionBody(BaseModel):
     language: str = "ar"
 
 
-_NODE_NAMES = {"market", "audience", "channels", "calendar", "kpis"}
+_NODE_NAMES = {"market", "audience", "channels", "calendar", "kpis", "ads"}
 
 
 def _sse(payload: dict[str, Any]) -> str:
@@ -65,6 +66,19 @@ def _summarize(obj: Any) -> Any:
 router = APIRouter(prefix="/plans", tags=["plans"])
 
 
+@router.get("/readiness")
+async def plan_readiness(user: CurrentUser, db: DbSession):
+    """Check whether the tenant's business profile is complete enough to generate a plan."""
+    if not user.tenant_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tenant")
+    profile = await _build_business_profile(db, user.tenant_id, None)
+    result = validate_business_profile(profile)
+    return {
+        **result,
+        "onboarding_url": "/onboarding/business",
+    }
+
+
 @router.get("/", response_model=list[PlanListItem])
 async def list_plans(user: CurrentUser, db: DbSession, skip: int = 0, limit: int = 50):
     result = await db.execute(
@@ -86,6 +100,19 @@ async def list_plans(user: CurrentUser, db: DbSession, skip: int = 0, limit: int
 async def generate(data: PlanGenerateRequest, user: CurrentUser, db: DbSession):
     if not user.tenant_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tenant")
+    # Pre-flight: block generation if required business-profile fields are missing.
+    profile_for_check = await _build_business_profile(db, user.tenant_id, data.business_profile)
+    readiness = validate_business_profile(profile_for_check)
+    if not readiness["ok"]:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "detail": "business_profile_incomplete",
+                "missing": readiness["missing"],
+                "warnings": readiness["warnings"],
+                "onboarding_url": "/onboarding/business",
+            },
+        )
     try:
         plan = await generate_plan(
             db,
@@ -127,6 +154,18 @@ async def generate_stream(
 
     # Prepare state before the streaming generator starts so we can fail fast.
     profile = await _build_business_profile(db, tenant_id, data.business_profile)
+
+    readiness = validate_business_profile(profile)
+    if not readiness["ok"]:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "detail": "business_profile_incomplete",
+                "missing": readiness["missing"],
+                "warnings": readiness["warnings"],
+                "onboarding_url": "/onboarding/business",
+            },
+        )
 
     run = AgentRun(
         tenant_id=tenant_id,

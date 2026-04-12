@@ -15,3 +15,4 @@ class StrategyState(TypedDict, total=False):
     calendar: list[dict[str, Any]]
     kpis: list[dict[str, Any]]
     goals: list[str]
+    ad_strategy: dict[str, Any]
