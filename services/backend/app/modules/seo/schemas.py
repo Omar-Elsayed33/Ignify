@@ -9,15 +9,30 @@ class SEOKeywordCreate(BaseModel):
     keyword: str
     search_volume: Optional[int] = None
     difficulty: Optional[int] = None
+    cpc: Optional[float] = None
+    intent: Optional[str] = None
     current_rank: Optional[int] = None
     target_url: Optional[str] = None
+    location: Optional[str] = None
+    language: Optional[str] = None
+
+
+class SEOKeywordBulkCreate(BaseModel):
+    keywords: list[str]
+    target_url: Optional[str] = None
+    location: Optional[str] = None
+    language: Optional[str] = None
 
 
 class SEOKeywordUpdate(BaseModel):
     search_volume: Optional[int] = None
     difficulty: Optional[int] = None
+    cpc: Optional[float] = None
+    intent: Optional[str] = None
     current_rank: Optional[int] = None
     target_url: Optional[str] = None
+    location: Optional[str] = None
+    language: Optional[str] = None
 
 
 class SEOKeywordResponse(BaseModel):
@@ -26,8 +41,12 @@ class SEOKeywordResponse(BaseModel):
     keyword: str
     search_volume: Optional[int] = None
     difficulty: Optional[int] = None
+    cpc: Optional[float] = None
+    intent: Optional[str] = None
     current_rank: Optional[int] = None
     target_url: Optional[str] = None
+    location: Optional[str] = None
+    language: Optional[str] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -38,9 +57,23 @@ class SEORankingResponse(BaseModel):
     keyword_id: uuid.UUID
     rank: int
     url: Optional[str] = None
+    title: Optional[str] = None
+    serp_features: Optional[list[Any]] = None
     date: date
 
     model_config = {"from_attributes": True}
+
+
+class SEOAuditUrlRequest(BaseModel):
+    url: str
+    target_keywords: Optional[list[str]] = None
+    language: Optional[str] = "ar"
+
+
+class SEOSuggestRequest(BaseModel):
+    topic: str
+    keywords: Optional[list[str]] = None
+    language: Optional[str] = "ar"
 
 
 class SEOAuditCreate(BaseModel):

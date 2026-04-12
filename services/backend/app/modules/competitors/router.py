@@ -86,6 +86,60 @@ async def delete_competitor(competitor_id: uuid.UUID, user: CurrentUser, db: DbS
 # ── Snapshots / Analysis ──
 
 
+@router.post("/{competitor_id}/snapshot", response_model=CompetitorSnapshotResponse, status_code=status.HTTP_201_CREATED)
+async def take_snapshot(competitor_id: uuid.UUID, user: CurrentUser, db: DbSession):
+    """Scrape all configured public URLs for this competitor and store a snapshot."""
+    from app.core.competitor_scraper import scrape_public_page
+
+    comp_result = await db.execute(
+        select(Competitor).where(Competitor.id == competitor_id, Competitor.tenant_id == user.tenant_id)
+    )
+    competitor = comp_result.scalar_one_or_none()
+    if not competitor:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Competitor not found")
+
+    urls = [
+        u for u in [
+            competitor.website,
+            competitor.instagram_url,
+            competitor.facebook_url,
+            competitor.twitter_url,
+            competitor.linkedin_url,
+            competitor.tiktok_url,
+            competitor.youtube_url,
+        ] if u
+    ]
+
+    scraped = []
+    for u in urls[:10]:
+        scraped.append(await scrape_public_page(u))
+
+    snapshot = CompetitorSnapshot(
+        competitor_id=competitor.id,
+        data={"scraped": scraped, "url_count": len(scraped)},
+        snapshot_type="public_scrape",
+    )
+    db.add(snapshot)
+    await db.flush()
+    return snapshot
+
+
+@router.get("/{competitor_id}/history", response_model=list[CompetitorSnapshotResponse])
+async def get_history(competitor_id: uuid.UUID, user: CurrentUser, db: DbSession):
+    """Alias of /snapshots for historical API clarity."""
+    comp_result = await db.execute(
+        select(Competitor).where(Competitor.id == competitor_id, Competitor.tenant_id == user.tenant_id)
+    )
+    if not comp_result.scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Competitor not found")
+    result = await db.execute(
+        select(CompetitorSnapshot)
+        .where(CompetitorSnapshot.competitor_id == competitor_id)
+        .order_by(CompetitorSnapshot.created_at.desc())
+    )
+    return result.scalars().all()
+
+
 @router.get("/{competitor_id}/snapshots", response_model=list[CompetitorSnapshotResponse])
 async def list_snapshots(competitor_id: uuid.UUID, user: CurrentUser, db: DbSession):
     comp_result = await db.execute(
@@ -99,6 +153,71 @@ async def list_snapshots(competitor_id: uuid.UUID, user: CurrentUser, db: DbSess
         .order_by(CompetitorSnapshot.created_at.desc())
     )
     return result.scalars().all()
+
+
+@router.post("/{competitor_id}/analyze/agent", response_model=CompetitorSnapshotResponse, status_code=status.HTTP_201_CREATED)
+async def analyze_competitor_agent(competitor_id: uuid.UUID, user: CurrentUser, db: DbSession):
+    """Run the CompetitorAgent: scrape public pages → analyse content → find gaps."""
+    from app.agents.registry import get_agent
+    from app.db.models import Tenant
+
+    comp_result = await db.execute(
+        select(Competitor).where(Competitor.id == competitor_id, Competitor.tenant_id == user.tenant_id)
+    )
+    competitor = comp_result.scalar_one_or_none()
+    if not competitor:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Competitor not found")
+
+    urls = [
+        u for u in [
+            competitor.website,
+            competitor.instagram_url,
+            competitor.facebook_url,
+            competitor.twitter_url,
+            competitor.linkedin_url,
+            competitor.tiktok_url,
+            competitor.youtube_url,
+        ] if u
+    ]
+
+    # Tenant brand context for the gap finder
+    tenant_result = await db.execute(select(Tenant).where(Tenant.id == user.tenant_id))
+    tenant = tenant_result.scalar_one_or_none()
+    our_brand = (tenant.config or {}) if tenant else {}
+
+    try:
+        agent = get_agent("competitor", tenant_id=str(user.tenant_id))
+        out = await agent.run(
+            {
+                "tenant_id": str(user.tenant_id),
+                "competitor_id": str(competitor_id),
+                "name": competitor.name,
+                "urls": urls,
+                "our_brand": our_brand,
+                "language": (our_brand.get("language") if isinstance(our_brand, dict) else None) or "ar",
+            },
+            thread_id=f"competitor-{competitor_id}",
+        )
+    except Exception as e:  # noqa: BLE001
+        out = {"error": str(e)}
+
+    snapshot_data = {
+        "scraped": out.get("scraped") or [],
+        "analysis": out.get("analysis") or {},
+        "gaps": out.get("gaps") or [],
+        "status": "completed" if not out.get("error") else "failed",
+    }
+    if out.get("error"):
+        snapshot_data["error"] = out["error"]
+
+    snapshot = CompetitorSnapshot(
+        competitor_id=competitor_id,
+        data=snapshot_data,
+        snapshot_type="agent_analysis",
+    )
+    db.add(snapshot)
+    await db.flush()
+    return snapshot
 
 
 @router.post("/{competitor_id}/analyze", response_model=CompetitorSnapshotResponse, status_code=status.HTTP_201_CREATED)

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import DataTable, { Column } from "@/components/DataTable";
+import { Link } from "@/i18n/navigation";
 import { clsx } from "clsx";
 import { api } from "@/lib/api";
 
@@ -57,7 +58,16 @@ export default function TenantsPage() {
   };
 
   const columns: Column<TenantRow>[] = [
-    { key: "name", label: t("tenantName"), sortable: true },
+    {
+      key: "name",
+      label: t("tenantName"),
+      sortable: true,
+      render: (item) => (
+        <Link href={`/admin/tenants/${item.id}`} className="text-primary hover:underline">
+          {item.name}
+        </Link>
+      ),
+    },
     { key: "slug", label: "Slug", sortable: true },
     {
       key: "created_at",

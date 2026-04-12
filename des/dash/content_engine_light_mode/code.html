@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ignify AI | Content Engine</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Manrope:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error": "#ba1a1a",
+                        "background": "#fcf8ff",
+                        "surface-container-highest": "#e4e1ee",
+                        "primary-container": "#ff6b35",
+                        "surface-container": "#efecfa",
+                        "inverse-primary": "#ffb59d",
+                        "on-secondary-fixed-variant": "#910035",
+                        "on-surface": "#1b1b24",
+                        "primary-fixed": "#ffdbd0",
+                        "on-secondary-container": "#fffbff",
+                        "on-secondary": "#ffffff",
+                        "outline": "#8d7168",
+                        "on-tertiary-fixed": "#2d0050",
+                        "on-primary-fixed": "#390c00",
+                        "surface-dim": "#dbd8e6",
+                        "surface-container-high": "#e9e6f4",
+                        "inverse-on-surface": "#f2effd",
+                        "secondary-fixed-dim": "#ffb2bc",
+                        "tertiary-fixed": "#f1dbff",
+                        "tertiary-container": "#bf79ff",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-surface": "#302f3a",
+                        "secondary-container": "#df215c",
+                        "on-tertiary-fixed-variant": "#680eac",
+                        "surface-tint": "#ab3500",
+                        "secondary-fixed": "#ffd9dd",
+                        "on-tertiary-container": "#4b0081",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#8234c6",
+                        "on-tertiary": "#ffffff",
+                        "surface": "#fcf8ff",
+                        "error-container": "#ffdad6",
+                        "surface-bright": "#fcf8ff",
+                        "outline-variant": "#e1bfb5",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#832600",
+                        "on-surface-variant": "#594139",
+                        "tertiary-fixed-dim": "#deb7ff",
+                        "secondary": "#b80046",
+                        "primary": "#ab3500",
+                        "on-background": "#1b1b24",
+                        "on-primary-container": "#5f1900",
+                        "surface-container-low": "#f5f2ff",
+                        "surface-variant": "#e4e1ee",
+                        "primary-fixed-dim": "#ffb59d",
+                        "on-secondary-fixed": "#400013",
+                        "on-error": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Manrope"],
+                        "label": ["Space Grotesk"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .font-headline { font-family: 'Space Grotesk', sans-serif; }
+        .gradient-ember { background: linear-gradient(135deg, #FF6B35 0%, #FF3D71 50%, #7B2CBF 100%); }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface selection:bg-primary-fixed">
+<aside class="h-screen w-64 fixed left-0 top-0 flex flex-col bg-surface-container-low z-50">
+<div class="flex flex-col p-6 gap-2 h-full">
+<div class="mb-8">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 gradient-ember rounded-xl flex items-center justify-center text-white">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<div>
+<h1 class="text-xl font-bold text-on-surface font-headline tracking-tighter">Ignify AI</h1>
+<p class="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-headline font-bold">Marketing Workspace</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded-xl shadow-sm flex items-center justify-between cursor-pointer border border-outline-variant/10">
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 rounded-md bg-tertiary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-xs text-on-tertiary-fixed-variant">corporate_fare</span>
+</div>
+<span class="text-sm font-semibold font-headline">Acme Corp</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-sm">unfold_more</span>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface/70 hover:bg-surface-container-lowest/50 transition-all rounded-lg font-headline text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">grid_view</span>
+                    Workspace
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 bg-surface-container-lowest text-primary rounded-lg shadow-sm font-headline text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">calendar_month</span>
+                    Campaigns
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface/70 hover:bg-surface-container-lowest/50 transition-all rounded-lg font-headline text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">leaderboard</span>
+                    Analytics
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface/70 hover:bg-surface-container-lowest/50 transition-all rounded-lg font-headline text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">smart_toy</span>
+                    Automation
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface/70 hover:bg-surface-container-lowest/50 transition-all rounded-lg font-headline text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">group</span>
+                    Audience
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface/70 hover:bg-surface-container-lowest/50 transition-all rounded-lg font-headline text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">settings</span>
+                    Settings
+                </a>
+</nav>
+<div class="mt-auto pt-6 border-t border-outline-variant/10 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface/70 hover:bg-surface-container-lowest/50 transition-all rounded-lg font-headline text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+                    Support
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface/70 hover:bg-surface-container-lowest/50 transition-all rounded-lg font-headline text-sm font-medium uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined">manage_accounts</span>
+                    Account
+                </a>
+</div>
+</div>
+</aside>
+<main class="ml-64 flex-1 min-h-screen">
+<header class="sticky top-0 z-40 bg-surface/70 backdrop-blur-xl h-16 px-8 flex justify-between items-center w-full">
+<div class="flex items-center gap-6">
+<h2 class="text-2xl font-bold tracking-tighter text-on-surface font-headline">Editorial Calendar</h2>
+<div class="flex items-center bg-surface-container px-3 py-1.5 rounded-full border border-outline-variant/10">
+<span class="material-symbols-outlined text-sm text-on-surface-variant mr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm placeholder:text-on-surface-variant/50 w-48" placeholder="Search content..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex gap-2 mr-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined">help</span>
+</button>
+</div>
+<button class="px-6 py-2.5 rounded-full gradient-ember text-white font-bold text-sm font-headline tracking-tight shadow-lg shadow-primary/20 flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">auto_awesome</span>
+                    AI Copilot
+                </button>
+<img alt="User profile" class="w-10 h-10 rounded-full border-2 border-white shadow-sm" data-alt="portrait of a confident young creative professional man in a clean white studio setting with soft natural light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBN3ap6wMR61BFY9zP_4LT27Ox1Mr-nHvQhMGA9mj7FSveIZgILcdl_QJeXsd88h6WQ5xyMFrDJDhD47NuUxgxXU8dpkQM3xFdTa7hwCPZMi2sZpcxZNx3dQLwcSTPrF8n33Kwid8Oa2xzS-FEOJg5j2jbG90-F4-cYXdwY1B-c2dNWf9uXMKqZB599KlqQ0zWWzGBlT16yB4RuUudRSpxKt32les0LULFu0qHrykOhb-NyNM8UeB-AxQubThcp1-YXEbdL2ZVIJdM"/>
+</div>
+</header>
+<section class="p-8">
+<div class="mb-8 flex justify-between items-end">
+<div>
+<p class="text-on-surface-variant font-medium mb-1">October 2023</p>
+<div class="flex items-center gap-4">
+<h3 class="text-4xl font-bold font-headline tracking-tight text-on-surface">Content Stream</h3>
+<div class="flex bg-surface-container p-1 rounded-xl">
+<button class="px-4 py-1.5 rounded-lg bg-surface-container-lowest shadow-sm text-sm font-bold text-on-surface">Month</button>
+<button class="px-4 py-1.5 rounded-lg text-sm font-medium text-on-surface-variant">Week</button>
+</div>
+</div>
+</div>
+<div class="flex gap-3">
+<span class="px-4 py-2 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant text-xs font-bold font-headline uppercase tracking-widest flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+                        Active Campaigns: 12
+                    </span>
+</div>
+</div>
+<div class="grid grid-cols-7 gap-6">
+<div class="col-span-1 text-center py-2 text-xs font-bold font-headline uppercase tracking-[0.2em] text-on-surface-variant/40">Mon</div>
+<div class="col-span-1 text-center py-2 text-xs font-bold font-headline uppercase tracking-[0.2em] text-on-surface-variant/40">Tue</div>
+<div class="col-span-1 text-center py-2 text-xs font-bold font-headline uppercase tracking-[0.2em] text-on-surface-variant/40">Wed</div>
+<div class="col-span-1 text-center py-2 text-xs font-bold font-headline uppercase tracking-[0.2em] text-on-surface-variant/40 text-primary">Thu</div>
+<div class="col-span-1 text-center py-2 text-xs font-bold font-headline uppercase tracking-[0.2em] text-on-surface-variant/40">Fri</div>
+<div class="col-span-1 text-center py-2 text-xs font-bold font-headline uppercase tracking-[0.2em] text-on-surface-variant/40">Sat</div>
+<div class="col-span-1 text-center py-2 text-xs font-bold font-headline uppercase tracking-[0.2em] text-on-surface-variant/40">Sun</div>
+<div class="col-span-7 grid grid-cols-7 gap-6 auto-rows-[220px]">
+<div class="p-4 rounded-2xl bg-surface-container-low/30 border border-outline-variant/5 flex flex-col">
+<span class="text-2xl font-headline font-bold text-on-surface/20">23</span>
+</div>
+<div class="p-4 rounded-2xl bg-surface-container-low/30 border border-outline-variant/5 flex flex-col">
+<span class="text-2xl font-headline font-bold text-on-surface/20">24</span>
+</div>
+<div class="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/10 flex flex-col gap-3 relative">
+<span class="text-2xl font-headline font-bold text-on-surface/30">25</span>
+<div class="bg-surface-container-lowest p-3 rounded-xl shadow-sm border border-outline-variant/10 hover:-translate-y-1 transition-transform cursor-pointer">
+<div class="flex justify-between mb-2">
+<span class="text-[10px] font-bold text-tertiary uppercase tracking-tighter">LinkedIn</span>
+<span class="material-symbols-outlined text-sm text-on-surface-variant">more_horiz</span>
+</div>
+<p class="text-xs font-semibold leading-tight mb-2">Q4 Growth Strategy Thread</p>
+<div class="flex -space-x-2">
+<div class="w-5 h-5 rounded-full bg-primary/20 border border-white"></div>
+<div class="w-5 h-5 rounded-full bg-tertiary/20 border border-white"></div>
+</div>
+</div>
+</div>
+<div class="p-4 rounded-2xl bg-surface-container-high ring-2 ring-primary/20 border border-primary/10 flex flex-col gap-3 relative">
+<div class="flex justify-between items-start">
+<span class="text-3xl font-headline font-extrabold text-primary">26</span>
+<span class="px-2 py-0.5 rounded bg-primary-fixed text-[10px] font-bold text-on-primary-fixed uppercase tracking-wider">Today</span>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded-xl shadow-md border border-outline-variant/20 hover:-translate-y-1 transition-transform cursor-pointer">
+<div class="flex justify-between mb-2">
+<span class="text-[10px] font-bold text-secondary uppercase tracking-tighter">Instagram</span>
+<span class="material-symbols-outlined text-sm text-on-surface-variant" style="font-variation-settings: 'FILL' 1;">push_pin</span>
+</div>
+<p class="text-xs font-bold leading-tight mb-3">Product Reveal: The Ember Core</p>
+<img class="w-full h-16 object-cover rounded-lg mb-2" data-alt="vibrant abstract 3d composition with flowing orange and violet waves and professional studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKS24w6F961vnjOk9CL1YI-_O91PJm4GjsYoi4OJnrbo7-ZoaUYwn6XWo1ztL_REbEZEimxxoZefdeEzXYsOKbmYbRWuNOt_eie3pVjBMvqkubkvXbnat4eGOP7DZzQmbRn78Wtle0Xw5Et70SpRF8gZqp-MQcR3T2IEFiA2NRy9Kv39UrxFPbqWOODVRMAcChAhbG0pEPPcRBAep_fgGUitcoRlU0TPdrXb6apsJbW9sisBIOF-woxg7B1PH5cObwStCvPWbyOmU"/>
+</div>
+</div>
+<div class="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/10 flex flex-col gap-3 relative">
+<span class="text-2xl font-headline font-bold text-on-surface/30">27</span>
+<div class="bg-surface-container-lowest p-3 rounded-xl shadow-sm border border-outline-variant/10 hover:-translate-y-1 transition-transform cursor-pointer">
+<div class="flex justify-between mb-2">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">Blog</span>
+</div>
+<p class="text-xs font-semibold leading-tight">10 Ways AI is Changing Copywriting</p>
+</div>
+</div>
+<div class="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/10 flex flex-col">
+<span class="text-2xl font-headline font-bold text-on-surface/30">28</span>
+</div>
+<div class="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/10 flex flex-col">
+<span class="text-2xl font-headline font-bold text-on-surface/30">29</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<div class="fixed top-0 right-0 h-full w-[400px] bg-surface-container-lowest shadow-2xl z-50 border-l border-outline-variant/10 flex flex-col">
+<div class="p-8 border-b border-outline-variant/10 flex items-center justify-between">
+<div>
+<h3 class="text-xl font-bold font-headline tracking-tight text-on-surface">AI Content Generator</h3>
+<p class="text-xs text-on-surface-variant">Drafting for Oct 26th</p>
+</div>
+<button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">close</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto p-8 no-scrollbar flex flex-col gap-8">
+<div>
+<label class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-3 font-headline">Target Channel</label>
+<div class="grid grid-cols-3 gap-2">
+<button class="flex flex-col items-center justify-center py-4 rounded-xl bg-surface-container-low border-2 border-primary/40 text-primary">
+<span class="material-symbols-outlined mb-1">alternate_email</span>
+<span class="text-[10px] font-bold uppercase font-headline">Threads</span>
+</button>
+<button class="flex flex-col items-center justify-center py-4 rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined mb-1">photo_camera</span>
+<span class="text-[10px] font-bold uppercase font-headline">Instagram</span>
+</button>
+<button class="flex flex-col items-center justify-center py-4 rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined mb-1">work</span>
+<span class="text-[10px] font-bold uppercase font-headline">LinkedIn</span>
+</button>
+</div>
+</div>
+<div>
+<label class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-3 font-headline">Content Prompt</label>
+<textarea class="w-full bg-surface-container-low border-none rounded-2xl p-4 text-sm focus:ring-2 focus:ring-primary/20 placeholder:text-on-surface-variant/40 resize-none" placeholder="Describe the post you want to create..." rows="4"></textarea>
+</div>
+<div>
+<label class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-3 font-headline">Tone of Voice</label>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1.5 rounded-full bg-surface-container-high text-xs font-semibold text-on-surface border border-outline-variant/10 cursor-pointer hover:bg-surface-container-highest transition-colors">Confident</span>
+<span class="px-3 py-1.5 rounded-full bg-primary-fixed text-xs font-bold text-on-primary-fixed-variant ring-1 ring-primary/20 cursor-pointer">Professional</span>
+<span class="px-3 py-1.5 rounded-full bg-surface-container-high text-xs font-semibold text-on-surface border border-outline-variant/10 cursor-pointer hover:bg-surface-container-highest transition-colors">Witty</span>
+<span class="px-3 py-1.5 rounded-full bg-surface-container-high text-xs font-semibold text-on-surface border border-outline-variant/10 cursor-pointer hover:bg-surface-container-highest transition-colors">Educational</span>
+</div>
+</div>
+<div class="p-6 rounded-2xl bg-tertiary-fixed/30 border border-tertiary/10 relative overflow-hidden">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-tertiary/10 blur-2xl rounded-full"></div>
+<div class="flex items-center gap-3 mb-4">
+<div class="w-8 h-8 rounded-lg bg-tertiary text-white flex items-center justify-center">
+<span class="material-symbols-outlined text-lg">psychology</span>
+</div>
+<span class="text-sm font-bold font-headline text-on-tertiary-fixed-variant">AI Suggestion</span>
+</div>
+<p class="text-xs text-on-surface leading-relaxed font-medium italic">
+                    "Since you're targeting 'Threads', I recommend a provocative opening question about AI productivity to drive higher engagement ratios."
+                </p>
+</div>
+</div>
+<div class="p-8 bg-surface-container-low/50 border-t border-outline-variant/10">
+<button class="w-full py-4 rounded-full gradient-ember text-white font-bold font-headline tracking-wide shadow-xl shadow-primary/30 flex items-center justify-center gap-3 active:opacity-90 transition-opacity">
+<span class="material-symbols-outlined">auto_fix_high</span>
+                Generate Draft
+            </button>
+<p class="text-[10px] text-center text-on-surface-variant mt-4 uppercase tracking-[0.1em] font-bold">Estimated Credits: 24</p>
+</div>
+</div>
+</body></html>

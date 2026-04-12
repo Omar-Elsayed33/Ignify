@@ -1,3 +1,4 @@
+import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -5,6 +6,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.email import build_verification_email, send_email
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -46,6 +48,9 @@ async def register_user(db: AsyncSession, data: RegisterRequest) -> tuple[User, 
     db.add(tenant)
     await db.flush()
 
+    verify_token = secrets.token_urlsafe(48)
+    verify_expires = datetime.now(timezone.utc) + timedelta(hours=settings.EMAIL_VERIFICATION_EXPIRE_HOURS)
+
     user = User(
         tenant_id=tenant.id,
         email=data.email,
@@ -54,6 +59,9 @@ async def register_user(db: AsyncSession, data: RegisterRequest) -> tuple[User, 
         role=UserRole.owner,
         lang_preference=data.lang_preference,
         is_active=True,
+        email_verified=False,
+        email_verification_token=verify_token,
+        email_verification_expires=verify_expires,
     )
     db.add(user)
 
@@ -65,8 +73,60 @@ async def register_user(db: AsyncSession, data: RegisterRequest) -> tuple[User, 
     db.add(balance)
     await db.flush()
 
+    # Send verification email (dev = logs to console)
+    link = f"{settings.FRONTEND_URL}/{data.lang_preference}/verify?token={verify_token}"
+    subject, html, text = build_verification_email(data.full_name, link, data.lang_preference)
+    try:
+        await send_email(data.email, subject, html, text)
+    except Exception:
+        pass  # non-fatal in dev
+
+    # Kick off async welcome email (non-fatal)
+    try:
+        from app.modules.notifications.tasks import send_notification_email
+        send_notification_email.delay(str(user.id), "welcome", {})
+    except Exception:
+        pass
+
     tokens = await _issue_tokens(db, user)
     return user, tokens
+
+
+async def request_verification_email(db: AsyncSession, user_id: uuid.UUID) -> None:
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise ValueError("User not found")
+    if user.email_verified:
+        return
+
+    user.email_verification_token = secrets.token_urlsafe(48)
+    user.email_verification_expires = datetime.now(timezone.utc) + timedelta(
+        hours=settings.EMAIL_VERIFICATION_EXPIRE_HOURS
+    )
+    await db.flush()
+
+    link = f"{settings.FRONTEND_URL}/{user.lang_preference}/verify?token={user.email_verification_token}"
+    subject, html, text = build_verification_email(user.full_name, link, user.lang_preference)
+    await send_email(user.email, subject, html, text)
+
+
+async def verify_email(db: AsyncSession, token: str) -> User:
+    result = await db.execute(select(User).where(User.email_verification_token == token))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise ValueError("invalid")
+    if user.email_verified:
+        return user
+    if not user.email_verification_expires or user.email_verification_expires < datetime.now(timezone.utc):
+        raise ValueError("expired")
+
+    user.email_verified = True
+    user.email_verified_at = datetime.now(timezone.utc)
+    user.email_verification_token = None
+    user.email_verification_expires = None
+    await db.flush()
+    return user
 
 
 async def login_user(db: AsyncSession, email: str, password: str) -> tuple[User, TokenResponse]:
@@ -74,6 +134,9 @@ async def login_user(db: AsyncSession, email: str, password: str) -> tuple[User,
     user = result.scalar_one_or_none()
     if not user or not verify_password(password, user.password_hash):
         raise ValueError("Invalid email or password")
+
+    if settings.EMAIL_VERIFICATION_REQUIRED and not user.email_verified:
+        raise ValueError("email_not_verified")
 
     tokens = await _issue_tokens(db, user)
     return user, tokens

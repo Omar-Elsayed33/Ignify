@@ -1,178 +1,114 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import DashboardHeader from "@/components/DashboardHeader";
-import DataTable, { Column } from "@/components/DataTable";
-import { Coins, Loader2, ShoppingCart, TrendingDown, TrendingUp } from "lucide-react";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { Loader2, AlertTriangle, ArrowUpRight, Settings2 } from "lucide-react";
 import { api } from "@/lib/api";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-interface BalanceResponse {
-  tenant_id: string;
-  balance: number;
-  updated_at: string;
+interface SubscriptionStatus {
+  plan_code: string;
+  plan_name_en: string;
+  plan_name_ar: string;
+  status: string;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+  stripe_customer_id: string | null;
+  provider: string | null;
 }
 
-interface CreditTransaction {
-  id: string;
-  tenant_id: string;
-  action_type: string;
-  credits_used: number;
-  description: string | null;
-  created_at: string;
-  [key: string]: unknown;
+interface UsageData {
+  quota: Record<string, number>;
+  used: Record<string, number>;
+  remaining: Record<string, number>;
 }
 
-interface UsageSummary {
-  total_credits_used: number;
-  total_credits_purchased: number;
-  current_balance: number;
-  transaction_count: number;
-}
+// ── Usage bar ────────────────────────────────────────────────────────────────
 
-// ── Chart helpers ─────────────────────────────────────────────────────────────
+function UsageBar({
+  label,
+  used,
+  quota,
+  unlimitedLabel,
+  ofLabel,
+}: {
+  label: string;
+  used: number;
+  quota: number;
+  unlimitedLabel: string;
+  ofLabel: string;
+}) {
+  const unlimited = quota === -1;
+  const pct = unlimited ? 0 : Math.min(100, (used / Math.max(1, quota)) * 100);
+  const danger = pct >= 80;
 
-function buildChartData(transactions: CreditTransaction[]) {
-  // Group by date, sum absolute credits used
-  const byDate: Record<string, number> = {};
-  transactions.forEach((tx) => {
-    const date = tx.created_at.split("T")[0];
-    byDate[date] = (byDate[date] ?? 0) + Math.abs(tx.credits_used);
-  });
-  return Object.entries(byDate)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .slice(-8)
-    .map(([date, credits]) => ({ name: date, credits }));
+  return (
+    <div className="rounded-xl border border-border bg-surface p-4">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-sm font-medium text-text-primary">{label}</span>
+        <span className="text-xs text-text-secondary">
+          {unlimited
+            ? unlimitedLabel
+            : `${used.toLocaleString()} ${ofLabel} ${quota.toLocaleString()}`}
+        </span>
+      </div>
+      {!unlimited && (
+        <div className="h-2 w-full overflow-hidden rounded-full bg-background">
+          <div
+            className={`h-full transition-all ${
+              danger ? "bg-error" : "bg-primary"
+            }`}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function BillingPage() {
-  const t = useTranslations("billingPage");
-
-  const [balance, setBalance] = useState<BalanceResponse | null>(null);
-  const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
-  const [usage, setUsage] = useState<UsageSummary | null>(null);
+  const t = useTranslations("billing");
+  const locale = useLocale();
+  const [sub, setSub] = useState<SubscriptionStatus | null>(null);
+  const [usage, setUsage] = useState<UsageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Buy credits modal state
-  const [buyOpen, setBuyOpen] = useState(false);
-  const [buyCredits, setBuyCredits] = useState(500);
-  const [buyAmount, setBuyAmount] = useState(49);
-  const [buyRef, setBuyRef] = useState("");
-  const [purchasing, setPurchasing] = useState(false);
-
-  // ── Fetch all billing data ────────────────────────────────────────────────
+  const [managing, setManaging] = useState(false);
 
   useEffect(() => {
-    async function load() {
+    (async () => {
       try {
         setLoading(true);
-        const [bal, txs, usg] = await Promise.all([
-          api.get<BalanceResponse>("/api/v1/billing/balance"),
-          api.get<CreditTransaction[]>("/api/v1/billing/transactions"),
-          api.get<UsageSummary>("/api/v1/billing/usage"),
+        const [s, u] = await Promise.all([
+          api.get<SubscriptionStatus>("/api/v1/billing/subscription"),
+          api.get<UsageData>("/api/v1/billing/usage"),
         ]);
-        setBalance(bal);
-        setTransactions(txs);
-        setUsage(usg);
+        setSub(s);
+        setUsage(u);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load billing data");
+        setError(e instanceof Error ? e.message : t("errors.failed"));
       } finally {
         setLoading(false);
       }
-    }
-    load();
-  }, []);
+    })();
+  }, [t]);
 
-  // ── Purchase handler ──────────────────────────────────────────────────────
-
-  async function handlePurchase(e: React.FormEvent) {
-    e.preventDefault();
+  async function openPortal() {
     try {
-      setPurchasing(true);
-      await api.post("/api/v1/billing/purchase", {
-        amount: buyAmount,
-        credits: buyCredits,
-        payment_ref: buyRef || null,
-      });
-      // Refresh balance and transactions
-      const [bal, txs, usg] = await Promise.all([
-        api.get<BalanceResponse>("/api/v1/billing/balance"),
-        api.get<CreditTransaction[]>("/api/v1/billing/transactions"),
-        api.get<UsageSummary>("/api/v1/billing/usage"),
-      ]);
-      setBalance(bal);
-      setTransactions(txs);
-      setUsage(usg);
-      setBuyOpen(false);
-      setBuyRef("");
+      setManaging(true);
+      const res = await api.post<{ url: string }>("/api/v1/billing/portal");
+      if (res.url) window.location.href = res.url;
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Purchase failed");
+      alert(e instanceof Error ? e.message : t("errors.failed"));
     } finally {
-      setPurchasing(false);
+      setManaging(false);
     }
   }
-
-  // ── Columns ───────────────────────────────────────────────────────────────
-
-  const columns: Column<CreditTransaction>[] = [
-    {
-      key: "created_at",
-      label: t("transactionDate"),
-      sortable: true,
-      render: (item) => (
-        <span>{new Date(item.created_at).toLocaleDateString()}</span>
-      ),
-    },
-    {
-      key: "action_type",
-      label: t("transactionType"),
-      render: (item) => (
-        <span className="capitalize">{item.action_type.replace(/_/g, " ")}</span>
-      ),
-    },
-    {
-      key: "credits_used",
-      label: t("amount"),
-      sortable: true,
-      render: (item) => (
-        <span
-          className={
-            item.credits_used < 0
-              ? "font-medium text-success"
-              : "font-medium text-error"
-          }
-        >
-          {item.credits_used < 0 ? "+" : ""}
-          {Math.abs(item.credits_used)} {t("credits")}
-        </span>
-      ),
-    },
-    {
-      key: "description",
-      label: t("transactionStatus"),
-      render: (item) => (
-        <span className="text-sm text-text-secondary">
-          {item.description ?? "—"}
-        </span>
-      ),
-    },
-  ];
-
-  // ── Loading / error ───────────────────────────────────────────────────────
 
   if (loading) {
     return (
@@ -196,201 +132,118 @@ export default function BillingPage() {
     );
   }
 
-  const chartData = buildChartData(transactions);
+  const planName = locale === "ar" ? sub?.plan_name_ar : sub?.plan_name_en;
+  const renewsOn = sub?.current_period_end
+    ? new Date(sub.current_period_end).toLocaleDateString(
+        locale === "ar" ? "ar-EG" : "en-US"
+      )
+    : "—";
+
+  const anyOver80 = usage
+    ? Object.keys(usage.quota).some((k) => {
+        const q = usage.quota[k];
+        const u = usage.used[k] ?? 0;
+        return q !== -1 && q > 0 && (u / q) * 100 >= 80;
+      })
+    : false;
 
   return (
     <div>
       <DashboardHeader title={t("title")} />
+      <div className="space-y-6 p-6">
+        <p className="text-sm text-text-secondary">{t("subtitle")}</p>
 
-      <div className="p-6">
-        {/* Stats */}
-        <div className="mb-6 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-          {/* Current Balance */}
-          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-accent/10 p-2.5">
-                <Coins className="h-5 w-5 text-accent" />
-              </div>
-              <div>
-                <p className="text-sm text-text-secondary">{t("creditBalance")}</p>
-                <p className="text-xl font-bold text-text-primary">
-                  {(balance?.balance ?? 0).toLocaleString()} {t("credits")}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => setBuyOpen(true)}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-sm font-medium text-white hover:bg-primary-dark"
-            >
-              <ShoppingCart className="h-4 w-4" />
-              {t("buyCredits")}
-            </button>
+        {anyOver80 && (
+          <div className="flex items-start gap-3 rounded-xl border border-error/30 bg-error/5 p-4">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-error" />
+            <p className="text-sm text-error">{t("usage.warning80")}</p>
           </div>
-
-          {/* Total Purchased */}
-          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-success/10 p-2.5">
-                <TrendingUp className="h-5 w-5 text-success" />
-              </div>
-              <div>
-                <p className="text-sm text-text-secondary">{t("totalPurchased")}</p>
-                <p className="text-xl font-bold text-text-primary">
-                  {(usage?.total_credits_purchased ?? 0).toLocaleString()} {t("credits")}
-                </p>
-              </div>
-            </div>
-            <div className="mt-4 rounded-lg bg-background px-4 py-3">
-              <p className="text-xs text-text-muted">
-                {usage?.transaction_count ?? 0} {t("transactions")}
-              </p>
-            </div>
-          </div>
-
-          {/* Total Used */}
-          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-error/10 p-2.5">
-                <TrendingDown className="h-5 w-5 text-error" />
-              </div>
-              <div>
-                <p className="text-sm text-text-secondary">{t("totalUsed")}</p>
-                <p className="text-xl font-bold text-text-primary">
-                  {(usage?.total_credits_used ?? 0).toLocaleString()} {t("credits")}
-                </p>
-              </div>
-            </div>
-            <div className="mt-4 rounded-lg bg-background px-4 py-3">
-              <p className="text-xs text-text-muted">
-                {t("balance")}: {(usage?.current_balance ?? 0).toLocaleString()}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Usage Chart */}
-        <div className="mb-6 rounded-xl border border-border bg-surface p-6 shadow-sm">
-          <h3 className="mb-4 text-lg font-semibold text-text-primary">
-            {t("usage")}
-          </h3>
-          {chartData.length === 0 ? (
-            <div className="flex h-64 items-center justify-center text-sm text-text-muted">
-              {t("noUsageData")}
-            </div>
-          ) : (
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-                  <XAxis dataKey="name" stroke="#94A3B8" fontSize={12} />
-                  <YAxis stroke="#94A3B8" fontSize={12} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#fff",
-                      border: "1px solid #E2E8F0",
-                      borderRadius: "8px",
-                      fontSize: "12px",
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="credits"
-                    stroke="#FF6B00"
-                    fill="#FF6B00"
-                    fillOpacity={0.1}
-                    strokeWidth={2}
-                    name={t("credits")}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </div>
-
-        {/* Transaction History */}
-        <h3 className="mb-4 text-lg font-semibold text-text-primary">
-          {t("transactionHistory")}
-        </h3>
-        {transactions.length === 0 ? (
-          <div className="rounded-xl border border-border bg-surface p-10 text-center text-sm text-text-muted">
-            {t("noTransactions")}
-          </div>
-        ) : (
-          <DataTable
-            columns={columns}
-            data={transactions as unknown as Record<string, unknown>[]}
-          />
         )}
-      </div>
 
-      {/* Buy Credits Modal */}
-      {buyOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl bg-surface p-6 shadow-xl">
-            <h2 className="mb-5 text-lg font-semibold text-text-primary">
-              {t("buyCredits")}
-            </h2>
-            <form onSubmit={handlePurchase} className="space-y-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-text-primary">
-                  {t("credits")}
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  value={buyCredits}
-                  onChange={(e) => setBuyCredits(Number(e.target.value))}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  required
-                />
+        {/* Current Plan Card */}
+        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-sm text-text-secondary">
+                {t("currentPlan.title")}
+              </p>
+              <h2 className="mt-1 text-2xl font-bold text-text-primary">
+                {planName}
+              </h2>
+              <div className="mt-2 flex items-center gap-3 text-sm">
+                <span className="rounded-full bg-success/10 px-2.5 py-0.5 font-medium text-success">
+                  {t(`status.${sub?.status ?? "active"}` as `status.active`)}
+                </span>
+                {sub?.current_period_end && (
+                  <span className="text-text-muted">
+                    {t("currentPlan.renewsOn")}: {renewsOn}
+                  </span>
+                )}
               </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-text-primary">
-                  {t("amount")} ($)
-                </label>
-                <input
-                  type="number"
-                  min={0.01}
-                  step={0.01}
-                  value={buyAmount}
-                  onChange={(e) => setBuyAmount(Number(e.target.value))}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  required
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-text-primary">
-                  {t("paymentRef")}
-                </label>
-                <input
-                  type="text"
-                  value={buyRef}
-                  onChange={(e) => setBuyRef(e.target.value)}
-                  placeholder="Optional reference"
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              </div>
-              <div className="flex justify-end gap-3 pt-2">
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/billing/plans"
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark"
+              >
+                <ArrowUpRight className="h-4 w-4" />
+                {t("currentPlan.upgrade")}
+              </Link>
+              {sub?.stripe_customer_id && (
                 <button
-                  type="button"
-                  onClick={() => setBuyOpen(false)}
-                  className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-hover"
+                  onClick={openPortal}
+                  disabled={managing}
+                  className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-hover disabled:opacity-60"
                 >
-                  {t("cancel")}
+                  {managing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Settings2 className="h-4 w-4" />
+                  )}
+                  {t("currentPlan.manage")}
                 </button>
-                <button
-                  type="submit"
-                  disabled={purchasing}
-                  className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark disabled:opacity-60"
-                >
-                  {purchasing && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {t("confirm")}
-                </button>
-              </div>
-            </form>
+              )}
+            </div>
           </div>
         </div>
-      )}
+
+        {/* Usage */}
+        <div>
+          <h3 className="mb-3 text-lg font-semibold text-text-primary">
+            {t("usage.title")}
+          </h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <UsageBar
+              label={t("usage.articles")}
+              used={usage?.used.articles ?? 0}
+              quota={usage?.quota.articles ?? 0}
+              unlimitedLabel={t("usage.unlimited")}
+              ofLabel={t("usage.of")}
+            />
+            <UsageBar
+              label={t("usage.images")}
+              used={usage?.used.images ?? 0}
+              quota={usage?.quota.images ?? 0}
+              unlimitedLabel={t("usage.unlimited")}
+              ofLabel={t("usage.of")}
+            />
+            <UsageBar
+              label={t("usage.videos")}
+              used={usage?.used.videos ?? 0}
+              quota={usage?.quota.videos ?? 0}
+              unlimitedLabel={t("usage.unlimited")}
+              ofLabel={t("usage.of")}
+            />
+            <UsageBar
+              label={t("usage.aiTokens")}
+              used={usage?.used.ai_tokens ?? 0}
+              quota={usage?.quota.ai_tokens ?? 0}
+              unlimitedLabel={t("usage.unlimited")}
+              ofLabel={t("usage.of")}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

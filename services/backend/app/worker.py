@@ -1,4 +1,5 @@
 from celery import Celery
+from celery.schedules import crontab
 
 from app.core.config import settings
 
@@ -17,7 +18,52 @@ celery_app.conf.update(
     task_track_started=True,
     task_acks_late=True,
     worker_prefetch_multiplier=1,
+    beat_schedule={
+        "scan-due-social-posts": {
+            "task": "ignify.scan_due_posts",
+            "schedule": 60.0,
+        },
+        "snapshot-daily-metrics": {
+            "task": "ignify.snapshot_daily_metrics",
+            "schedule": crontab(hour=1, minute=0),
+            "options": {"expires": 60 * 60 * 12},
+        },
+        "scan-onboarding-emails": {
+            "task": "ignify.scan_onboarding_emails",
+            "schedule": crontab(hour=10, minute=0),
+        },
+        "scan-weekly-reports": {
+            "task": "ignify.scan_weekly_reports",
+            "schedule": crontab(hour=9, minute=0, day_of_week=1),
+        },
+        "sync-ad-insights": {
+            "task": "ignify.sync_ad_insights",
+            "schedule": 2 * 60 * 60.0,  # every 2 hours
+        },
+        "daily-rank-sync": {
+            "task": "ignify.daily_rank_sync",
+            "schedule": crontab(hour=2, minute=0),
+            "options": {"expires": 60 * 60 * 12},
+        },
+        "daily-competitor-snapshot": {
+            "task": "ignify.daily_competitor_snapshot",
+            "schedule": crontab(hour=3, minute=0),
+            "options": {"expires": 60 * 60 * 12},
+        },
+        "cleanup-stale-video-runs": {
+            "task": "ignify.cleanup_stale_video_runs",
+            "schedule": crontab(minute="*/15"),
+        },
+    },
 )
+
+# Register social scheduler tasks via import side-effects
+import app.modules.social_scheduler.tasks  # noqa: E402,F401
+import app.modules.notifications.tasks  # noqa: E402,F401
+import app.modules.ads.tasks  # noqa: E402,F401
+import app.modules.video_gen.tasks  # noqa: E402,F401
+import app.modules.seo.tasks  # noqa: E402,F401
+import app.modules.competitors.tasks  # noqa: E402,F401
 
 
 @celery_app.task(bind=True, name="ignify.scheduled_post_publish")
@@ -153,3 +199,7 @@ def sync_social_metrics(self, social_account_id: str, tenant_id: str) -> dict:
             }
 
     return asyncio.run(_sync())
+
+
+# Register analytics snapshot task (import side-effect).
+import app.modules.analytics_dashboard.tasks  # noqa: E402,F401

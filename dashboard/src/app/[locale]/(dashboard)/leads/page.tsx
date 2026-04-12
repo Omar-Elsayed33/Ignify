@@ -1,13 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
+import { useLocale } from "next-intl";
 import DashboardHeader from "@/components/DashboardHeader";
-import DataTable, { Column } from "@/components/DataTable";
 import Modal from "@/components/Modal";
 import { api } from "@/lib/api";
-import { Plus, LayoutGrid, List, AlertCircle, Loader2, Users } from "lucide-react";
+import {
+  AlertCircle,
+  Loader2,
+  Plus,
+  Users,
+  X,
+  Sparkles,
+  Phone,
+  Mail,
+} from "lucide-react";
 import { clsx } from "clsx";
+
+type Stage = "new" | "contacted" | "qualified" | "proposal" | "won" | "lost";
+type Source =
+  | "whatsapp"
+  | "messenger"
+  | "instagram"
+  | "website"
+  | "ads"
+  | "manual"
+  | "facebook"
+  | "other";
 
 interface Lead {
   id: string;
@@ -15,158 +36,208 @@ interface Lead {
   email: string | null;
   phone: string | null;
   company: string | null;
-  source: "whatsapp" | "messenger" | "instagram" | "website" | "ads" | "manual";
+  source: Source;
   score: number | null;
-  status: "new" | "contacted" | "qualified" | "proposal" | "won" | "lost";
+  status: Stage;
+  activities_count?: number;
   created_at: string;
-  [key: string]: unknown;
+  updated_at: string;
 }
 
-interface AddForm {
-  name: string;
-  email: string;
-  phone: string;
-  company: string;
-  source: Lead["source"];
-  score: string;
-  status: Lead["status"];
+interface KanbanColumn {
+  stage: Stage;
+  leads: Lead[];
 }
 
-const stages: Lead["status"][] = ["new", "contacted", "qualified", "proposal", "won", "lost"];
+interface Activity {
+  id: string;
+  lead_id: string;
+  activity_type: string;
+  description: string | null;
+  created_at: string;
+}
 
-const stageColors: Record<string, string> = {
-  new: "border-info bg-info/5",
-  contacted: "border-accent bg-accent/5",
-  qualified: "border-primary bg-primary/5",
-  proposal: "border-purple-500 bg-purple-500/5",
-  won: "border-success bg-success/5",
-  lost: "border-error bg-error/5",
+const STAGES: Stage[] = ["new", "contacted", "qualified", "proposal", "won", "lost"];
+
+const stageStyles: Record<Stage, { bar: string; badge: string; dot: string }> = {
+  new: { bar: "bg-info", badge: "bg-info/10 text-info", dot: "bg-info" },
+  contacted: { bar: "bg-accent", badge: "bg-accent/10 text-accent", dot: "bg-accent" },
+  qualified: { bar: "bg-primary", badge: "bg-primary/10 text-primary", dot: "bg-primary" },
+  proposal: { bar: "bg-purple-500", badge: "bg-purple-500/10 text-purple-500", dot: "bg-purple-500" },
+  won: { bar: "bg-success", badge: "bg-success/10 text-success", dot: "bg-success" },
+  lost: { bar: "bg-error", badge: "bg-error/10 text-error", dot: "bg-error" },
 };
 
-export default function LeadsPage() {
-  const t = useTranslations("leadsPage");
+const sourceStyles: Record<string, string> = {
+  whatsapp: "bg-emerald-500/10 text-emerald-600",
+  messenger: "bg-blue-500/10 text-blue-600",
+  instagram: "bg-pink-500/10 text-pink-600",
+  facebook: "bg-blue-600/10 text-blue-700",
+  website: "bg-slate-500/10 text-slate-600",
+  ads: "bg-orange-500/10 text-orange-600",
+  manual: "bg-gray-500/10 text-gray-600",
+  other: "bg-gray-400/10 text-gray-500",
+};
 
-  const [leads, setLeads] = useState<Lead[]>([]);
+function ScoreBadge({ score }: { score: number | null }) {
+  if (score === null || score === undefined) return null;
+  const tone =
+    score >= 80
+      ? "bg-success/10 text-success"
+      : score >= 50
+        ? "bg-accent/10 text-accent"
+        : "bg-error/10 text-error";
+  return (
+    <span className={clsx("rounded-full px-2 py-0.5 text-[10px] font-semibold", tone)}>
+      {score}
+    </span>
+  );
+}
+
+export default function LeadsKanbanPage() {
+  const t = useTranslations("leads");
+  const tPage = useTranslations("leadsPage");
+  const locale = useLocale();
+
+  const [columns, setColumns] = useState<KanbanColumn[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [view, setView] = useState<"pipeline" | "list">("pipeline");
 
   const [addOpen, setAddOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [addForm, setAddForm] = useState<AddForm>({
+  const [form, setForm] = useState({
     name: "",
-    email: "",
     phone: "",
-    company: "",
-    source: "manual",
-    score: "",
-    status: "new",
+    email: "",
+    source: "manual" as Source,
+    notes: "",
   });
 
-  async function fetchLeads() {
+  const [drawerLead, setDrawerLead] = useState<Lead | null>(null);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(false);
+  const [noteText, setNoteText] = useState("");
+  const [qualifying, setQualifying] = useState(false);
+
+  const [dragLeadId, setDragLeadId] = useState<string | null>(null);
+
+  const fetchKanban = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await api.get<Lead[]>("/api/v1/leads/");
-      setLeads(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load leads");
+      const data = await api.get<KanbanColumn[]>("/api/v1/leads/kanban");
+      // Ensure all stages present
+      const map = new Map<Stage, Lead[]>();
+      data.forEach((c) => map.set(c.stage as Stage, c.leads));
+      setColumns(STAGES.map((s) => ({ stage: s, leads: map.get(s) ?? [] })));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("errors.failed"));
     } finally {
       setLoading(false);
     }
-  }
+  }, [t]);
 
   useEffect(() => {
-    fetchLeads();
-  }, []);
+    fetchKanban();
+  }, [fetchKanban]);
 
-  async function handleAdd(e: React.FormEvent) {
+  async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!addForm.name.trim()) return;
+    if (!form.name.trim()) return;
     try {
       setSubmitting(true);
       setFormError(null);
-      const newLead = await api.post<Lead>("/api/v1/leads/", {
-        name: addForm.name,
-        email: addForm.email || undefined,
-        phone: addForm.phone || undefined,
-        company: addForm.company || undefined,
-        source: addForm.source,
-        score: addForm.score ? parseInt(addForm.score, 10) : undefined,
-        status: addForm.status,
+      await api.post<Lead>("/api/v1/leads/", {
+        name: form.name,
+        phone: form.phone || undefined,
+        email: form.email || undefined,
+        source: form.source,
+        notes: form.notes || undefined,
       });
-      setLeads((prev) => [newLead, ...prev]);
       setAddOpen(false);
-      setAddForm({ name: "", email: "", phone: "", company: "", source: "manual", score: "", status: "new" });
+      setForm({ name: "", phone: "", email: "", source: "manual", notes: "" });
+      fetchKanban();
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Failed to add lead");
+      setFormError(err instanceof Error ? err.message : t("errors.failed"));
     } finally {
       setSubmitting(false);
     }
   }
 
-  async function handleUpdateStatus(id: string, status: Lead["status"]) {
+  async function moveLead(leadId: string, toStage: Stage) {
+    // Optimistic update
+    setColumns((prev) => {
+      const next = prev.map((c) => ({ ...c, leads: [...c.leads] }));
+      let moved: Lead | null = null;
+      for (const c of next) {
+        const idx = c.leads.findIndex((l) => l.id === leadId);
+        if (idx >= 0) {
+          moved = { ...c.leads[idx], status: toStage };
+          c.leads.splice(idx, 1);
+          break;
+        }
+      }
+      if (moved) {
+        const col = next.find((c) => c.stage === toStage);
+        if (col) col.leads.unshift(moved);
+      }
+      return next;
+    });
     try {
-      const updated = await api.put<Lead>(`/api/v1/leads/${id}`, { status });
-      setLeads((prev) => prev.map((l) => (l.id === id ? updated : l)));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update lead");
+      await api.post(`/api/v1/leads/${leadId}/move`, { stage: toStage });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("errors.failed"));
+      fetchKanban();
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm(t("confirmDelete"))) return;
+  async function openDrawer(lead: Lead) {
+    setDrawerLead(lead);
+    setActivities([]);
+    setLoadingActivities(true);
     try {
-      await api.delete(`/api/v1/leads/${id}`);
-      setLeads((prev) => prev.filter((l) => l.id !== id));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete lead");
+      const data = await api.get<Activity[]>(`/api/v1/leads/${lead.id}/activities`);
+      setActivities(data);
+    } catch {
+      setActivities([]);
+    } finally {
+      setLoadingActivities(false);
     }
   }
 
-  const scoreBadge = (score: number | null) => {
-    if (score === null) return <span className="text-xs text-text-muted">—</span>;
-    const color = score >= 80 ? "bg-success/10 text-success" : score >= 60 ? "bg-accent/10 text-accent" : "bg-error/10 text-error";
-    return <span className={clsx("rounded-full px-2.5 py-0.5 text-xs font-semibold", color)}>{score}</span>;
-  };
+  async function addNote() {
+    if (!drawerLead || !noteText.trim()) return;
+    try {
+      const a = await api.post<Activity>(
+        `/api/v1/leads/${drawerLead.id}/activities`,
+        { activity_type: "note", content: noteText }
+      );
+      setActivities((prev) => [a, ...prev]);
+      setNoteText("");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("errors.failed"));
+    }
+  }
 
-  const columns: Column<Lead>[] = [
-    { key: "name", label: t("name"), sortable: true },
-    { key: "email", label: "Email", render: (item) => <span>{item.email ?? "—"}</span> },
-    { key: "company", label: t("company"), sortable: true, render: (item) => <span>{item.company ?? "—"}</span> },
-    { key: "source", label: t("source"), render: (item) => <span className="capitalize">{item.source}</span> },
-    {
-      key: "status",
-      label: t("status"),
-      render: (item) => (
-        <select
-          value={item.status}
-          onChange={(e) => handleUpdateStatus(item.id, e.target.value as Lead["status"])}
-          className="rounded border border-border bg-transparent px-2 py-0.5 text-xs focus:border-primary focus:outline-none"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {stages.map((s) => (
-            <option key={s} value={s}>{t(s)}</option>
-          ))}
-        </select>
-      ),
-    },
-    { key: "score", label: t("leadScore"), render: (item) => scoreBadge(item.score) },
-    {
-      key: "id",
-      label: "",
-      render: (item) => (
-        <button
-          onClick={() => handleDelete(item.id)}
-          className="rounded p-1 text-text-muted transition-colors hover:bg-error/10 hover:text-error"
-          title={t("delete")}
-        >
-          <span className="text-xs">✕</span>
-        </button>
-      ),
-    },
-  ];
+  async function qualifyLead() {
+    if (!drawerLead) return;
+    try {
+      setQualifying(true);
+      const r = await api.post<{ score: number; qualification: string; next_action: string }>(
+        `/api/v1/leads/${drawerLead.id}/qualify`
+      );
+      setDrawerLead({ ...drawerLead, score: r.score });
+      // refresh activities & kanban
+      const data = await api.get<Activity[]>(`/api/v1/leads/${drawerLead.id}/activities`);
+      setActivities(data);
+      fetchKanban();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("errors.failed"));
+    } finally {
+      setQualifying(false);
+    }
+  }
 
   return (
     <div>
@@ -180,36 +251,14 @@ export default function LeadsPage() {
           </div>
         )}
 
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex gap-1 rounded-lg bg-background p-1">
-            <button
-              onClick={() => setView("pipeline")}
-              className={clsx(
-                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium",
-                view === "pipeline" ? "bg-surface text-primary shadow-sm" : "text-text-secondary"
-              )}
-            >
-              <LayoutGrid className="h-4 w-4" />
-              {t("pipeline")}
-            </button>
-            <button
-              onClick={() => setView("list")}
-              className={clsx(
-                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium",
-                view === "list" ? "bg-surface text-primary shadow-sm" : "text-text-secondary"
-              )}
-            >
-              <List className="h-4 w-4" />
-              {t("listView")}
-            </button>
-          </div>
-
+        <div className="mb-5 flex items-center justify-between">
+          <p className="text-sm text-text-muted">{t("subtitle")}</p>
           <button
             onClick={() => setAddOpen(true)}
             className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark"
           >
             <Plus className="h-4 w-4" />
-            {t("addLead")}
+            {t("form.new")}
           </button>
         </div>
 
@@ -217,57 +266,108 @@ export default function LeadsPage() {
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : view === "pipeline" ? (
-          leads.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-20 text-center">
-              <Users className="h-10 w-10 text-text-muted" />
-              <p className="mt-3 text-sm font-medium text-text-primary">{t("emptyTitle")}</p>
-              <p className="mt-1 text-sm text-text-muted">{t("emptyDescription")}</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <div className="flex gap-4 pb-2" style={{ minWidth: "max-content" }}>
-                {stages.map((stage) => {
-                  const stageLeads = leads.filter((l) => l.status === stage);
-                  return (
-                    <div key={stage} className="w-[200px]">
-                      <div className={clsx("mb-3 rounded-lg border-s-4 px-3 py-2", stageColors[stage])}>
-                        <p className="text-sm font-semibold text-text-primary">{t(stage)}</p>
-                        <p className="text-xs text-text-muted">{stageLeads.length} {t("leads")}</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <div className="flex gap-4 pb-4" style={{ minWidth: "max-content" }}>
+              {columns.map((col) => {
+                const style = stageStyles[col.stage];
+                return (
+                  <div
+                    key={col.stage}
+                    className="flex w-[280px] shrink-0 flex-col rounded-xl bg-background/50 p-2"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const id = e.dataTransfer.getData("text/lead-id") || dragLeadId;
+                      if (id) moveLead(id, col.stage);
+                      setDragLeadId(null);
+                    }}
+                  >
+                    <div className="mb-3 flex items-center justify-between px-2">
+                      <div className="flex items-center gap-2">
+                        <span className={clsx("h-2.5 w-2.5 rounded-full", style.dot)} />
+                        <p className="text-sm font-semibold text-text-primary">
+                          {t(`kanban.${col.stage}`)}
+                        </p>
                       </div>
-                      <div className="space-y-2">
-                        {stageLeads.map((lead) => (
+                      <span className={clsx("rounded-full px-2 py-0.5 text-xs font-semibold", style.badge)}>
+                        {col.leads.length}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-2 min-h-[100px]">
+                      {col.leads.length === 0 ? (
+                        <div className="rounded-lg border border-dashed border-border/60 px-3 py-8 text-center text-xs text-text-muted">
+                          —
+                        </div>
+                      ) : (
+                        col.leads.map((lead) => (
                           <div
                             key={lead.id}
-                            className="cursor-pointer rounded-lg border border-border bg-surface p-3 shadow-sm transition-shadow hover:shadow-md"
+                            draggable
+                            onDragStart={(e) => {
+                              e.dataTransfer.setData("text/lead-id", lead.id);
+                              e.dataTransfer.effectAllowed = "move";
+                              setDragLeadId(lead.id);
+                            }}
+                            onDragEnd={() => setDragLeadId(null)}
+                            onClick={() => openDrawer(lead)}
+                            className={clsx(
+                              "group cursor-grab rounded-lg border border-border bg-surface p-3 shadow-sm transition-all hover:shadow-md active:cursor-grabbing",
+                              dragLeadId === lead.id && "opacity-50"
+                            )}
                           >
-                            <p className="text-sm font-medium text-text-primary">{lead.name}</p>
-                            <p className="mt-0.5 text-xs text-text-muted">{lead.company ?? "—"}</p>
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-sm font-medium text-text-primary line-clamp-1">
+                                {lead.name}
+                              </p>
+                              <ScoreBadge score={lead.score} />
+                            </div>
+                            <div className="mt-1.5 space-y-0.5">
+                              {lead.phone && (
+                                <div className="flex items-center gap-1 text-xs text-text-muted">
+                                  <Phone className="h-3 w-3" />
+                                  <span className="truncate">{lead.phone}</span>
+                                </div>
+                              )}
+                              {lead.email && (
+                                <div className="flex items-center gap-1 text-xs text-text-muted">
+                                  <Mail className="h-3 w-3" />
+                                  <span className="truncate">{lead.email}</span>
+                                </div>
+                              )}
+                            </div>
                             <div className="mt-2 flex items-center justify-between">
-                              <span className="text-xs capitalize text-text-muted">{lead.source}</span>
-                              {scoreBadge(lead.score)}
+                              <span
+                                className={clsx(
+                                  "rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize",
+                                  sourceStyles[lead.source] ?? sourceStyles.other
+                                )}
+                              >
+                                {t.has(`source.${lead.source}`) ? t(`source.${lead.source}`) : lead.source}
+                              </span>
+                              <Link
+                                href={`/${locale}/leads/${lead.id}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-[11px] text-primary opacity-0 transition-opacity group-hover:opacity-100 hover:underline"
+                              >
+                                {t("card.viewDetails")}
+                              </Link>
                             </div>
                           </div>
-                        ))}
-                      </div>
+                        ))
+                      )}
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })}
             </div>
-          )
-        ) : (
-          <DataTable
-            columns={columns}
-            data={leads as unknown as Record<string, unknown>[]}
-            emptyTitle={t("emptyTitle")}
-            emptyDescription={t("emptyDescription")}
-          />
+          </div>
         )}
       </div>
 
-      <Modal open={addOpen} onOpenChange={setAddOpen} title={t("addLead")}>
-        <form onSubmit={handleAdd} className="space-y-4">
+      {/* Add Modal */}
+      <Modal open={addOpen} onOpenChange={setAddOpen} title={t("form.new")}>
+        <form onSubmit={handleCreate} className="space-y-4">
           {formError && (
             <div className="flex items-center gap-2 rounded-lg bg-error/10 px-3 py-2 text-sm text-error">
               <AlertCircle className="h-4 w-4 shrink-0" />
@@ -275,81 +375,67 @@ export default function LeadsPage() {
             </div>
           )}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-text-primary">{t("name")}</label>
+            <label className="mb-1.5 block text-sm font-medium text-text-primary">
+              {t("form.name")}
+            </label>
             <input
-              type="text"
               required
-              value={addForm.name}
-              onChange={(e) => setAddForm((f) => ({ ...f, name: e.target.value }))}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-text-primary">Email</label>
-            <input
-              type="email"
-              value={addForm.email}
-              onChange={(e) => setAddForm((f) => ({ ...f, email: e.target.value }))}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-text-primary">{t("phone")}</label>
-            <input
-              type="tel"
-              value={addForm.phone}
-              onChange={(e) => setAddForm((f) => ({ ...f, phone: e.target.value }))}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-text-primary">{t("company")}</label>
-            <input
-              type="text"
-              value={addForm.company}
-              onChange={(e) => setAddForm((f) => ({ ...f, company: e.target.value }))}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-text-primary">{t("source")}</label>
-              <select
-                value={addForm.source}
-                onChange={(e) => setAddForm((f) => ({ ...f, source: e.target.value as AddForm["source"] }))}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              >
-                <option value="manual">Manual</option>
-                <option value="website">Website</option>
-                <option value="ads">Ads</option>
-                <option value="instagram">Instagram</option>
-                <option value="whatsapp">WhatsApp</option>
-                <option value="messenger">Messenger</option>
-              </select>
+              <label className="mb-1.5 block text-sm font-medium text-text-primary">
+                {t("form.phone")}
+              </label>
+              <input
+                value={form.phone}
+                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+              />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-text-primary">{t("leadScore")}</label>
+              <label className="mb-1.5 block text-sm font-medium text-text-primary">
+                {t("form.email")}
+              </label>
               <input
-                type="number"
-                min="0"
-                max="100"
-                value={addForm.score}
-                onChange={(e) => setAddForm((f) => ({ ...f, score: e.target.value }))}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
               />
             </div>
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-text-primary">{t("status")}</label>
+            <label className="mb-1.5 block text-sm font-medium text-text-primary">
+              {t("form.source")}
+            </label>
             <select
-              value={addForm.status}
-              onChange={(e) => setAddForm((f) => ({ ...f, status: e.target.value as AddForm["status"] }))}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              value={form.source}
+              onChange={(e) => setForm((f) => ({ ...f, source: e.target.value as Source }))}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
             >
-              {stages.map((s) => (
-                <option key={s} value={s}>{t(s)}</option>
-              ))}
+              <option value="manual">{t("source.manual")}</option>
+              <option value="whatsapp">{t("source.whatsapp")}</option>
+              <option value="instagram">{t("source.instagram")}</option>
+              <option value="messenger">{t("source.facebook")}</option>
+              <option value="website">{t("source.website")}</option>
+              <option value="ads">Ads</option>
+              <option value="other">{t("source.other")}</option>
             </select>
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-text-primary">
+              {t("form.notes")}
+            </label>
+            <textarea
+              rows={3}
+              value={form.notes}
+              onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+            />
           </div>
           <div className="flex justify-end gap-3">
             <button
@@ -357,7 +443,7 @@ export default function LeadsPage() {
               onClick={() => setAddOpen(false)}
               className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-hover"
             >
-              {t("cancel")}
+              {tPage("cancel")}
             </button>
             <button
               type="submit"
@@ -365,11 +451,150 @@ export default function LeadsPage() {
               className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark disabled:opacity-60"
             >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              {t("addLead")}
+              {t("form.submit")}
             </button>
           </div>
         </form>
       </Modal>
+
+      {/* Side Drawer */}
+      {drawerLead && (
+        <div className="fixed inset-0 z-50 flex">
+          <div
+            className="flex-1 bg-black/30 backdrop-blur-sm"
+            onClick={() => setDrawerLead(null)}
+          />
+          <div className="w-full max-w-md overflow-y-auto bg-surface shadow-2xl">
+            <div className="sticky top-0 flex items-center justify-between border-b border-border bg-surface px-5 py-4">
+              <div>
+                <p className="text-base font-semibold text-text-primary">{drawerLead.name}</p>
+                <p className="text-xs text-text-muted capitalize">
+                  {t(`kanban.${drawerLead.status}`)}
+                </p>
+              </div>
+              <button
+                onClick={() => setDrawerLead(null)}
+                className="rounded-lg p-1.5 text-text-muted hover:bg-surface-hover"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-5 p-5">
+              <div className="space-y-2 rounded-xl border border-border p-4">
+                {drawerLead.phone && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Phone className="h-4 w-4 text-text-muted" />
+                    <span>{drawerLead.phone}</span>
+                  </div>
+                )}
+                {drawerLead.email && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Mail className="h-4 w-4 text-text-muted" />
+                    <span>{drawerLead.email}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between pt-1">
+                  <span
+                    className={clsx(
+                      "rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize",
+                      sourceStyles[drawerLead.source] ?? sourceStyles.other
+                    )}
+                  >
+                    {t.has(`source.${drawerLead.source}`) ? t(`source.${drawerLead.source}`) : drawerLead.source}
+                  </span>
+                  {drawerLead.score !== null && <ScoreBadge score={drawerLead.score} />}
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={qualifyLead}
+                  disabled={qualifying}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-white hover:bg-primary-dark disabled:opacity-60"
+                >
+                  {qualifying ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4" />
+                  )}
+                  {qualifying ? t("actions.qualifying") : t("actions.qualify")}
+                </button>
+                <select
+                  value={drawerLead.status}
+                  onChange={(e) => {
+                    const s = e.target.value as Stage;
+                    moveLead(drawerLead.id, s);
+                    setDrawerLead({ ...drawerLead, status: s });
+                  }}
+                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                >
+                  {STAGES.map((s) => (
+                    <option key={s} value={s}>
+                      {t(`kanban.${s}`)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <p className="mb-2 text-sm font-semibold text-text-primary">
+                  {t("activities.title")}
+                </p>
+                <div className="mb-3 space-y-2">
+                  <textarea
+                    rows={2}
+                    value={noteText}
+                    onChange={(e) => setNoteText(e.target.value)}
+                    placeholder={t("activities.addNote")}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                  />
+                  <button
+                    onClick={addNote}
+                    disabled={!noteText.trim()}
+                    className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-dark disabled:opacity-60"
+                  >
+                    {t("activities.addNote")}
+                  </button>
+                </div>
+
+                {loadingActivities ? (
+                  <div className="flex justify-center py-6">
+                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  </div>
+                ) : activities.length === 0 ? (
+                  <p className="py-4 text-center text-xs text-text-muted">
+                    {t("activities.empty")}
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {activities.map((a) => (
+                      <li
+                        key={a.id}
+                        className="rounded-lg border border-border bg-background/40 p-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-primary">
+                            {t.has(`activity.${a.activity_type}`) ? t(`activity.${a.activity_type}`) : a.activity_type}
+                          </span>
+                          <span className="text-[10px] text-text-muted">
+                            {new Date(a.created_at).toLocaleString(locale === "ar" ? "ar" : "en")}
+                          </span>
+                        </div>
+                        {a.description && (
+                          <p className="mt-1 whitespace-pre-wrap text-xs text-text-secondary">
+                            {a.description}
+                          </p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

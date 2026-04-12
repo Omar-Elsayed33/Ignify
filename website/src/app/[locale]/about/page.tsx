@@ -3,248 +3,161 @@
 import React from "react";
 import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
-import {
-  Lightbulb,
-  Heart,
-  Eye,
-  Target,
-  Rocket,
-  Shield,
-  Users,
-  Sparkles,
-} from "lucide-react";
+import { Target, Eye, Users, Globe, Sparkles } from "lucide-react";
 
-const fadeInUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
-};
-
-const stagger = {
-  visible: { transition: { staggerChildren: 0.1 } },
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
 export default function AboutPage() {
-  const t = useTranslations("about_page");
+  const t = useTranslations("about");
 
-  const values = [
-    { key: "innovation" as const, icon: Rocket, color: "from-orange-500 to-amber-500" },
-    { key: "simplicity" as const, icon: Sparkles, color: "from-purple-500 to-pink-500" },
-    { key: "transparency" as const, icon: Eye, color: "from-blue-500 to-cyan-500" },
-    { key: "customer" as const, icon: Heart, color: "from-red-500 to-rose-500" },
-  ];
-
-  const team = [
-    { name: "Alex Rivera", role: "CEO & Co-Founder", initials: "AR" },
-    { name: "Lina Ahmad", role: "CTO & Co-Founder", initials: "LA" },
-    { name: "James Park", role: "VP of Product", initials: "JP" },
-    { name: "Maya Johnson", role: "VP of Marketing", initials: "MJ" },
-    { name: "Omar Hassan", role: "Head of AI Research", initials: "OH" },
-    { name: "Sofia Martinez", role: "Head of Design", initials: "SM" },
-  ];
+  const members = t.raw("team.members") as {
+    name: string;
+    role: string;
+    bio: string;
+  }[];
+  const milestones = t.raw("milestones.items") as {
+    year: string;
+    title: string;
+    body: string;
+  }[];
 
   return (
     <>
-      {/* Hero */}
-      <section className="pt-32 pb-16 lg:pt-40 lg:pb-24 gradient-hero relative overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/3 start-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 end-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
-        </div>
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-6"
-          >
-            {t("title")}{" "}
-            <span className="gradient-text">{t("titleHighlight")}</span>
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0, transition: { delay: 0.2 } }}
-            className="text-lg sm:text-xl text-white/70 max-w-2xl mx-auto"
-          >
+      <section className="relative overflow-hidden pt-20 pb-16 bg-background">
+        <div className="absolute top-0 end-[-10%] light-leak-orange" />
+        <div className="relative max-w-4xl mx-auto px-4 text-center">
+          <h1 className="text-5xl sm:text-6xl font-bold mb-6 text-ink leading-tight">
+            {t("title")}
+          </h1>
+          <p className="text-lg text-on-surface-variant max-w-3xl mx-auto">
             {t("subtitle")}
-          </motion.p>
+          </p>
         </div>
       </section>
 
-      {/* Story */}
-      <section className="py-20 lg:py-32 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-20 bg-background">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-8">
           <motion.div
+            variants={fadeUp}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            variants={stagger}
+            className="p-10 rounded-3xl bg-surface-container-lowest shadow-soft"
           >
-            <motion.h2
-              variants={fadeInUp}
-              className="text-3xl sm:text-4xl font-bold text-secondary mb-8"
-            >
-              {t("story_title")}
-            </motion.h2>
-            <motion.p
-              variants={fadeInUp}
-              className="text-lg text-secondary/70 leading-relaxed mb-6"
-            >
-              {t("story_p1")}
-            </motion.p>
-            <motion.p
-              variants={fadeInUp}
-              className="text-lg text-secondary/70 leading-relaxed mb-6"
-            >
-              {t("story_p2")}
-            </motion.p>
-            <motion.p
-              variants={fadeInUp}
-              className="text-lg text-secondary/70 leading-relaxed"
-            >
-              {t("story_p3")}
-            </motion.p>
+            <div className="w-14 h-14 rounded-2xl brand-gradient-bg flex items-center justify-center mb-5">
+              <Target className="w-7 h-7 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold text-ink mb-3">
+              {t("mission.title")}
+            </h2>
+            <p className="text-on-surface-variant leading-relaxed">
+              {t("mission.body")}
+            </p>
+          </motion.div>
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="p-10 rounded-3xl bg-surface-container-lowest shadow-soft"
+          >
+            <div className="w-14 h-14 rounded-2xl brand-gradient-bg flex items-center justify-center mb-5">
+              <Eye className="w-7 h-7 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold text-ink mb-3">
+              {t("vision.title")}
+            </h2>
+            <p className="text-on-surface-variant leading-relaxed">
+              {t("vision.body")}
+            </p>
           </motion.div>
         </div>
       </section>
 
-      {/* Mission & Vision */}
-      <section className="py-20 lg:py-32 bg-surface">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            className="grid grid-cols-1 lg:grid-cols-2 gap-12"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={stagger}
-          >
-            <motion.div
-              variants={fadeInUp}
-              className="bg-white rounded-2xl p-8 lg:p-12 border border-gray-100"
-            >
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center mb-6">
-                <Target className="w-7 h-7 text-white" />
+      <section className="py-16 bg-surface-container-low">
+        <div className="max-w-5xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+          {[
+            { Icon: Users, value: t("stats.customers") },
+            { Icon: Globe, value: t("stats.countries") },
+            { Icon: Sparkles, value: t("stats.plans") },
+          ].map(({ Icon, value }, i) => (
+            <div key={i} className="p-6">
+              <div className="inline-flex w-14 h-14 rounded-2xl brand-gradient-bg items-center justify-center mb-4">
+                <Icon className="w-7 h-7 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-secondary mb-4">
-                {t("mission_title")}
-              </h3>
-              <p className="text-secondary/60 leading-relaxed text-lg">
-                {t("mission_text")}
-              </p>
-            </motion.div>
-
-            <motion.div
-              variants={fadeInUp}
-              className="bg-white rounded-2xl p-8 lg:p-12 border border-gray-100"
-            >
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-6">
-                <Lightbulb className="w-7 h-7 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-secondary mb-4">
-                {t("vision_title")}
-              </h3>
-              <p className="text-secondary/60 leading-relaxed text-lg">
-                {t("vision_text")}
-              </p>
-            </motion.div>
-          </motion.div>
+              <div className="text-3xl font-extrabold text-ink">{value}</div>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* Values */}
-      <section className="py-20 lg:py-32 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            className="text-center mb-16"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={stagger}
-          >
-            <motion.h2
-              variants={fadeInUp}
-              className="text-3xl sm:text-4xl lg:text-5xl font-bold text-secondary"
-            >
-              {t("values_title")}
-            </motion.h2>
-          </motion.div>
-
-          <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 gap-8"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={stagger}
-          >
-            {values.map((value) => (
+      <section className="py-20 bg-background">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl sm:text-4xl font-bold text-center text-ink mb-12">
+            {t("team.title")}
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {members.map((m, i) => (
               <motion.div
-                key={value.key}
-                variants={fadeInUp}
-                className="group p-8 rounded-2xl border border-gray-100 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300"
+                key={i}
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                className="p-6 rounded-3xl bg-surface-container-lowest shadow-soft text-center"
               >
-                <div
-                  className={`w-14 h-14 rounded-xl bg-gradient-to-br ${value.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}
-                >
-                  <value.icon className="w-7 h-7 text-white" />
+                <div className="w-20 h-20 mx-auto mb-4 rounded-full brand-gradient-bg flex items-center justify-center text-white text-2xl font-bold">
+                  {m.name.charAt(0)}
                 </div>
-                <h3 className="text-xl font-bold text-secondary mb-3">
-                  {t(`values.${value.key}.title`)}
-                </h3>
-                <p className="text-secondary/60 leading-relaxed">
-                  {t(`values.${value.key}.description`)}
+                <h3 className="font-bold text-ink">{m.name}</h3>
+                <p className="text-sm text-primary mb-2">{m.role}</p>
+                <p className="text-sm text-on-surface-variant leading-relaxed">
+                  {m.bio}
                 </p>
               </motion.div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* Team */}
-      <section className="py-20 lg:py-32 bg-surface">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            className="text-center mb-16"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={stagger}
-          >
-            <motion.h2
-              variants={fadeInUp}
-              className="text-3xl sm:text-4xl lg:text-5xl font-bold text-secondary mb-4"
-            >
-              {t("team_title")}{" "}
-              <span className="gradient-text">{t("team_titleHighlight")}</span>
-            </motion.h2>
-            <motion.p
-              variants={fadeInUp}
-              className="text-lg text-secondary/60 max-w-2xl mx-auto"
-            >
-              {t("team_subtitle")}
-            </motion.p>
-          </motion.div>
-
-          <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={stagger}
-          >
-            {team.map((member) => (
-              <motion.div
-                key={member.name}
-                variants={fadeInUp}
-                className="bg-white rounded-2xl p-8 text-center border border-gray-100 hover:shadow-lg transition-shadow duration-300"
-              >
-                <div className="w-20 h-20 rounded-full gradient-primary flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
-                  {member.initials}
-                </div>
-                <h3 className="text-lg font-bold text-secondary mb-1">
-                  {member.name}
-                </h3>
-                <p className="text-sm text-secondary/50">{member.role}</p>
-              </motion.div>
-            ))}
-          </motion.div>
+      <section className="py-20 bg-surface-container-low">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl sm:text-4xl font-bold text-center text-ink mb-12">
+            {t("milestones.title")}
+          </h2>
+          <div className="relative">
+            <div className="absolute top-0 bottom-0 start-4 w-0.5 bg-gradient-to-b from-primary-container via-secondary to-tertiary opacity-40" />
+            <div className="space-y-8">
+              {milestones.map((m, i) => (
+                <motion.div
+                  key={i}
+                  variants={fadeUp}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  className="relative ps-16"
+                >
+                  <div className="absolute start-0 top-0 w-8 h-8 rounded-full brand-gradient-bg flex items-center justify-center text-white text-xs font-bold">
+                    {i + 1}
+                  </div>
+                  <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-soft">
+                    <span className="inline-block text-xs font-bold text-primary mb-1">
+                      {m.year}
+                    </span>
+                    <h3 className="text-lg font-bold text-ink mb-2">
+                      {m.title}
+                    </h3>
+                    <p className="text-on-surface-variant leading-relaxed">
+                      {m.body}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
     </>

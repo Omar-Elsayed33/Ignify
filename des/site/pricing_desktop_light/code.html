@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "background": "#f9f9fe",
+                    "surface-container-low": "#f3f3f8",
+                    "tertiary-fixed": "#f1dbff",
+                    "primary-fixed": "#ffdbd0",
+                    "surface": "#f9f9fe",
+                    "secondary": "#b80046",
+                    "surface-container": "#ededf2",
+                    "error-container": "#ffdad6",
+                    "on-background": "#1a1c1f",
+                    "on-secondary-fixed": "#400013",
+                    "inverse-primary": "#ffb59d",
+                    "secondary-fixed": "#ffd9dd",
+                    "on-error": "#ffffff",
+                    "surface-variant": "#e2e2e7",
+                    "surface-bright": "#f9f9fe",
+                    "on-primary-fixed-variant": "#832600",
+                    "on-surface-variant": "#594139",
+                    "on-primary": "#ffffff",
+                    "inverse-on-surface": "#f0f0f5",
+                    "inverse-surface": "#2e3034",
+                    "tertiary": "#8234c6",
+                    "on-primary-fixed": "#390c00",
+                    "secondary-container": "#df215c",
+                    "on-tertiary-fixed-variant": "#680eac",
+                    "primary": "#ab3500",
+                    "surface-tint": "#ab3500",
+                    "outline-variant": "#e1bfb5",
+                    "surface-container-high": "#e8e8ed",
+                    "on-error-container": "#93000a",
+                    "surface-container-highest": "#e2e2e7",
+                    "primary-fixed-dim": "#ffb59d",
+                    "outline": "#8d7168",
+                    "on-secondary-container": "#fffbff",
+                    "tertiary-fixed-dim": "#deb7ff",
+                    "tertiary-container": "#bf79ff",
+                    "error": "#ba1a1a",
+                    "on-primary-container": "#5f1900",
+                    "on-tertiary-fixed": "#2d0050",
+                    "on-secondary-fixed-variant": "#910035",
+                    "secondary-fixed-dim": "#ffb2bc",
+                    "surface-dim": "#d9dade",
+                    "primary-container": "#ff6b35",
+                    "on-surface": "#1a1c1f",
+                    "on-tertiary-container": "#4b0081",
+                    "surface-container-lowest": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Space Grotesk"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .gradient-text {
+            background: linear-gradient(to right, #FF6B35, #FF3D71, #7B2CBF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #FF6B35, #FF3D71, #7B2CBF);
+        }
+        .glass-panel {
+            background: rgba(249, 249, 254, 0.8);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface selection:bg-primary-fixed">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-[#f9f9fe]/80 backdrop-blur-xl shadow-[0_40px_60px_-15px_rgba(123,44,191,0.06)]">
+<div class="flex justify-between items-center px-8 py-4 max-w-screen-2xl mx-auto">
+<div class="text-2xl font-bold bg-gradient-to-r from-[#FF6B35] via-[#FF3D71] to-[#7B2CBF] bg-clip-text text-transparent font-['Space_Grotesk'] tracking-tight">
+                Ignify
+            </div>
+<div class="hidden md:flex items-center space-x-10">
+<a class="text-[#1A1A2E] font-medium hover:opacity-70 transition-opacity duration-300 font-['Space_Grotesk'] tracking-tight" href="#">Platform</a>
+<a class="text-[#1A1A2E] font-medium hover:opacity-70 transition-opacity duration-300 font-['Space_Grotesk'] tracking-tight" href="#">Solutions</a>
+<a class="text-[#1A1A2E] font-medium hover:opacity-70 transition-opacity duration-300 font-['Space_Grotesk'] tracking-tight" href="#">Resources</a>
+<a class="text-[#0B0B14] font-bold border-b-2 border-[#FF6B35] transition-opacity duration-300 font-['Space_Grotesk'] tracking-tight" href="#">Pricing</a>
+<a class="text-[#1A1A2E] font-medium hover:opacity-70 transition-opacity duration-300 font-['Space_Grotesk'] tracking-tight" href="#">Company</a>
+</div>
+<div class="flex items-center space-x-6">
+<div class="hidden lg:flex items-center space-x-4 text-on-surface-variant">
+<span class="material-symbols-outlined cursor-pointer hover:opacity-70 transition-opacity" data-icon="language">language</span>
+<span class="material-symbols-outlined cursor-pointer hover:opacity-70 transition-opacity" data-icon="light_mode">light_mode</span>
+<span class="material-symbols-outlined cursor-pointer hover:opacity-70 transition-opacity" data-icon="smart_toy">smart_toy</span>
+</div>
+<button class="text-[#1A1A2E] font-medium font-['Space_Grotesk'] tracking-tight scale-95 active:scale-90 transition-transform">Sign In</button>
+<button class="gradient-bg text-white px-6 py-2.5 rounded-xl font-bold font-['Space_Grotesk'] tracking-tight scale-95 active:scale-90 transition-transform">Get Started</button>
+</div>
+</div>
+</nav>
+<main class="pt-32 pb-24">
+<!-- Hero Section -->
+<section class="max-w-screen-xl mx-auto px-8 mb-24 text-center">
+<div class="inline-flex items-center px-4 py-2 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant text-xs font-bold tracking-widest uppercase mb-6">
+                Editorial Precision
+            </div>
+<h1 class="text-6xl md:text-7xl font-headline font-bold text-on-background tracking-tighter mb-8 leading-[0.95]">
+                Pricing tailored for <span class="gradient-text">Radiant Growth.</span>
+</h1>
+<p class="text-xl text-on-surface-variant max-w-2xl mx-auto font-light leading-relaxed">
+                Experience high-performance workspace tools treated with the prestige of a luxury digital publication. No hidden lines, just pure velocity.
+            </p>
+</section>
+<!-- Pricing Bento Grid -->
+<section class="max-w-screen-xl mx-auto px-8">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Starter Tier -->
+<div class="bg-surface-container-lowest rounded-xl p-10 flex flex-col h-full border-b-4 border-surface-container transition-all hover:-translate-y-1">
+<div class="mb-10">
+<span class="text-sm font-label font-bold text-outline tracking-widest uppercase">Starter</span>
+<div class="mt-4 flex items-baseline">
+<span class="text-5xl font-headline font-bold text-on-background">$29</span>
+<span class="text-on-surface-variant ml-2 font-medium">/mo</span>
+</div>
+<p class="mt-4 text-on-surface-variant text-sm">Perfect for solo curators and emerging editors starting their digital journey.</p>
+</div>
+<ul class="space-y-4 mb-12 flex-grow">
+<li class="flex items-center space-x-3 text-sm text-on-surface">
+<span class="material-symbols-outlined text-primary-container" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>5 Radiant Workspaces</span>
+</li>
+<li class="flex items-center space-x-3 text-sm text-on-surface">
+<span class="material-symbols-outlined text-primary-container" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>Essential Editorial Tools</span>
+</li>
+<li class="flex items-center space-x-3 text-sm text-on-surface">
+<span class="material-symbols-outlined text-primary-container" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>Standard Mist Rendering</span>
+</li>
+</ul>
+<button class="w-full py-4 rounded-xl border border-outline-variant text-on-background font-bold hover:bg-surface-container-low transition-colors">
+                        Select Starter
+                    </button>
+</div>
+<!-- Growth Tier (Featured) -->
+<div class="relative bg-surface-container-lowest rounded-xl p-10 flex flex-col h-full ring-2 ring-primary-container shadow-[0_40px_60px_-15px_rgba(255,107,53,0.15)] transition-all hover:-translate-y-1">
+<div class="absolute -top-4 left-1/2 -translate-x-1/2 gradient-bg text-white px-4 py-1 rounded-full text-xs font-bold tracking-widest uppercase">
+                        Most Popular
+                    </div>
+<div class="mb-10">
+<span class="text-sm font-label font-bold text-primary-container tracking-widest uppercase">Growth</span>
+<div class="mt-4 flex items-baseline text-primary-container">
+<span class="text-5xl font-headline font-bold text-on-background">$79</span>
+<span class="text-on-surface-variant ml-2 font-medium">/mo</span>
+</div>
+<p class="mt-4 text-on-surface-variant text-sm">Engineered for professional teams scaling their digital publication impact.</p>
+</div>
+<ul class="space-y-4 mb-12 flex-grow">
+<li class="flex items-center space-x-3 text-sm text-on-surface">
+<span class="material-symbols-outlined text-primary-container" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span>Unlimited Workspaces</span>
+</li>
+<li class="flex items-center space-x-3 text-sm text-on-surface">
+<span class="material-symbols-outlined text-primary-container" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span>Advanced Layout Engine</span>
+</li>
+<li class="flex items-center space-x-3 text-sm text-on-surface">
+<span class="material-symbols-outlined text-primary-container" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span>Priority Cloud Processing</span>
+</li>
+<li class="flex items-center space-x-3 text-sm text-on-surface">
+<span class="material-symbols-outlined text-primary-container" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span>Collaborative Review Suite</span>
+</li>
+</ul>
+<button class="w-full py-4 rounded-xl gradient-bg text-white font-bold shadow-lg shadow-primary-container/20 hover:opacity-90 transition-opacity">
+                        Go Radiant
+                    </button>
+</div>
+<!-- Agency Tier -->
+<div class="bg-surface-container-lowest rounded-xl p-10 flex flex-col h-full border-b-4 border-surface-container transition-all hover:-translate-y-1">
+<div class="mb-10">
+<span class="text-sm font-label font-bold text-tertiary tracking-widest uppercase">Agency</span>
+<div class="mt-4 flex items-baseline">
+<span class="text-5xl font-headline font-bold text-on-background">$199</span>
+<span class="text-on-surface-variant ml-2 font-medium">/mo</span>
+</div>
+<p class="mt-4 text-on-surface-variant text-sm">Full-scale enterprise solutions for high-volume agency operations.</p>
+</div>
+<ul class="space-y-4 mb-12 flex-grow">
+<li class="flex items-center space-x-3 text-sm text-on-surface">
+<span class="material-symbols-outlined text-tertiary" data-icon="auto_awesome" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span>Custom Branding API</span>
+</li>
+<li class="flex items-center space-x-3 text-sm text-on-surface">
+<span class="material-symbols-outlined text-tertiary" data-icon="auto_awesome" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span>White-label Delivery</span>
+</li>
+<li class="flex items-center space-x-3 text-sm text-on-surface">
+<span class="material-symbols-outlined text-tertiary" data-icon="auto_awesome" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span>24/7 Premium Concierge</span>
+</li>
+</ul>
+<button class="w-full py-4 rounded-xl border border-outline-variant text-on-background font-bold hover:bg-surface-container-low transition-colors">
+                        Select Agency
+                    </button>
+</div>
+</div>
+</section>
+<!-- FAQ Section -->
+<section class="max-w-screen-lg mx-auto px-8 mt-40">
+<div class="text-center mb-16">
+<h2 class="text-4xl font-headline font-bold text-on-background mb-4">Inquiries &amp; Clarifications</h2>
+<div class="h-1 w-20 gradient-bg mx-auto rounded-full"></div>
+</div>
+<div class="space-y-4">
+<div class="bg-surface-container-low rounded-xl p-8 hover:bg-surface-container transition-colors group cursor-pointer">
+<div class="flex justify-between items-center">
+<h4 class="text-lg font-headline font-bold text-on-background">Can I switch plans during the billing cycle?</h4>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors" data-icon="expand_more">expand_more</span>
+</div>
+<div class="mt-4 text-on-surface-variant leading-relaxed">
+                        Indeed. You may transition between tiers at any moment. Adjustments are calculated pro-rata and applied to your next editorial statement.
+                    </div>
+</div>
+<div class="bg-surface-container-low rounded-xl p-8 hover:bg-surface-container transition-colors group cursor-pointer">
+<div class="flex justify-between items-center">
+<h4 class="text-lg font-headline font-bold text-on-background">What defines a 'Workspace'?</h4>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors" data-icon="expand_more">expand_more</span>
+</div>
+<div class="mt-4 text-on-surface-variant leading-relaxed">
+                        A workspace is a self-contained environment for a single project or brand. It allows for discrete asset management and specific stylistic configurations.
+                    </div>
+</div>
+<div class="bg-surface-container-low rounded-xl p-8 hover:bg-surface-container transition-colors group cursor-pointer">
+<div class="flex justify-between items-center">
+<h4 class="text-lg font-headline font-bold text-on-background">Is technical support included?</h4>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors" data-icon="expand_more">expand_more</span>
+</div>
+<div class="mt-4 text-on-surface-variant leading-relaxed">
+                        Comprehensive documentation is available for all tiers. Growth and Agency tiers benefit from direct access to our Radiant Success Team via encrypted priority channels.
+                    </div>
+</div>
+</div>
+</section>
+<!-- Final CTA -->
+<section class="max-w-screen-xl mx-auto px-8 mt-40">
+<div class="relative overflow-hidden rounded-3xl gradient-bg p-12 md:p-24 text-center text-white">
+<div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+<div class="absolute bottom-0 left-0 w-96 h-96 bg-black/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+<h3 class="text-4xl md:text-5xl font-headline font-bold mb-8 relative z-10">Ready to illuminate your workflow?</h3>
+<p class="text-lg opacity-90 max-w-xl mx-auto mb-12 relative z-10">Join over 10,000 editors who have embraced the Radiant Editorial standard.</p>
+<div class="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-6 relative z-10">
+<button class="bg-white text-on-background px-10 py-4 rounded-xl font-bold shadow-xl hover:bg-surface-container-lowest transition-colors">Start Free Trial</button>
+<button class="bg-transparent border-2 border-white/30 text-white px-10 py-4 rounded-xl font-bold hover:bg-white/10 transition-colors">Speak to Sales</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-12 px-8 bg-[#e8e8ed] dark:bg-[#0B0B14] border-t border-[#e1bfb5]/15 space-y-8">
+<div class="flex flex-col md:flex-row justify-between items-center max-w-screen-2xl mx-auto">
+<div class="text-lg font-black text-[#0B0B14] dark:text-white mb-6 md:mb-0">
+                Ignify
+            </div>
+<div class="flex flex-wrap justify-center gap-8 mb-6 md:mb-0">
+<a class="text-[#1A1A2E]/60 dark:text-[#e8e8ed]/60 text-sm tracking-wide font-['Inter'] hover:text-[#FF6B35] transition-colors" href="#">Privacy Policy</a>
+<a class="text-[#1A1A2E]/60 dark:text-[#e8e8ed]/60 text-sm tracking-wide font-['Inter'] hover:text-[#FF6B35] transition-colors" href="#">Terms of Service</a>
+<a class="text-[#1A1A2E]/60 dark:text-[#e8e8ed]/60 text-sm tracking-wide font-['Inter'] hover:text-[#FF6B35] transition-colors" href="#">Security</a>
+<a class="text-[#1A1A2E]/60 dark:text-[#e8e8ed]/60 text-sm tracking-wide font-['Inter'] hover:text-[#FF6B35] transition-colors" href="#">Status</a>
+<a class="text-[#1A1A2E]/60 dark:text-[#e8e8ed]/60 text-sm tracking-wide font-['Inter'] hover:text-[#FF6B35] transition-colors" href="#">Contact</a>
+</div>
+<div class="text-[#1A1A2E]/60 dark:text-[#e8e8ed]/60 text-sm tracking-wide font-['Inter']">
+                © 2024 Ignify Inc. Radiant Editorial Excellence.
+            </div>
+</div>
+</footer>
+</body></html>

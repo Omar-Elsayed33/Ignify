@@ -1,0 +1,429 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslations, useLocale } from "next-intl";
+import DashboardHeader from "@/components/DashboardHeader";
+import { api } from "@/lib/api";
+import {
+  AlertCircle,
+  Loader2,
+  Send,
+  Sparkles,
+  MessageSquare,
+  Instagram,
+  Phone,
+  Globe,
+  Facebook,
+} from "lucide-react";
+import { clsx } from "clsx";
+
+type ChannelType = "whatsapp" | "instagram" | "messenger" | "web";
+type Language = "ar" | "en";
+type Intent =
+  | "greeting"
+  | "question"
+  | "complaint"
+  | "purchase_intent"
+  | "booking"
+  | "feedback"
+  | "spam"
+  | "other";
+
+interface Conversation {
+  id: string;
+  channel_id: string;
+  channel_type: string | null;
+  customer_name: string | null;
+  customer_phone: string | null;
+  last_message: string | null;
+  last_message_at: string | null;
+  updated_at: string;
+}
+
+interface InboxMessage {
+  id: string;
+  role: "user" | "assistant" | "system" | "tool";
+  content: string;
+  created_at: string;
+}
+
+interface DraftResponse {
+  draft_reply: string;
+  intent: Intent | null;
+  confidence: number | null;
+  needs_human: boolean;
+  meta: Record<string, unknown>;
+}
+
+function channelIcon(type: string | null | undefined) {
+  switch ((type || "").toLowerCase()) {
+    case "whatsapp":
+      return Phone;
+    case "instagram":
+      return Instagram;
+    case "messenger":
+      return Facebook;
+    case "web":
+      return Globe;
+    default:
+      return MessageSquare;
+  }
+}
+
+function formatTime(iso: string | null | undefined) {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+      month: "short",
+      day: "numeric",
+    });
+  } catch {
+    return "";
+  }
+}
+
+export default function InboxPage() {
+  const t = useTranslations("inbox");
+  const locale = useLocale();
+  const isRtl = locale === "ar";
+
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loadingList, setLoadingList] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<InboxMessage[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+
+  const [draftText, setDraftText] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [lastIntent, setLastIntent] = useState<Intent | null>(null);
+  const [needsHuman, setNeedsHuman] = useState(false);
+
+  const active = useMemo(
+    () => conversations.find((c) => c.id === activeId) || null,
+    [conversations, activeId]
+  );
+
+  const loadConversations = useCallback(async () => {
+    try {
+      setLoadingList(true);
+      const data = await api.get<Conversation[]>("/api/v1/inbox/conversations");
+      setConversations(data);
+      if (!activeId && data.length > 0) {
+        setActiveId(data[0].id);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("errors.failed"));
+    } finally {
+      setLoadingList(false);
+    }
+  }, [activeId, t]);
+
+  const loadMessages = useCallback(async (id: string) => {
+    try {
+      setLoadingMessages(true);
+      const data = await api.get<InboxMessage[]>(
+        `/api/v1/inbox/conversations/${id}/messages`
+      );
+      setMessages(data);
+    } catch {
+      setMessages([]);
+    } finally {
+      setLoadingMessages(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadConversations();
+  }, [loadConversations]);
+
+  useEffect(() => {
+    if (activeId) {
+      setDraftText("");
+      setLastIntent(null);
+      setNeedsHuman(false);
+      loadMessages(activeId);
+    } else {
+      setMessages([]);
+    }
+  }, [activeId, loadMessages]);
+
+  async function handleGenerate() {
+    if (!active) return;
+    const lastCustomer = [...messages]
+      .reverse()
+      .find((m) => m.role === "user");
+    const seed = lastCustomer?.content || active.last_message || "";
+    if (!seed) {
+      setError(t("errors.failed"));
+      return;
+    }
+    const channelType = (active.channel_type || "whatsapp") as ChannelType;
+    const language: Language = isRtl ? "ar" : "en";
+    try {
+      setGenerating(true);
+      setError(null);
+      const res = await api.post<DraftResponse>("/api/v1/inbox/draft", {
+        conversation_id: active.id,
+        customer_message: seed,
+        language,
+        channel_type: ["whatsapp", "instagram", "messenger", "web"].includes(
+          channelType
+        )
+          ? channelType
+          : "web",
+      });
+      setDraftText(res.draft_reply || "");
+      setLastIntent(res.intent);
+      setNeedsHuman(Boolean(res.needs_human));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("errors.failed"));
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  async function handleSend() {
+    if (!active || !draftText.trim()) return;
+    try {
+      setSending(true);
+      setError(null);
+      await api.post<InboxMessage>("/api/v1/inbox/send", {
+        conversation_id: active.id,
+        message: draftText.trim(),
+      });
+      setDraftText("");
+      await loadMessages(active.id);
+      await loadConversations();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("errors.failed"));
+    } finally {
+      setSending(false);
+    }
+  }
+
+  function intentLabel(intent: Intent | null) {
+    if (!intent) return null;
+    const map: Record<Intent, string> = {
+      greeting: t("intents.greeting"),
+      question: t("intents.question"),
+      complaint: t("intents.complaint"),
+      purchase_intent: t("intents.purchase"),
+      booking: t("intents.booking"),
+      feedback: t("intents.feedback"),
+      spam: t("intents.spam"),
+      other: t("intents.other"),
+    };
+    return map[intent] || intent;
+  }
+
+  return (
+    <div>
+      <DashboardHeader title={t("title")} />
+      <div className="p-6">
+        <p className="mb-4 text-sm text-text-secondary">{t("subtitle")}</p>
+
+        {error && (
+          <div className="mb-4 flex items-center gap-3 rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            {error}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-[320px_1fr]">
+          {/* Left: conversations list */}
+          <aside className="rounded-xl border border-border bg-surface">
+            <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
+              {loadingList ? (
+                <div className="flex items-center justify-center p-8">
+                  <Loader2 className="h-5 w-5 animate-spin text-text-muted" />
+                </div>
+              ) : conversations.length === 0 ? (
+                <div className="p-6 text-center text-sm text-text-muted">
+                  {t("listEmpty")}
+                </div>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {conversations.map((c) => {
+                    const Icon = channelIcon(c.channel_type);
+                    const isActive = c.id === activeId;
+                    return (
+                      <li key={c.id}>
+                        <button
+                          type="button"
+                          onClick={() => setActiveId(c.id)}
+                          className={clsx(
+                            "flex w-full items-start gap-3 px-4 py-3 text-start transition-colors",
+                            isActive
+                              ? "bg-primary/10"
+                              : "hover:bg-surface-hover"
+                          )}
+                        >
+                          <div
+                            className={clsx(
+                              "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+                              isActive
+                                ? "bg-primary text-white"
+                                : "bg-background text-text-muted"
+                            )}
+                          >
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="truncate text-sm font-medium text-text-primary">
+                                {c.customer_name ||
+                                  c.customer_phone ||
+                                  (c.channel_type || "—")}
+                              </p>
+                              <span className="shrink-0 text-[10px] text-text-muted">
+                                {formatTime(
+                                  c.last_message_at || c.updated_at
+                                )}
+                              </span>
+                            </div>
+                            <p className="truncate text-xs text-text-secondary">
+                              {c.last_message || ""}
+                            </p>
+                          </div>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </aside>
+
+          {/* Right: active conversation */}
+          <section className="flex min-h-[calc(100vh-200px)] flex-col rounded-xl border border-border bg-surface">
+            {!active ? (
+              <div className="flex flex-1 items-center justify-center p-8 text-sm text-text-muted">
+                {t("selectConversation")}
+              </div>
+            ) : (
+              <>
+                {/* Header */}
+                <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-text-primary">
+                      {active.customer_name ||
+                        active.customer_phone ||
+                        (active.channel_type || "—")}
+                    </p>
+                    <p className="truncate text-xs text-text-muted">
+                      {active.channel_type}
+                    </p>
+                  </div>
+                  {(needsHuman || lastIntent === "complaint") && (
+                    <span className="flex items-center gap-1 rounded-full bg-warning/15 px-2.5 py-1 text-xs font-medium text-warning">
+                      <AlertCircle className="h-3 w-3" />
+                      {t("escalation.needsHuman")}
+                    </span>
+                  )}
+                </div>
+
+                {/* Messages */}
+                <div className="flex-1 overflow-y-auto p-4">
+                  {loadingMessages ? (
+                    <div className="flex items-center justify-center py-10">
+                      <Loader2 className="h-5 w-5 animate-spin text-text-muted" />
+                    </div>
+                  ) : (
+                    <ul className="space-y-3">
+                      {messages.map((m) => {
+                        const isMine = m.role === "assistant";
+                        return (
+                          <li
+                            key={m.id}
+                            className={clsx(
+                              "flex",
+                              isMine ? "justify-end" : "justify-start"
+                            )}
+                          >
+                            <div
+                              className={clsx(
+                                "max-w-[75%] rounded-2xl px-3 py-2 text-sm",
+                                isMine
+                                  ? "bg-primary text-white"
+                                  : "bg-background text-text-primary"
+                              )}
+                            >
+                              <p className="mb-1 text-[10px] font-semibold uppercase opacity-70">
+                                {isMine
+                                  ? t("messages.you")
+                                  : t("messages.customer")}
+                              </p>
+                              <p className="whitespace-pre-wrap leading-relaxed">
+                                {m.content}
+                              </p>
+                              <p className="mt-1 text-[10px] opacity-60">
+                                {formatTime(m.created_at)}
+                              </p>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+
+                {/* Composer */}
+                <div className="border-t border-border p-3">
+                  {lastIntent && (
+                    <div className="mb-2 flex items-center gap-2 text-xs text-text-muted">
+                      <span className="rounded-full bg-background px-2 py-0.5 font-medium text-text-secondary">
+                        {intentLabel(lastIntent)}
+                      </span>
+                    </div>
+                  )}
+                  <textarea
+                    rows={3}
+                    value={draftText}
+                    onChange={(e) => setDraftText(e.target.value)}
+                    placeholder={t("messages.typeMessage")}
+                    className="w-full resize-y rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                  <div className="mt-2 flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={handleGenerate}
+                      disabled={generating || sending}
+                      className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-text-secondary hover:bg-surface-hover disabled:opacity-50"
+                    >
+                      {generating ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-4 w-4" />
+                      )}
+                      {generating
+                        ? t("actions.generating")
+                        : t("actions.generateReply")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSend}
+                      disabled={sending || generating || !draftText.trim()}
+                      className="flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-dark disabled:opacity-50"
+                    >
+                      {sending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                      {sending ? t("actions.sending") : t("actions.send")}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}

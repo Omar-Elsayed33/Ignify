@@ -39,17 +39,27 @@ Users / Customers
 
 ---
 
-## Superadmin Credentials
+## Pre-seeded Accounts (DEBUG mode)
 
-| Field | Value |
-|---|---|
-| Email | `admin@ignify.com` |
-| Password | `Admin@2024` |
-| Role | `superadmin` |
-| URL | `http://localhost:3000/en/admin/dashboard` |
+Both accounts are auto-created when the backend starts with `DEBUG=true`:
 
-The superadmin is **auto-created** when the backend starts in `DEBUG=true` mode. It can:
-- Manage all tenants (activate/suspend/view)
+| Purpose | Email | Password | Role | First URL |
+|---|---|---|---|---|
+| Super admin | `admin@ignify.com` | `Admin@2024` | `superadmin` | `http://localhost:3000/en/admin/dashboard` |
+| Demo tenant (Acme Leather) | `customer@ignify.com` | `Customer@2024` | `owner` | `http://localhost:3000/ar/dashboard` |
+
+The **demo tenant** comes pre-loaded with rich sample data so the dashboard is never empty:
+
+- Approved 90-day marketing plan (Q1 2026, Acme Leather)
+- 10 content posts across `draft`, `review`, `approved`, `scheduled`, `published` (AR + EN mix)
+- 6 creative assets (hero shots, mockups, banners)
+- 12 leads across every pipeline stage, with realistic MENA sources
+- 30 days of social metrics with a growth curve
+- 5 conversations with 3–6 messages each (Arabic + English)
+
+The **superadmin** manages the whole platform:
+
+- Manage all tenants (activate / suspend / view)
 - Configure AI providers (OpenAI, Anthropic, Google)
 - Set credit pricing
 - View audit logs
@@ -252,6 +262,15 @@ ignify/
 └── Brand-doc/                # Brand identity
 ```
 
+## Further Reading
+
+- [`docs/EXECUTION_PLAN.md`](./docs/EXECUTION_PLAN.md) — phased execution roadmap.
+- [`docs/LAUNCH_CHECKLIST.md`](./docs/LAUNCH_CHECKLIST.md) — actionable pre-launch checklist (infra, security, marketing, support, QA).
+- [`docs/00_ignify_full_project_plan.md`](./docs/00_ignify_full_project_plan.md) — full product plan.
+- [`docs/08_technical_architecture_ar.md`](./docs/08_technical_architecture_ar.md) — technical architecture (Arabic).
+- `/help` in the dashboard — end-user help center (bilingual AR + EN).
+- `GET /ops/status` — detailed service / provider health (Postgres, Redis, MinIO, API keys).
+
 ## License
 
-Proprietary - All rights reserved.
+Proprietary — All rights reserved. License terms pending.

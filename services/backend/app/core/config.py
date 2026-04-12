@@ -17,14 +17,32 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    # AI
-    AGNO_RUNTIME_URL: str = "http://localhost:8001"
+    # LLM Gateway — OpenRouter is the single gateway for all models
+    OPENROUTER_API_KEY: str = ""
+    OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
+    OPENROUTER_SITE_URL: str = "https://ignify.ai"
+    OPENROUTER_APP_NAME: str = "Ignify"
+
+    # Media providers
+    REPLICATE_API_TOKEN: str = ""
+    ELEVENLABS_API_KEY: str = ""
 
     # Storage
     MINIO_ENDPOINT: str = "localhost:9000"
     MINIO_ACCESS_KEY: str = "ignify"
     MINIO_SECRET_KEY: str = "ignify_minio_2024"
     MINIO_BUCKET: str = "ignify-assets"
+    MINIO_PUBLIC_HOST: str = "localhost:9000"
+
+    # Email / Frontend
+    FRONTEND_URL: str = "http://localhost:3000"
+    EMAIL_VERIFICATION_EXPIRE_HOURS: int = 24
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM: str = "Ignify <no-reply@ignify.ai>"
+    EMAIL_VERIFICATION_REQUIRED: bool = False
 
     # CORS - accepts JSON string or comma-separated
     CORS_ORIGINS: str = '["http://localhost:3000","http://localhost:3010"]'
@@ -37,6 +55,58 @@ class Settings(BaseSettings):
     # Celery
     CELERY_BROKER_URL: str = "redis://localhost:6379/1"
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/2"
+
+    # Meta (Facebook/Instagram) OAuth
+    META_APP_ID: str = ""
+    META_APP_SECRET: str = ""
+    META_REDIRECT_URI: str = "http://localhost:8000/api/v1/social-scheduler/oauth/meta/callback"
+
+    # Billing - Stripe
+    STRIPE_SECRET_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
+    STRIPE_PUBLISHABLE_KEY: str = ""
+
+    # Billing - Paymob (Egypt)
+    PAYMOB_API_KEY: str = ""
+    PAYMOB_INTEGRATION_ID: str = ""
+    PAYMOB_IFRAME_ID: str = ""
+    PAYMOB_HMAC_SECRET: str = ""
+
+    # Billing - PayTabs (MENA)
+    PAYTABS_PROFILE_ID: str = ""
+    PAYTABS_SERVER_KEY: str = ""
+    PAYTABS_REGION: str = "EGY"  # EGY, SAU, ARE, JOR, OMN, GLOBAL
+    PAYTABS_BASE_URL: str = "https://secure-egypt.paytabs.com"  # region-dependent
+
+    # Billing - Geidea (MENA Pay by Link)
+    GEIDEA_PUBLIC_KEY: str = ""
+    GEIDEA_API_PASSWORD: str = ""
+    GEIDEA_MERCHANT_ID: str = ""
+    GEIDEA_BASE_URL: str = "https://api.merchant.geidea.net"
+
+    # Billing - URLs
+    BILLING_SUCCESS_URL: str = "http://localhost:3000/billing/success"
+    BILLING_CANCEL_URL: str = "http://localhost:3000/billing/cancel"
+    BILLING_CALLBACK_BASE: str = "http://localhost:8000"
+
+    # Observability
+    SENTRY_DSN: str = ""
+    SENTRY_ENVIRONMENT: str = "development"
+    SENTRY_TRACES_SAMPLE_RATE: float = 0.1
+    LOG_LEVEL: str = "INFO"
+
+    # Webhooks
+    META_WEBHOOK_VERIFY_TOKEN: str = "ignify-webhook-verify-token-change-me"
+
+    # SEO / SERP providers (all optional — stub mode when none configured)
+    SERPER_API_KEY: str = ""
+    DATAFORSEO_LOGIN: str = ""
+    DATAFORSEO_PASSWORD: str = ""
+    GOOGLE_CSE_ID: str = ""
+    GOOGLE_CSE_API_KEY: str = ""
+
+    # Agno runtime (used by existing seo/competitor AI endpoints)
+    AGNO_RUNTIME_URL: str = "http://localhost:8010"
 
     @property
     def cors_origins_list(self) -> list[str]:

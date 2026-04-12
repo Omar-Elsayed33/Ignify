@@ -21,15 +21,16 @@ export default function Button({
   className = "",
   type = "button",
 }: ButtonProps) {
-  const baseStyles =
-    "inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-300 cursor-pointer";
+  const base =
+    "inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-300 cursor-pointer whitespace-nowrap";
 
   const variants = {
     primary:
-      "gradient-primary text-white shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/40 hover:scale-105",
+      "brand-gradient-bg text-white shadow-soft hover:scale-[1.02] hover:opacity-95",
     secondary:
-      "border-2 border-primary text-primary hover:bg-primary hover:text-white",
-    ghost: "text-secondary hover:text-primary hover:bg-surface",
+      "bg-transparent text-on-surface hover:bg-surface-container-low border-2 border-transparent hover:border-outline-variant/30",
+    ghost:
+      "bg-transparent text-on-surface-variant hover:text-primary hover:bg-surface-container-low",
   };
 
   const sizes = {
@@ -38,7 +39,7 @@ export default function Button({
     lg: "px-8 py-4 text-lg",
   };
 
-  const classes = `${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`;
+  const classes = `${base} ${variants[variant]} ${sizes[size]} ${className}`;
 
   if (href) {
     return (
@@ -47,7 +48,6 @@ export default function Button({
       </a>
     );
   }
-
   return (
     <button type={type} onClick={onClick} className={classes}>
       {children}

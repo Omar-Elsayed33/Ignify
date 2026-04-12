@@ -79,6 +79,9 @@ class PostType(str, enum.Enum):
 
 class ContentStatus(str, enum.Enum):
     draft = "draft"
+    review = "review"
+    approved = "approved"
+    rejected = "rejected"
     scheduled = "scheduled"
     published = "published"
 
@@ -88,6 +91,7 @@ class AssetType(str, enum.Enum):
     banner = "banner"
     logo = "logo"
     mockup = "mockup"
+    video = "video"
 
 
 class AdPlatform(str, enum.Enum):
@@ -173,6 +177,8 @@ class Plan(Base):
     max_credits: Mapped[int] = mapped_column(Integer, default=1000)
     price_monthly: Mapped[float] = mapped_column(Numeric(10, 2), default=0)
     features: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, default=dict)
+    prices: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, default=dict)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     tenants: Mapped[list["Tenant"]] = relationship(back_populates="plan")
 
@@ -206,6 +212,10 @@ class User(Base):
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.viewer)
     lang_preference: Mapped[str] = mapped_column(String(10), default="en")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    email_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    email_verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    email_verification_token: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, index=True)
+    email_verification_expires: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     tenant: Mapped[Optional["Tenant"]] = relationship(back_populates="users")
@@ -446,6 +456,35 @@ class ContentCalendar(Base):
     status: Mapped[ContentStatus] = mapped_column(Enum(ContentStatus), default=ContentStatus.scheduled)
 
 
+class ContentTemplate(Base):
+    __tablename__ = "content_templates"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    type: Mapped[str] = mapped_column(String(50), nullable=False, default="post")
+    channel: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    language: Mapped[str] = mapped_column(String(10), nullable=False, default="ar")
+    brief_template: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    system_prompt: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    is_favorite: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+
+class ContentActivity(Base):
+    __tablename__ = "content_activities"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
+    content_post_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("content_posts.id"), nullable=False, index=True)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True)
+    user_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    action: Mapped[str] = mapped_column(String(50), nullable=False)
+    note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 # ──────────────────────────── Marketing - Creative ────────────────────────────
 
 
@@ -531,8 +570,12 @@ class SEOKeyword(Base):
     keyword: Mapped[str] = mapped_column(String(500), nullable=False)
     search_volume: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     difficulty: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    cpc: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    intent: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     current_rank: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     target_url: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
+    location: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    language: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     rankings: Mapped[list["SEORanking"]] = relationship(back_populates="keyword")
@@ -545,6 +588,8 @@ class SEORanking(Base):
     keyword_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("seo_keywords.id"), nullable=False)
     rank: Mapped[int] = mapped_column(Integer, nullable=False)
     url: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
+    title: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    serp_features: Mapped[Optional[list[Any]]] = mapped_column(JSON, default=list)
     date: Mapped[date] = mapped_column(Date, nullable=False)
 
     keyword: Mapped["SEOKeyword"] = relationship(back_populates="rankings")
@@ -811,7 +856,77 @@ class BrandSettings(Base):
     logo_url: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
 
+    # ── White-label (Agency tier) ──
+    white_label_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    custom_domain: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, unique=True, index=True)
+    custom_domain_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    app_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    favicon_url: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
+    email_sender_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    email_sender_address: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    footer_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    support_email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    support_url: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
+    hide_powered_by: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
     tenant: Mapped["Tenant"] = relationship(back_populates="brand_settings")
+
+
+# ──────────────────────────── Content Experiments (A/B Testing) ────────────────────────────
+
+
+class ExperimentStatus(str, enum.Enum):
+    draft = "draft"
+    running = "running"
+    completed = "completed"
+
+
+class ContentExperiment(Base):
+    __tablename__ = "content_experiments"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    brief: Mapped[str] = mapped_column(Text, nullable=False)
+    target: Mapped[str] = mapped_column(String(50), nullable=False, default="post")
+    channel: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    language: Mapped[str] = mapped_column(String(10), nullable=False, default="ar")
+    status: Mapped[ExperimentStatus] = mapped_column(
+        Enum(ExperimentStatus, name="experiment_status"), default=ExperimentStatus.draft, nullable=False
+    )
+    winner_variant_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
+    traffic_split: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, default=dict)
+    created_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+    variants: Mapped[list["ContentVariant"]] = relationship(
+        back_populates="experiment", cascade="all, delete-orphan"
+    )
+
+
+class ContentVariant(Base):
+    __tablename__ = "content_variants"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
+    experiment_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("content_experiments.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    variant_label: Mapped[str] = mapped_column(String(8), nullable=False)  # A, B, C, D
+    content_post_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("content_posts.id"), nullable=True
+    )
+    prompt_override: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    model_override: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending")
+    error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    impressions: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    clicks: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    engagements: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    conversions: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    experiment: Mapped["ContentExperiment"] = relationship(back_populates="variants")
 
 
 # ──────────────────────────── Platform ────────────────────────────
@@ -836,3 +951,90 @@ class TenantPhoneNumber(Base):
     platform_channel_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("platform_channels.id"), nullable=False)
     phone_number: Mapped[str] = mapped_column(String(50), nullable=False)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+# ──────────────────────────── Agents ────────────────────────────
+
+
+class MarketingPlan(Base):
+    __tablename__ = "marketing_plans"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    period_start: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    period_end: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    goals: Mapped[Optional[list[Any]]] = mapped_column(JSON, default=list)
+    personas: Mapped[Optional[list[Any]]] = mapped_column(JSON, default=list)
+    channels: Mapped[Optional[list[Any]]] = mapped_column(JSON, default=list)
+    calendar: Mapped[Optional[list[Any]]] = mapped_column(JSON, default=list)
+    kpis: Mapped[Optional[list[Any]]] = mapped_column(JSON, default=list)
+    market_analysis: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, default=dict)
+    status: Mapped[str] = mapped_column(String(32), default="draft", nullable=False)
+    version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    created_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+
+class AgentRun(Base):
+    __tablename__ = "agent_runs"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True)
+    agent_name: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    thread_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    model: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    input: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, default=dict)
+    output: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, default=dict)
+    status: Mapped[str] = mapped_column(String(32), default="pending", nullable=False)
+    error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    input_tokens: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    output_tokens: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    cost_usd: Mapped[Optional[float]] = mapped_column(Numeric(10, 6), nullable=True)
+    latency_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    finished_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class TenantAgentConfig(Base):
+    __tablename__ = "tenant_agent_configs"
+    __table_args__ = (UniqueConstraint("tenant_id", "agent_name", name="uq_tenant_agent"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True)
+    agent_name: Mapped[str] = mapped_column(String(64), nullable=False)
+    model: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    system_prompt: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    temperature: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    enabled_subagents: Mapped[Optional[list[str]]] = mapped_column(JSON, default=list)
+    max_tokens: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    is_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+
+# ──────────────────────────── Knowledge Base (pgvector) ────────────────────────────
+
+try:  # pragma: no cover - pgvector is optional at import time
+    from pgvector.sqlalchemy import Vector as _PGVector  # type: ignore
+
+    _EMBEDDING_COLUMN_TYPE = _PGVector(1536)
+except Exception:  # pragma: no cover
+    # Fall back to JSON so imports don't fail in environments without pgvector
+    # installed (tests, CI lint). Runtime vector ops require the real dep.
+    _EMBEDDING_COLUMN_TYPE = JSON
+
+
+class KnowledgeChunk(Base):
+    __tablename__ = "knowledge_chunks"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    source: Mapped[str] = mapped_column(String(32), nullable=False, default="custom")
+    title: Mapped[str] = mapped_column(String(512), nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    embedding: Mapped[Optional[list[float]]] = mapped_column(_EMBEDDING_COLUMN_TYPE, nullable=True)
+    metadata_: Mapped[Optional[dict[str, Any]]] = mapped_column("metadata", JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)

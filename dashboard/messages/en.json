@@ -73,6 +73,7 @@
     "communication": "Communication",
     "channels": "Channels",
     "conversations": "Conversations",
+    "inbox": "AI Inbox",
     "assistant": "AI Assistant",
     "settingsGroup": "Settings",
     "integrations": "Integrations",
@@ -80,7 +81,136 @@
     "billing": "Billing",
     "team": "Team",
     "profile": "Business Profile",
-    "collapse": "Collapse sidebar"
+    "plans": "Marketing Plans",
+    "contentGen": "AI Content",
+    "creativeGen": "AI Creative",
+    "videoGen": "AI Video",
+    "scheduler": "Scheduler",
+    "analyticsDash": "Analytics Overview",
+    "aiAgents": "AI Agents",
+    "knowledgeBase": "Knowledge Base",
+    "adminSettings": "Admin Settings",
+    "help": "Help",
+    "collapse": "Collapse sidebar",
+    "experiments": "A/B Tests",
+    "whiteLabel": "White Label"
+  },
+  "experiments": {
+    "title": "A/B Content Tests",
+    "subtitle": "Generate multiple content variants and track which performs best.",
+    "new": "New Experiment",
+    "newTitle": "New A/B Experiment",
+    "empty": "No experiments yet. Create one to compare content variants.",
+    "brief": "Brief",
+    "generating": "Generating variant...",
+    "defaultModel": "Default model",
+    "status": {
+      "draft": "Draft",
+      "running": "Running",
+      "completed": "Completed"
+    },
+    "actions": {
+      "start": "Start",
+      "declareWinner": "Declare Winner"
+    },
+    "metrics": {
+      "impressions": "Impressions",
+      "clicks": "Clicks",
+      "engagements": "Engagements",
+      "conversions": "Conversions",
+      "rate": "Engagement score"
+    },
+    "form": {
+      "name": "Experiment name",
+      "brief": "Brief",
+      "target": "Target",
+      "channel": "Channel",
+      "language": "Language",
+      "variants": "Variants",
+      "variantLabel": "Variant",
+      "addVariant": "Add variant",
+      "model": "Model",
+      "promptHint": "Prompt directive (optional)",
+      "promptPlaceholder": "e.g. more playful tone",
+      "cancel": "Cancel",
+      "generate": "Generate Variants"
+    }
+  },
+  "whiteLabel": {
+    "title": "White Label",
+    "subtitle": "Brand the platform as your own agency.",
+    "saved": "Settings saved.",
+    "section": {
+      "branding": "Branding",
+      "domain": "Custom Domain",
+      "email": "Email & Support",
+      "footer": "Footer & Visibility"
+    },
+    "form": {
+      "appName": "App name",
+      "logoUrl": "Logo URL",
+      "faviconUrl": "Favicon URL",
+      "primaryColor": "Primary color",
+      "secondaryColor": "Secondary color",
+      "customDomain": "Custom domain",
+      "verifyDomain": "Verify",
+      "verified": "Verified",
+      "pending": "Pending DNS",
+      "dnsHint": "Point a CNAME from your domain to ignify.app to complete verification.",
+      "senderName": "Email sender name",
+      "senderAddress": "Email sender address",
+      "supportEmail": "Support email",
+      "supportUrl": "Support URL",
+      "footerText": "Footer text",
+      "hidePoweredBy": "Hide 'Powered by Ignify' footer",
+      "enableWhiteLabel": "Enable white-label branding",
+      "save": "Save changes"
+    },
+    "upgrade": {
+      "title": "Unlock White Label with Agency",
+      "description": "Brand the platform with your own logo, colors, and domain. Available on the Agency plan.",
+      "button": "Upgrade to Agency"
+    }
+  },
+  "analyticsDash": {
+    "title": "Analytics Overview",
+    "subtitle": "Track reach, engagement, leads and conversion across all channels.",
+    "period": {
+      "label": "Period",
+      "7d": "Last 7 days",
+      "30d": "Last 30 days",
+      "90d": "Last 90 days"
+    },
+    "kpi": {
+      "reach": "Reach",
+      "engagement": "Engagement",
+      "leads": "New Leads",
+      "conversion": "Conversion Rate",
+      "deltaUp": "Up vs previous period",
+      "deltaDown": "Down vs previous period"
+    },
+    "charts": {
+      "reachOverTime": "Reach Over Time",
+      "engagementOverTime": "Engagement Over Time"
+    },
+    "topPosts": {
+      "title": "Top Posts",
+      "empty": "No post data for this period yet."
+    },
+    "leadsBySource": {
+      "title": "Leads by Source",
+      "empty": "No leads captured in this period."
+    },
+    "report": {
+      "generate": "Generate AI Report",
+      "generating": "Generating AI report...",
+      "summary": "Executive Summary",
+      "insights": "Key Insights",
+      "recommendations": "Recommendations"
+    },
+    "errors": {
+      "failed": "Failed to load analytics. Please try again."
+    }
   },
   "header": {
     "search": "Search anything...",
@@ -156,6 +286,47 @@
     "emptyTitle": "No creative assets",
     "emptyDescription": "Generate or upload your first creative asset"
   },
+  "ads": {
+    "accountsTitle": "Meta Ad Accounts",
+    "accountsSubtitle": "Connect and sync your Meta ad accounts.",
+    "syncAccounts": "Sync from Meta",
+    "noAccounts": "No ad accounts connected yet. Click sync to pull them from Meta.",
+    "active": "Active",
+    "inactive": "Inactive",
+    "newTitle": "AI Campaign Builder",
+    "step1": "Objective & Budget",
+    "step2": "Target Audience",
+    "step3": "Products & Creatives",
+    "step4": "Review & Launch",
+    "adAccount": "Ad Account",
+    "selectAccount": "Select an account…",
+    "pageId": "Facebook Page ID",
+    "objective": "Objective",
+    "budgetUsd": "Total Budget (USD)",
+    "durationDays": "Duration (days)",
+    "language": "Language",
+    "audienceDescription": "Audience description",
+    "audiencePlaceholder": "E.g., Young professionals 25–35 in GCC interested in fitness…",
+    "productsLabel": "Products (one per line)",
+    "productsPlaceholder": "Protein Powder\nYoga Mat",
+    "creativesLabel": "Creative image URLs (one per line)",
+    "generate": "Generate with AI",
+    "launch": "Launch",
+    "next": "Next",
+    "back": "Back",
+    "campaign": "Campaign",
+    "refreshInsights": "Refresh Insights",
+    "pause": "Pause",
+    "resume": "Resume",
+    "stop": "Stop",
+    "impressions": "Impressions",
+    "clicks": "Clicks",
+    "spend": "Spend",
+    "ctr": "CTR",
+    "performanceHistory": "Performance History",
+    "config": "Configuration",
+    "noData": "No data yet."
+  },
   "adsPage": {
     "title": "Ads Manager",
     "createCampaign": "Create Campaign",
@@ -186,7 +357,16 @@
     "keywordTracking": "Keyword Tracking",
     "technicalSeo": "Technical SEO",
     "onPageSeo": "On-Page SEO",
-    "backlinks": "Backlinks"
+    "backlinks": "Backlinks",
+    "auditTitle": "SEO Audit",
+    "auditNewUrl": "Audit a new URL",
+    "auditReport": "Audit Report",
+    "targetKeywords": "Target Keywords",
+    "addKeywords": "Add Keywords",
+    "keywordsBulkLabel": "Paste keywords (one per line or comma separated)",
+    "trackRanking": "Track Ranking",
+    "contentSuggestions": "Content Suggestions",
+    "linkingStrategy": "Internal Linking"
   },
   "socialPage": {
     "title": "Social Media",
@@ -198,6 +378,69 @@
     "comments": "Comments",
     "shares": "Shares",
     "reach": "Reach"
+  },
+  "leads": {
+    "title": "Leads CRM",
+    "subtitle": "Drag and drop leads across stages. Click a card for details.",
+    "kanban": {
+      "new": "New",
+      "contacted": "Contacted",
+      "qualified": "Qualified",
+      "proposal": "Proposal",
+      "won": "Won",
+      "lost": "Lost"
+    },
+    "form": {
+      "name": "Name",
+      "phone": "Phone",
+      "email": "Email",
+      "source": "Source",
+      "notes": "Notes",
+      "submit": "Save",
+      "new": "New Lead"
+    },
+    "card": {
+      "score": "Score",
+      "qualify": "Qualify",
+      "viewDetails": "View details"
+    },
+    "qualification": {
+      "hot": "Hot",
+      "warm": "Warm",
+      "cold": "Cold"
+    },
+    "activities": {
+      "title": "Activities",
+      "addNote": "Add note",
+      "empty": "No activities yet"
+    },
+    "activity": {
+      "note": "Note",
+      "call": "Call",
+      "message": "Message",
+      "email": "Email",
+      "stage_change": "Stage changed"
+    },
+    "source": {
+      "instagram": "Instagram",
+      "whatsapp": "WhatsApp",
+      "facebook": "Facebook",
+      "messenger": "Messenger",
+      "website": "Website",
+      "manual": "Manual",
+      "ads": "Ads",
+      "other": "Other"
+    },
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "qualify": "Qualify with AI",
+      "qualifying": "Qualifying...",
+      "move": "Move stage"
+    },
+    "errors": {
+      "failed": "Something went wrong"
+    }
   },
   "leadsPage": {
     "title": "Leads CRM",
@@ -315,7 +558,11 @@
     "errorLoad": "Failed to load competitors",
     "errorAdd": "Failed to add competitor",
     "errorAnalyze": "Analysis failed",
-    "errorDelete": "Failed to delete competitor"
+    "errorDelete": "Failed to delete competitor",
+    "takeSnapshot": "Take Snapshot",
+    "runAgent": "Run Agent Analysis",
+    "history": "History",
+    "gaps": "Opportunity Gaps"
   },
   "profilePage": {
     "title": "Business Profile",
@@ -419,6 +666,81 @@
     "saveSettings": "Save Settings",
     "saved": "Settings saved successfully"
   },
+  "billing": {
+    "title": "Billing & Subscription",
+    "subtitle": "Manage your plan, billing and usage.",
+    "currentPlan": {
+      "title": "Current Plan",
+      "status": "Status",
+      "renewsOn": "Renews on",
+      "upgrade": "Upgrade Plan",
+      "manage": "Manage Billing",
+      "cancel": "Cancel Subscription"
+    },
+    "status": {
+      "active": "Active",
+      "past_due": "Past Due",
+      "cancelled": "Cancelled",
+      "trialing": "Trialing"
+    },
+    "usage": {
+      "title": "Usage This Month",
+      "articles": "Articles",
+      "images": "Images",
+      "videos": "Videos",
+      "aiTokens": "AI Tokens",
+      "used": "used",
+      "of": "of",
+      "unlimited": "Unlimited",
+      "warning80": "You've used over 80% of your quota. Consider upgrading your plan."
+    },
+    "plans": {
+      "title": "Choose Your Plan",
+      "subtitle": "Upgrade to unlock more features and higher limits.",
+      "currency": "Currency",
+      "perMonth": "month",
+      "popular": "Most Popular",
+      "free": "Free",
+      "starter": "Starter",
+      "pro": "Pro",
+      "agency": "Agency",
+      "subscribe": "Subscribe",
+      "currentPlan": "Current Plan"
+    },
+    "success": {
+      "title": "Payment Successful",
+      "subtitle": "Thank you! Your subscription is now active.",
+      "goToDashboard": "Go to Dashboard"
+    },
+    "cancel": {
+      "title": "Payment Cancelled",
+      "subtitle": "No charges were made. You can try again any time.",
+      "tryAgain": "View Plans"
+    },
+    "errors": {
+      "failed": "Something went wrong. Please try again.",
+      "quotaExceeded": "You've reached your plan limit. Please upgrade to continue."
+    },
+    "currency": {
+      "usd": "US Dollar",
+      "egp": "Egyptian Pound",
+      "sar": "Saudi Riyal",
+      "aed": "UAE Dirham"
+    },
+    "providers": {
+      "title": "Choose Payment Method",
+      "stripe": "International Cards",
+      "stripeDesc": "Pay with Visa, Mastercard, Amex (USD)",
+      "paymob": "Paymob (Egypt)",
+      "paymobDesc": "Cards, wallets, Fawry",
+      "paytabs": "PayTabs (MENA)",
+      "paytabsDesc": "Cards, wallets, regional methods",
+      "geidea": "Geidea Pay by Link",
+      "geideaDesc": "Secure pay-by-link (Saudi/MENA)",
+      "select": "Continue",
+      "cancel": "Cancel"
+    }
+  },
   "billingPage": {
     "title": "Billing",
     "currentPlan": "Current Plan",
@@ -478,8 +800,937 @@
     "apiStatus": "API Status",
     "addProvider": "Add Provider"
   },
+  "adminPlans": {
+    "title": "Plans",
+    "subtitle": "Create and price subscription plans per currency.",
+    "new": "New Plan",
+    "columns": {
+      "slug": "Slug",
+      "name": "Name",
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "users": "Users",
+      "channels": "Channels",
+      "active": "Active",
+      "actions": "Actions"
+    },
+    "form": {
+      "name": "Plan name",
+      "slug": "Slug",
+      "prices": "Prices per currency (monthly / yearly)",
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "features": "Features",
+      "limits": "Limits",
+      "maxUsers": "Max users",
+      "maxChannels": "Max channels",
+      "maxCredits": "Max credits",
+      "active": "Active",
+      "save": "Save",
+      "cancel": "Cancel",
+      "create": "Create"
+    },
+    "currencies": {
+      "USD": "USD",
+      "EGP": "EGP",
+      "SAR": "SAR",
+      "AED": "AED"
+    },
+    "features": {
+      "analytics": "Analytics",
+      "seo": "SEO",
+      "ads": "Ads",
+      "whitelabel": "White-label",
+      "priority": "Priority support",
+      "customdomain": "Custom domain"
+    }
+  },
+  "adminDash": {
+    "title": "Platform Monitoring",
+    "subtitle": "Live view of tenants, marketing plans and AI usage.",
+    "kpi": {
+      "tenants": "Total Tenants",
+      "plans": "Active Plans",
+      "runs24h": "AI Runs (24h)",
+      "cost30d": "Total Cost (30d)"
+    },
+    "plans": {
+      "title": "Recent Marketing Plans",
+      "tenant": "Tenant",
+      "planTitle": "Plan",
+      "status": "Status",
+      "created": "Created",
+      "view": "View",
+      "empty": "No marketing plans yet."
+    },
+    "runs": {
+      "title": "Recent Agent Runs",
+      "agent": "Agent",
+      "model": "Model",
+      "status": "Status",
+      "cost": "Cost (USD)",
+      "latency": "Latency (ms)",
+      "empty": "No agent runs yet."
+    },
+    "tenants": {
+      "title": "Tenants",
+      "view": "View",
+      "name": "Name",
+      "users": "Users",
+      "plan": "Plan",
+      "status": "Status"
+    },
+    "report": {
+      "download": "Download Weekly PDF",
+      "downloading": "Preparing PDF…",
+      "language": "Language"
+    }
+  },
+  "adminTenant": {
+    "tabs": {
+      "overview": "Overview",
+      "plans": "Marketing Plans",
+      "runs": "Agent Runs",
+      "configs": "Agent Configs"
+    },
+    "configs": {
+      "agent": "Agent",
+      "model": "Model",
+      "override": "Override",
+      "defaultModel": "Default Model",
+      "customModel": "Custom Model",
+      "systemPrompt": "System Prompt",
+      "temperature": "Temperature",
+      "enabled": "Enabled",
+      "save": "Save",
+      "reset": "Reset",
+      "saved": "Saved successfully"
+    }
+  },
+  "adminSettings": {
+    "title": "Global Settings",
+    "subtitle": "Platform-wide provider configuration.",
+    "providers": {
+      "openrouter": "OpenRouter (LLM Gateway)",
+      "replicate": "Replicate (Images/Video)",
+      "elevenlabs": "ElevenLabs (Voice)",
+      "stripe": "Stripe (Billing)",
+      "paymob": "Paymob (Billing)",
+      "paytabs": "PayTabs (Billing)",
+      "geidea": "Geidea (Billing)",
+      "configured": "Configured",
+      "notConfigured": "Not configured"
+    },
+    "warning": {
+      "readOnly": "Read-only view",
+      "envManaged": "Global keys are managed via server .env — contact platform admin to update. Tenants can override their agent models via their own settings page."
+    },
+    "auth": {
+      "title": "Authentication",
+      "emailVerificationLabel": "Email verification required",
+      "emailVerificationOn": "ON",
+      "emailVerificationOff": "OFF",
+      "envManaged": "Managed via .env (EMAIL_VERIFICATION_REQUIRED)"
+    }
+  },
+  "knowledgeBase": {
+    "title": "Knowledge Base",
+    "heading": "Knowledge Base",
+    "subtitle": "Train the AI Inbox agent with FAQs, product info, and policies. Chunks are embedded and retrieved via semantic search.",
+    "addChunk": "Add chunk",
+    "editChunk": "Edit chunk",
+    "bulkImport": "Bulk import",
+    "import": "Import",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "searchPlaceholder": "Search chunks...",
+    "empty": "No knowledge chunks yet. Add one or import in bulk.",
+    "confirmDelete": "Delete this chunk?",
+    "importHelp": "Paste JSON array [{title, content, source?}] or upload a CSV (title,content,source).",
+    "fields": {
+      "title": "Title",
+      "content": "Content",
+      "source": "Source"
+    },
+    "sources": {
+      "faq": "FAQ",
+      "product": "Product",
+      "policy": "Policy",
+      "custom": "Custom"
+    },
+    "errors": {
+      "saveFailed": "Failed to save chunk",
+      "deleteFailed": "Failed to delete chunk",
+      "importEmpty": "No valid chunks found to import",
+      "importFailed": "Failed to import chunks"
+    }
+  },
+  "aiAgents": {
+    "title": "AI Agents",
+    "subtitle": "Customize the model and prompt powering each AI agent for your workspace.",
+    "table": {
+      "agent": "Agent",
+      "currentModel": "Current Model",
+      "temperature": "Temperature",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "actions": {
+      "edit": "Edit",
+      "reset": "Reset to Default",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "form": {
+      "model": "Model",
+      "systemPrompt": "System Prompt (optional)",
+      "temperature": "Temperature",
+      "maxTokens": "Max Tokens",
+      "enabled": "Enabled",
+      "customModel": "Custom model identifier"
+    },
+    "status": {
+      "default": "Default",
+      "overridden": "Overridden",
+      "disabled": "Disabled"
+    },
+    "errors": {
+      "failed": "Failed to save agent configuration."
+    }
+  },
   "empty": {
     "title": "Nothing here yet",
     "description": "Get started by creating your first item"
+  },
+  "plans": {
+    "title": "Marketing Plans",
+    "subtitle": "Generate comprehensive AI-powered marketing plans tailored to your business",
+    "generate": "Generate Plan",
+    "generateNew": "Generate New Plan",
+    "listEmpty": "No marketing plans yet. Generate your first AI-powered plan!",
+    "form": {
+      "title": "New Marketing Plan",
+      "titleLabel": "Plan Title",
+      "titlePlaceholder": "e.g. Q1 Growth Strategy",
+      "periodDays": "Plan Period",
+      "period30": "30 Days",
+      "period60": "60 Days",
+      "period90": "90 Days",
+      "language": "Content Language",
+      "languageAr": "Arabic",
+      "languageEn": "English",
+      "languageBoth": "Both",
+      "submit": "Generate Plan",
+      "generating": "Generating your plan..."
+    },
+    "status": {
+      "draft": "Draft",
+      "approved": "Approved",
+      "archived": "Archived"
+    },
+    "sections": {
+      "overview": "Overview",
+      "market": "Market Analysis",
+      "audience": "Audience",
+      "channels": "Channels",
+      "calendar": "Calendar",
+      "kpis": "KPIs"
+    },
+    "actions": {
+      "view": "View",
+      "approve": "Approve",
+      "edit": "Edit",
+      "delete": "Delete",
+      "regenerate": "Regenerate",
+      "exportPdf": "Export PDF"
+    },
+    "fields": {
+      "goals": "Goals",
+      "personas": "Personas",
+      "channels": "Channels",
+      "calendar": "Content Calendar",
+      "kpis": "Key Performance Indicators",
+      "marketAnalysis": "Market Analysis",
+      "competitors": "Competitors",
+      "swot": "SWOT Analysis",
+      "trends": "Trends",
+      "period": "Period"
+    },
+    "steps": {
+      "market": "Analyzing market",
+      "audience": "Defining audience",
+      "channels": "Selecting channels",
+      "calendar": "Building calendar",
+      "kpis": "Setting KPIs"
+    },
+    "generating": {
+      "nodes": {
+        "market": "Market Analysis",
+        "marketDesc": "Researching competitors, trends, and SWOT",
+        "audience": "Audience Profiling",
+        "audienceDesc": "Building personas and buyer intent",
+        "channels": "Channel Planning",
+        "channelsDesc": "Choosing the right channels and mix",
+        "calendar": "Content Calendar",
+        "calendarDesc": "Scheduling posts across the period",
+        "kpis": "KPI Setting",
+        "kpisDesc": "Defining measurable success metrics"
+      },
+      "status": {
+        "pending": "Waiting",
+        "running": "In progress",
+        "done": "Done",
+        "failed": "Failed"
+      },
+      "stream": {
+        "connecting": "Connecting to live stream...",
+        "fallback": "Live stream unavailable. Using non-streaming fallback."
+      },
+      "elapsed": "Elapsed",
+      "seconds": "s"
+    },
+    "table": {
+      "day": "Day",
+      "channel": "Channel",
+      "format": "Format",
+      "topic": "Topic"
+    },
+    "days": "days",
+    "approved": "Plan approved",
+    "errorLoad": "Failed to load plans",
+    "errorGenerate": "Failed to generate plan",
+    "errorApprove": "Failed to approve plan"
+  },
+  "contentGen": {
+    "title": "AI Content Generator",
+    "subtitle": "Generate on-brand marketing content for any channel in seconds",
+    "form": {
+      "brief": "Content Brief",
+      "briefPlaceholder": "Describe what you want to create. e.g. A launch announcement for our new fitness app targeting busy professionals.",
+      "target": "Content Type",
+      "targetPost": "Social Post",
+      "targetBlog": "Blog Article",
+      "targetCaption": "Caption",
+      "targetAdCopy": "Ad Copy",
+      "channel": "Channel",
+      "language": "Language",
+      "languageAr": "Arabic",
+      "languageEn": "English",
+      "languageBoth": "Both",
+      "submit": "Generate Content",
+      "generating": "Generating your content..."
+    },
+    "steps": {
+      "brief": "Analyzing brief",
+      "draft": "Drafting content",
+      "refine": "Refining voice",
+      "hashtags": "Crafting hashtags",
+      "finalize": "Finalizing output"
+    },
+    "result": {
+      "title": "Generated Content",
+      "hashtags": "Hashtags",
+      "copy": "Copy",
+      "copied": "Copied!",
+      "edit": "Edit",
+      "regenerate": "Regenerate"
+    },
+    "errors": {
+      "failed": "Failed to generate content. Please try again."
+    }
+  },
+  "creativeGen": {
+    "title": "AI Creative Generator",
+    "subtitle": "Turn a short idea into 4 on-brand image variations in seconds",
+    "form": {
+      "idea": "Creative Idea",
+      "ideaPlaceholder": "Describe the image you want. e.g. A minimalist flat-lay of a luxury skincare bottle on a marble surface with soft morning light.",
+      "style": "Style",
+      "stylePhoto": "Photography",
+      "styleIllustration": "Illustration",
+      "style3d": "3D Render",
+      "styleMinimal": "Minimalist",
+      "styleAnime": "Anime",
+      "dimensions": "Dimensions",
+      "dim_1_1": "1:1 Instagram Post",
+      "dim_9_16": "9:16 Story / Reel",
+      "dim_16_9": "16:9 YouTube",
+      "dim_4_5": "4:5 Feed",
+      "language": "Language",
+      "submit": "Generate Creative",
+      "generating": "Crafting prompt... Generating 4 variations..."
+    },
+    "steps": {
+      "prompt": "Engineering prompt",
+      "brand": "Checking brand fit",
+      "render": "Rendering 4 variations"
+    },
+    "result": {
+      "title": "Generated Variations",
+      "download": "Download",
+      "select": "Select",
+      "regenerate": "Regenerate"
+    },
+    "errors": {
+      "failed": "Failed to generate creative. Please try again.",
+      "noToken": "Replicate API token is not configured. Running in stub mode — no images were rendered."
+    }
+  },
+  "videoGen": {
+    "title": "AI Video Generator",
+    "subtitle": "Turn a short idea into a ready-to-post vertical video in minutes",
+    "form": {
+      "idea": "Video Idea",
+      "ideaPlaceholder": "Describe the video you want. e.g. A 30s reel showcasing a new skincare serum, soft morning light, close-up product shots, confident female voiceover.",
+      "duration": "Duration",
+      "dur15": "15 seconds",
+      "dur30": "30 seconds",
+      "dur60": "60 seconds",
+      "videoType": "Video Type",
+      "typeAd": "Ad / Promo",
+      "typeEducational": "Educational",
+      "typeEntertainment": "Entertainment",
+      "aspectRatio": "Aspect Ratio",
+      "ratio_9_16": "9:16 Reel / Short",
+      "ratio_1_1": "1:1 Square",
+      "ratio_16_9": "16:9 YouTube",
+      "language": "Language",
+      "submit": "Generate Video",
+      "generating": "Writing script, planning scenes, rendering video..."
+    },
+    "steps": {
+      "script": "Writing script",
+      "scenes": "Planning scenes",
+      "voiceSelect": "Selecting voice",
+      "voiceRender": "Rendering voiceover",
+      "videoRender": "Rendering video",
+      "captions": "Generating captions"
+    },
+    "result": {
+      "script": "Script",
+      "scenes": "Scenes",
+      "download": "Download",
+      "regenerate": "Regenerate",
+      "stub": "Video rendering stub — configure REPLICATE_API_TOKEN to enable real rendering."
+    },
+    "errors": {
+      "failed": "Failed to generate video. Please try again."
+    }
+  },
+  "creativeGallery": {
+    "title": "Creative Gallery",
+    "subtitle": "All your AI-generated images and videos in one place.",
+    "newCreative": "New Creative",
+    "empty": "No creatives yet. Generate your first one!",
+    "search": "Search creatives...",
+    "filter": {
+      "all": "All",
+      "image": "Images",
+      "video": "Videos"
+    },
+    "actions": {
+      "download": "Download",
+      "delete": "Delete",
+      "attach": "Attach to Content"
+    }
+  },
+  "videoGallery": {
+    "title": "Video Gallery",
+    "subtitle": "Your AI-generated videos.",
+    "newVideo": "New Video",
+    "empty": "No videos yet.",
+    "search": "Search videos...",
+    "actions": {
+      "download": "Download",
+      "delete": "Delete",
+      "attach": "Attach to Content"
+    }
+  },
+  "logo_overlay": {
+    "enabled": "Apply brand logo overlay",
+    "position": {
+      "topLeft": "Top Left",
+      "topRight": "Top Right",
+      "bottomLeft": "Bottom Left",
+      "bottomRight": "Bottom Right",
+      "center": "Center"
+    }
+  },
+  "inbox": {
+    "title": "AI Inbox",
+    "subtitle": "Draft on-brand replies for incoming customer messages.",
+    "listEmpty": "No conversations yet.",
+    "selectConversation": "Select a conversation to view messages.",
+    "messages": {
+      "customer": "Customer",
+      "you": "You",
+      "typeMessage": "Type or edit your reply..."
+    },
+    "actions": {
+      "generateReply": "Generate AI Reply",
+      "send": "Send",
+      "sending": "Sending...",
+      "generating": "Generating..."
+    },
+    "intents": {
+      "greeting": "Greeting",
+      "question": "Question",
+      "complaint": "Complaint",
+      "purchase": "Purchase intent",
+      "booking": "Booking",
+      "feedback": "Feedback",
+      "spam": "Spam",
+      "other": "Other"
+    },
+    "escalation": {
+      "needsHuman": "Needs human agent"
+    },
+    "errors": {
+      "failed": "Failed to generate reply. Please try again."
+    }
+  },
+  "onboarding": {
+    "welcome": "Welcome to Ignify",
+    "progressStep": "Step {step}",
+    "of": "of",
+    "business": {
+      "title": "Tell us about your business",
+      "subtitle": "This helps our AI tailor your marketing strategy.",
+      "industry": "Industry",
+      "industryOptions": {
+        "ecommerce": "E-commerce",
+        "restaurant": "Restaurant",
+        "clinic": "Clinic",
+        "real_estate": "Real estate",
+        "services": "Services",
+        "saas": "SaaS",
+        "other": "Other"
+      },
+      "country": "Country",
+      "countryOptions": {
+        "EG": "Egypt",
+        "SA": "Saudi Arabia",
+        "AE": "United Arab Emirates",
+        "KW": "Kuwait",
+        "QA": "Qatar",
+        "BH": "Bahrain",
+        "OM": "Oman",
+        "other": "Other"
+      },
+      "primaryLanguage": "Primary language",
+      "description": "Business description",
+      "descriptionPlaceholder": "What does your business do?",
+      "audience": "Target audience",
+      "audiencePlaceholder": "Who are your ideal customers?",
+      "products": "Products or services",
+      "addProduct": "Add product",
+      "competitors": "Main competitors",
+      "addCompetitor": "Add competitor",
+      "next": "Next"
+    },
+    "brand": {
+      "title": "Define your brand voice",
+      "subtitle": "We'll use this in every piece of content we generate.",
+      "tone": "Brand tone",
+      "toneOptions": {
+        "professional": "Professional",
+        "friendly": "Friendly",
+        "playful": "Playful",
+        "luxury": "Luxury",
+        "bold": "Bold",
+        "educational": "Educational"
+      },
+      "forbiddenWords": "Forbidden words",
+      "forbiddenWordsPlaceholder": "Type a word and press Enter",
+      "colors": "Brand colors",
+      "primaryColor": "Primary color",
+      "secondaryColor": "Secondary color",
+      "logo": "Logo",
+      "uploadLogo": "Paste a logo URL or leave empty",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "channels": {
+      "title": "Choose your channels",
+      "subtitle": "Which platforms should we build your strategy around?",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "plan": {
+      "title": "Generate your first marketing plan",
+      "subtitle": "We'll now generate your first marketing plan based on everything you shared.",
+      "generate": "Generate Plan",
+      "generating": "Generating...",
+      "steps": {
+        "market": "Analyzing your market",
+        "audience": "Building audience personas",
+        "channels": "Mapping channel strategy",
+        "calendar": "Drafting content calendar",
+        "kpis": "Defining KPIs"
+      }
+    },
+    "errors": {
+      "failed": "Something went wrong. Please try again."
+    }
+  },
+  "scheduler": {
+    "title": "Social Scheduler",
+    "subtitle": "Plan and automate posts across Facebook and Instagram.",
+    "calendar": {
+      "empty": "No posts",
+      "newPost": "New Post",
+      "thisWeek": "This Week",
+      "days": {
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat",
+        "sun": "Sun"
+      }
+    },
+    "form": {
+      "caption": "Caption",
+      "captionPlaceholder": "Write your post caption…",
+      "platforms": "Platforms",
+      "scheduledAt": "Schedule date & time",
+      "mediaUrls": "Media URLs",
+      "bestTime": "Suggest best time",
+      "submit": "Schedule Post",
+      "scheduling": "Scheduling…"
+    },
+    "accounts": {
+      "title": "Social Accounts",
+      "connected": "Connected Accounts",
+      "connectMeta": "Connect Facebook / Instagram",
+      "disconnect": "Disconnect",
+      "expiresOn": "Expires on",
+      "noAccounts": "No accounts connected yet."
+    },
+    "status": {
+      "scheduled": "Scheduled",
+      "published": "Published",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "errors": {
+      "failed": "Something went wrong. Please try again.",
+      "oauthFailed": "Could not start authentication. Please try again."
+    }
+  },
+  "team": {
+    "title": "Team Management",
+    "subtitle": "Manage your team members, roles, and invitations",
+    "currentRole": "Your role",
+    "rolesLabel": "Roles",
+    "members": {
+      "title": "Members",
+      "empty": "No members yet",
+      "invite": "Invite member",
+      "columns": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "lastLogin": "Last login",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "unverified": "Unverified"
+      }
+    },
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "editor": "Editor",
+      "viewer": "Viewer"
+    },
+    "roleDescriptions": {
+      "owner": "Full access including billing and ownership transfer",
+      "admin": "Manage team, content, ads, and agent configuration",
+      "editor": "Create and edit content, view plans, respond in inbox",
+      "viewer": "View-only access to content, plans, inbox, and analytics"
+    },
+    "invite": {
+      "title": "Invite a new member",
+      "email": "Email address",
+      "role": "Role",
+      "message": "Message (optional)",
+      "messagePlaceholder": "Add a personal note to the invitation email...",
+      "submit": "Send invitation",
+      "sending": "Sending...",
+      "sent": "Invitation sent",
+      "success": "Invitation sent successfully"
+    },
+    "invitations": {
+      "title": "Pending invitations",
+      "empty": "No pending invitations",
+      "columns": {
+        "email": "Email",
+        "role": "Role",
+        "invitedBy": "Invited by",
+        "expires": "Expires",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "expired": "Expired",
+        "cancelled": "Cancelled"
+      },
+      "resend": "Resend",
+      "cancel": "Cancel",
+      "cancelled": "Invitation cancelled",
+      "resent": "Invitation resent"
+    },
+    "actions": {
+      "changeRole": "Change role",
+      "deactivate": "Deactivate",
+      "remove": "Remove",
+      "transferOwnership": "Transfer ownership",
+      "confirm": "Confirm"
+    },
+    "transfer": {
+      "title": "Transfer ownership",
+      "warning": "You will be demoted to admin. This action cannot be undone.",
+      "warning2": "This action cannot be undone.",
+      "warningDemotion": "You will be demoted to admin immediately after transfer.",
+      "selectMember": "Select new owner",
+      "typeToConfirm": "Type {email} to confirm",
+      "confirm": "Transfer ownership",
+      "success": "Ownership transferred. Please sign in again."
+    },
+    "accept": {
+      "title": "Accept invitation",
+      "welcomeTo": "You have been invited to join",
+      "setPassword": "Set your password to get started",
+      "fullName": "Full name",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "submit": "Accept and sign in",
+      "accepting": "Accepting...",
+      "invalidToken": "Invalid or missing invitation token",
+      "expired": "This invitation has expired"
+    },
+    "errors": {
+      "failed": "Something went wrong. Please try again.",
+      "cannotDemoteOwner": "The owner cannot be demoted. Transfer ownership first.",
+      "onlyOwnerCanChangeAdmin": "Only the owner can change another admin's role.",
+      "passwordsDontMatch": "Passwords do not match"
+    }
+  },
+  "verify": {
+    "title": "Verifying your email",
+    "verifying": "Please wait while we confirm your email address...",
+    "successTitle": "Email verified!",
+    "successMessage": "Your email has been confirmed. You can now access all features.",
+    "goToDashboard": "Go to Dashboard",
+    "failedTitle": "Verification failed",
+    "failedMessage": "We couldn't verify your email.",
+    "resendButton": "Resend verification link",
+    "resending": "Sending...",
+    "resent": "A new verification email has been sent. Please check your inbox.",
+    "banner": {
+      "message": "Please verify your email address to unlock all features.",
+      "action": "Resend link",
+      "dismiss": "Dismiss"
+    },
+    "resendPage": {
+      "title": "Resend verification email",
+      "email": "Email",
+      "submit": "Send verification email"
+    },
+    "errors": {
+      "failed": "Something went wrong. Please try again.",
+      "expired": "This verification link has expired. Please request a new one.",
+      "invalid": "This verification link is invalid."
+    }
+  },
+  "adminAgents": {
+    "title": "AI Agents",
+    "subtitle": "Inspect registered agents, their graphs, and recent activity.",
+    "list": {
+      "name": "Agent",
+      "model": "Model",
+      "subAgents": "nodes",
+      "viewGraph": "View Graph",
+      "empty": "No agents registered."
+    },
+    "graph": {
+      "nodes": "Nodes",
+      "edges": "Edges",
+      "back": "Back",
+      "recentRuns": "Recent Runs",
+      "systemPrompt": "System Prompt"
+    }
+  },
+  "agentTrace": {
+    "title": "Agent Run",
+    "columns": {
+      "node": "Node",
+      "duration": "Duration",
+      "tokens": "Tokens (in/out)",
+      "cost": "Cost",
+      "status": "Status"
+    },
+    "tabs": {
+      "timeline": "Timeline",
+      "input": "Input",
+      "output": "Output",
+      "error": "Error"
+    },
+    "status": {
+      "pending": "Pending",
+      "running": "Running",
+      "succeeded": "Succeeded",
+      "failed": "Failed",
+      "skipped": "Skipped"
+    },
+    "totals": {
+      "cost": "Total Cost",
+      "latency": "Latency",
+      "tokens": "Tokens"
+    },
+    "empty": "No trace data recorded for this run.",
+    "backToAgent": "Back to agent graph"
+  },
+  "contentBulk": {
+    "title": "Bulk Content Generation",
+    "subtitle": "Generate a week of on-brand posts at once",
+    "addRow": "Add Row",
+    "removeRow": "Remove",
+    "loadFromPlan": "Load from Plan",
+    "pickPlan": "Choose an approved plan",
+    "generateAll": "Generate All",
+    "generating": "Generating...",
+    "row": "Row {n}",
+    "empty": "No rows yet. Add one or load from a plan.",
+    "columns": {
+      "brief": "Brief",
+      "target": "Type",
+      "channel": "Channel",
+      "language": "Language",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "pending": "Pending",
+      "running": "Running",
+      "ok": "Done",
+      "error": "Error"
+    }
+  },
+  "contentTemplates": {
+    "title": "Content Templates",
+    "subtitle": "Reusable briefs and prompts for faster content generation",
+    "new": "New Template",
+    "use": "Use",
+    "edit": "Edit",
+    "delete": "Delete",
+    "favorite": "Favorite",
+    "unfavorite": "Unfavorite",
+    "loadFromTemplate": "Load from template",
+    "form": {
+      "name": "Template Name",
+      "type": "Content Type",
+      "channel": "Channel",
+      "language": "Language",
+      "brief": "Brief Template",
+      "briefPlaceholder": "Describe the content brief. You can use placeholders like {product} or {audience}.",
+      "systemPrompt": "System Prompt (optional)",
+      "save": "Save Template"
+    },
+    "empty": "No templates yet. Create your first template to reuse common briefs.",
+    "confirmDelete": "Delete this template?"
+  },
+  "contentWorkflow": {
+    "submitReview": "Submit for Review",
+    "approve": "Approve",
+    "reject": "Reject",
+    "publishNow": "Publish Now",
+    "rejectReason": "Reason for rejection",
+    "submitting": "Submitting...",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "activityTitle": "Activity",
+    "comments": "Comments",
+    "addComment": "Add comment...",
+    "post": "Post",
+    "statusLabel": {
+      "draft": "Draft",
+      "review": "In Review",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "scheduled": "Scheduled",
+      "published": "Published"
+    },
+    "actions": {
+      "submit_review": "submitted for review",
+      "approve": "approved",
+      "reject": "rejected",
+      "publish": "published",
+      "comment": "commented"
+    }
+  },
+  "plansRegenerate": {
+    "button": "Regenerate",
+    "confirm": "Regenerate this section? It will replace the current values.",
+    "regenerating": "Regenerating..."
+  },
+  "helpCenter": {
+    "title": "Help Center",
+    "subtitle": "Guides, tips and best practices to get the most out of Ignify.",
+    "searchPlaceholder": "Search help articles...",
+    "learnMore": "Learn more",
+    "backToHelp": "Back to Help Center",
+    "relatedArticles": "Related articles",
+    "notFound": "Help article not found.",
+    "topics": {
+      "gettingStarted": {
+        "title": "Getting Started",
+        "description": "Set up your workspace, invite your team, and take your first tour.",
+        "content": "Welcome to Ignify! This guide walks you through the first 15 minutes of using the platform so that by the end you have a workspace that understands your brand, a team that can collaborate, and your first AI-generated output.\n\nStep 1 — Complete your brand profile. Go to Business Profile from the sidebar. Fill in your industry, target audience, products/services, and a short brand description. This profile powers every piece of AI-generated content and every marketing plan the system produces, so the more precise you are here, the better everything else will be. If you sell handmade leather goods in Egypt, say exactly that — not just \"ecommerce\".\n\nStep 2 — Upload your knowledge base. Still inside Business Profile, paste anything you want the AI to know: shipping policy, return policy, frequently asked questions, tone-of-voice rules. The AI reads this before every generation.\n\nStep 3 — Invite your team. Go to Settings → Team. Add marketers as Editor, designers as Contributor, and leadership as Owner. Each role has a clearly scoped permission set, and every action is logged in the audit trail.\n\nStep 4 — Connect a channel. Open Channels and connect at least one of Instagram, WhatsApp, or Facebook. You don't need every channel on day one — pick the one where your customers already live.\n\nStep 5 — Take the product tour. From the dashboard, click the \"Tour\" button at the top. It walks you through the five main workspaces (Plans, Content, Creative, Ads, Analytics) in about four minutes. You can re-run it any time.\n\nOnce done, you're ready to generate your first marketing plan — see the next article."
+      },
+      "firstPlan": {
+        "title": "Generate Your First Plan",
+        "description": "Let AI produce a 90-day marketing plan tailored to your brand.",
+        "content": "The Marketing Plan is Ignify's flagship feature. It uses your brand profile to produce a complete 90-day plan covering goals, buyer personas, channel mix, content calendar, KPIs and a full market analysis. Here's how to generate your first one.\n\n1. Open the Marketing Plans workspace from the sidebar. Click \"Generate new plan\".\n\n2. Confirm the inputs. The form pre-fills from your brand profile, but you can tweak: period length (30/60/90 days), budget tier (lean, balanced, aggressive), and primary objectives (awareness, conversion, retention, launch).\n\n3. Click Generate. The AI will take 60–90 seconds to produce the plan. You'll see a progress indicator with the current stage (market research → personas → calendar → KPIs).\n\n4. Review each section. Every section is regenerable independently — if you love the personas but not the calendar, click the regenerate icon on just that section and the rest stays intact.\n\n5. Collaborate. Leave comments on specific calendar items. Assign calendar items to team members. Approve the plan when ready.\n\n6. Turn the calendar into real content. From any calendar row, click \"Draft\" to auto-create a content brief in the AI Content workspace, pre-filled with the topic, hook, CTA and target channel. From there you're two clicks away from a finished caption + image.\n\nTip: generate two or three plan variants with different tones (e.g. \"bold\" vs \"educational\") and pick the one that feels most like your brand. The credits cost is small, and side-by-side comparison beats trying to iterate a single plan."
+      },
+      "aiContent": {
+        "title": "Create AI Content",
+        "description": "Draft captions, blogs, emails and ads with brand-aware AI.",
+        "content": "The AI Content workspace generates long-form and short-form copy in Arabic and English, using your brand tone. Here's the fastest path to a publish-ready post.\n\n1. Open AI Content and click New Brief. Pick a format (social post, blog article, email, ad copy) and a channel (Instagram, TikTok, blog, etc). The prompt surface adapts to the format.\n\n2. Fill in the brief. Minimum viable brief: a one-line topic + desired CTA. Better brief: include a hook angle, target persona, length, and 3–5 keywords. Best brief: reference an existing piece of content you loved and say \"same tone as this\".\n\n3. Generate. You'll get three variants by default. Swipe between them and pick the strongest, or mix sentences from multiple.\n\n4. Refine. Use the inline rewriting tools: \"shorter\", \"more playful\", \"add emojis\", \"translate to Arabic\", \"add hashtags\". These are one-click operations that preserve the rest of the copy.\n\n5. Send for review. If your team has an approval workflow, click Send for review and an editor gets notified. If you're the editor, approve and move to Scheduler.\n\n6. Schedule or publish. From the content page, jump to Scheduler to queue the post for the best engagement slot on your chosen channel. Ignify estimates the optimal time based on your past engagement data.\n\nPro tips: save any well-performing brief as a Template so the whole team can reuse it. Use the \"Brand voice score\" indicator to make sure generated copy still sounds like you — if it drops below 70%, regenerate."
+      },
+      "aiImages": {
+        "title": "Generate AI Images",
+        "description": "Produce product photography and social creatives in seconds.",
+        "content": "Creative Studio turns text prompts into brand-ready visuals. It supports multiple style presets (editorial, flat-lay, lifestyle, studio, UGC) and aspect ratios for every major channel.\n\n1. Open Creative Studio → Generate. Pick the aspect ratio (1:1 for feed, 9:16 for stories/reels, 16:9 for web banners).\n\n2. Write your prompt. Be concrete: instead of \"a nice photo of a wallet\" try \"top-down flat lay of a dark-brown handmade leather wallet on walnut wood, warm golden afternoon light, moody editorial style, studio aesthetic\". Include the subject, angle, lighting, mood and style.\n\n3. Use a style preset. Pick one from the dropdown — this appends tested prompt fragments to your text that steer the model toward the look you want.\n\n4. Generate. You'll receive four variants. Pick the strongest.\n\n5. Refine. Options include: remove background, upscale 2x, variations of this image, inpaint (erase + redraw a region). Each operation is non-destructive — the original is always preserved.\n\n6. Save to library. Good images go into your Assets library where the whole team can reuse them, including directly from the AI Content workspace.\n\nImportant: always review generated images for any brand or legal issues before using externally — e.g. logos, faces of real people, or trademarked items. Ignify warns you when it detects these but cannot catch every case."
+      },
+      "socialAccounts": {
+        "title": "Connect Social Accounts",
+        "description": "Link Instagram, Facebook, TikTok and more to schedule and measure.",
+        "content": "Connecting social accounts lets Ignify both publish on your behalf and read engagement metrics to improve recommendations. All tokens are encrypted at rest and scoped to the minimum permissions required.\n\nInstagram / Facebook: use Channels → Connect → Instagram. You'll be redirected to Meta to authorize. Required permissions: pages_show_list, pages_read_engagement, instagram_basic, instagram_content_publish. Your Instagram account must be a Business or Creator account linked to a Facebook Page.\n\nTikTok: Channels → Connect → TikTok. The TikTok for Business OAuth flow will open. You need a TikTok Business account.\n\nWhatsApp: two options. (a) WhatsApp Business Cloud API via Meta — recommended for volume. (b) QR pairing via the built-in connector — faster for small accounts.\n\nGoogle / YouTube: OAuth via Google, scoped to YouTube upload + analytics read.\n\nTroubleshooting: if a token expires, you'll see a red banner in the Channels page. Click Reconnect. If Meta rejects the permission request, make sure your app is out of Development mode and the page you're connecting is managed by the same user that is logged into Ignify.\n\nPrivacy: you can disconnect a channel at any time. Disconnecting revokes the token, stops all scheduled posts on that channel, and purges stored metrics after 30 days."
+      },
+      "team": {
+        "title": "Manage Your Team",
+        "description": "Invite teammates, assign roles and track activity.",
+        "content": "Ignify is built for teams of 3–30 people collaborating on marketing. Every action is scoped to a role and logged to the audit trail.\n\nRoles:\n- Owner: full access including billing, plan upgrades, data deletion.\n- Admin: everything except billing.\n- Editor: create/edit/publish content, plans and creatives. Cannot change settings or invite users.\n- Contributor: create drafts and submit for review. Cannot publish directly.\n- Viewer: read-only.\n\nInviting: Settings → Team → Invite. Enter email, pick a role, and optionally restrict to specific workspaces (e.g. only the Ads workspace for an agency contractor). The invitee receives a bilingual email with a one-click accept link. Invitations expire after 7 days.\n\nAudit log: Settings → Audit Log shows every change — who did what, when, with the diff. Filter by user, resource type, or date range. Exportable as CSV.\n\nTransferring ownership: a current Owner can promote another user to Owner at any time. There can be multiple Owners. To remove yourself as Owner, promote someone else first.\n\nSingle sign-on: available on the Enterprise plan. We support Google Workspace, Microsoft Entra, and any SAML 2.0 IdP. Contact support to enable.\n\nBest practice: give agency contractors Contributor access, not Editor, so their work is always reviewed by your team before going live."
+      },
+      "billing": {
+        "title": "Billing & Plans",
+        "description": "Manage your subscription, credits and invoices.",
+        "content": "Ignify billing has two components: a monthly subscription (Starter / Professional / Enterprise) and a credit balance for AI usage. Most text operations are 1–5 credits; image generation is 10–40 credits depending on resolution.\n\nChanging plan: Settings → Billing → Change plan. Upgrades are prorated and take effect immediately. Downgrades take effect at the end of the current billing cycle — you keep your higher limits until then.\n\nCredits: your plan includes a monthly credit grant. Top-ups are available in packs of 1,000 / 5,000 / 20,000. Credits never expire and top-up credits are used before the monthly grant, so you don't lose unused top-ups.\n\nPayment methods: Stripe (global cards), Paymob (Egypt — cards, Fawry, wallets), PayTabs (GCC — cards, mada, Apple Pay). We add methods based on demand; ask support if you need a specific provider.\n\nInvoices: all invoices are available under Settings → Billing → Invoices. VAT-compliant for Egypt and KSA. You can add your company tax ID under Settings → Billing → Tax info.\n\nRefunds: within 14 days of a new subscription for Starter/Professional, no questions asked. Enterprise is governed by your signed contract.\n\nFailed payments: we retry three times over 7 days before suspending the account. You'll get email warnings before any disruption. Your data is retained for 30 days after suspension, giving you time to resolve the issue without data loss."
+      },
+      "shortcuts": {
+        "title": "Keyboard Shortcuts",
+        "description": "Move faster with keyboard-first navigation.",
+        "content": "Ignify is keyboard-friendly. Press ? anywhere to open the shortcut sheet.\n\nGlobal:\n- Cmd/Ctrl + K — command palette (jump anywhere, search anything).\n- G then D — go to Dashboard.\n- G then P — go to Marketing Plans.\n- G then C — go to AI Content.\n- G then I — go to AI Creative (images).\n- G then A — go to Analytics.\n- G then S — go to Settings.\n- / — focus search.\n- ? — open shortcut sheet.\n- Esc — close any modal.\n\nContent editor:\n- Cmd/Ctrl + Enter — generate / regenerate.\n- Cmd/Ctrl + S — save draft.\n- Cmd/Ctrl + Shift + P — publish (if you have permission).\n- Alt + 1/2/3 — switch between variants.\n- Cmd/Ctrl + B — bold, Cmd/Ctrl + I — italic.\n\nCalendar / scheduler:\n- J / K — move selection down / up.\n- T — go to today.\n- W / M — switch to week / month view.\n- N — new post at selected slot.\n- Del — delete selected post.\n\nInbox:\n- E — archive, R — reply with AI suggestion, Shift + R — reply manually.\n- 1–5 — apply quick label.\n\nArabic keyboard: all shortcuts use physical key positions, so they work identically whether you're typing in Arabic or English layout.\n\nAccessibility: full screen-reader support, focus indicators, and respect for prefers-reduced-motion. If a shortcut conflicts with your assistive tech, you can rebind it in Settings → Preferences → Shortcuts."
+      }
+    }
   }
 }

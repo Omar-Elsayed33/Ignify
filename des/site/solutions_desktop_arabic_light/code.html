@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+
+<html dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-tint": "#ab3500",
+                    "on-primary-fixed-variant": "#832600",
+                    "tertiary-fixed": "#f1dbff",
+                    "on-tertiary-fixed-variant": "#680eac",
+                    "on-surface-variant": "#594139",
+                    "tertiary-container": "#bf79ff",
+                    "on-secondary": "#ffffff",
+                    "tertiary": "#8234c6",
+                    "on-tertiary-fixed": "#2d0050",
+                    "inverse-on-surface": "#f0f0f5",
+                    "secondary-container": "#df215c",
+                    "surface-container-low": "#f3f3f8",
+                    "on-primary": "#ffffff",
+                    "on-primary-fixed": "#390c00",
+                    "surface-container": "#ededf2",
+                    "on-primary-container": "#5f1900",
+                    "primary-fixed": "#ffdbd0",
+                    "on-tertiary-container": "#4b0081",
+                    "on-tertiary": "#ffffff",
+                    "on-background": "#1a1c1f",
+                    "outline": "#8d7168",
+                    "on-surface": "#1a1c1f",
+                    "secondary": "#b80046",
+                    "on-error": "#ffffff",
+                    "surface-dim": "#d9dade",
+                    "background": "#f9f9fe",
+                    "surface-bright": "#f9f9fe",
+                    "surface-container-highest": "#e2e2e7",
+                    "inverse-primary": "#ffb59d",
+                    "secondary-fixed-dim": "#ffb2bc",
+                    "primary": "#ab3500",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed-dim": "#deb7ff",
+                    "surface-variant": "#e2e2e7",
+                    "on-error-container": "#93000a",
+                    "inverse-surface": "#2e3034",
+                    "on-secondary-fixed": "#400013",
+                    "on-secondary-container": "#fffbff",
+                    "secondary-fixed": "#ffd9dd",
+                    "on-secondary-fixed-variant": "#910035",
+                    "surface": "#f9f9fe",
+                    "surface-container-high": "#e8e8ed",
+                    "error": "#ba1a1a",
+                    "primary-fixed-dim": "#ffb59d",
+                    "outline-variant": "#e1bfb5",
+                    "error-container": "#ffdad6",
+                    "primary-container": "#ff6b35"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Space Grotesk"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f9f9fe; }
+        .font-headline { font-family: 'Space Grotesk', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-panel { backdrop-filter: blur(20px); background-color: rgba(255, 255, 255, 0.8); }
+        .gradient-text { background: linear-gradient(90deg, #FF6B35, #FF3D71, #7B2CBF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .brand-gradient { background: linear-gradient(135deg, #FF6B35 0%, #FF3D71 50%, #7B2CBF 100%); }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- TopNavBar -->
+<header class="sticky top-0 w-full z-50 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm dark:shadow-none">
+<nav class="flex flex-row-reverse justify-between items-center px-6 py-4 max-w-7xl mx-auto w-full rtl">
+<div class="text-2xl font-bold bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 bg-clip-text text-transparent font-['Space_Grotesk']">
+                إجنيفاى
+            </div>
+<div class="hidden md:flex flex-row-reverse gap-8 items-center">
+<a class="text-slate-700 dark:text-slate-300 hover:text-orange-500 transition-colors font-['Space_Grotesk']" href="#">المنصة</a>
+<a class="text-orange-600 font-bold border-b-2 border-orange-500 pb-1 font-['Space_Grotesk']" href="#">الحلول</a>
+<a class="text-slate-700 dark:text-slate-300 hover:text-orange-500 transition-colors font-['Space_Grotesk']" href="#">الموارد</a>
+<a class="text-slate-700 dark:text-slate-300 hover:text-orange-500 transition-colors font-['Space_Grotesk']" href="#">الأسعار</a>
+<a class="text-slate-700 dark:text-slate-300 hover:text-orange-500 transition-colors font-['Space_Grotesk']" href="#">الشركة</a>
+</div>
+<div class="flex flex-row-reverse items-center gap-4">
+<button class="px-6 py-2 rounded-xl brand-gradient text-white font-bold hover:opacity-80 transition-all duration-300 scale-95 active:scale-90 font-['Space_Grotesk']">
+                    ابدأ الآن
+                </button>
+<button class="text-slate-700 dark:text-slate-300 font-['Space_Grotesk']">English</button>
+</div>
+</nav>
+</header>
+<main class="relative overflow-hidden">
+<!-- Hero Section -->
+<section class="relative pt-24 pb-32 px-6 overflow-hidden">
+<div class="max-w-7xl mx-auto text-right">
+<div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-tertiary/10 text-tertiary font-medium mb-8">
+<span class="material-symbols-outlined text-sm">auto_awesome</span>
+<span class="text-xs uppercase tracking-widest font-label">حلول مخصصة</span>
+</div>
+<h1 class="text-6xl md:text-8xl font-bold font-headline text-on-surface mb-8 tracking-tighter leading-none">
+                    محركات نمو دقيقة <br/> <span class="gradient-text">لكل قطاع</span>
+</h1>
+<p class="max-w-2xl text-xl text-on-surface-variant leading-relaxed mb-12">
+                    نحن لا نقدم حلولاً عامة. نحن نبني أنظمة ذكاء اصطناعي تفهم تعقيدات قطاعك وتدفع بأعمالك نحو الريادة المطلقة في سوق العمل.
+                </p>
+</div>
+<!-- Abstract Background Element -->
+<div class="absolute -top-24 -left-24 w-96 h-96 brand-gradient blur-[120px] opacity-20 rounded-full"></div>
+<div class="absolute top-1/2 -right-48 w-[500px] h-[500px] bg-tertiary blur-[150px] opacity-10 rounded-full"></div>
+</section>
+<!-- Industry Bento Grid -->
+<section class="py-24 px-6 bg-surface-container-low">
+<div class="max-w-7xl mx-auto">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+<!-- E-commerce Section (Large Card) -->
+<div class="md:col-span-8 bg-surface-container-lowest rounded-3xl p-10 relative overflow-hidden group">
+<div class="relative z-10">
+<span class="material-symbols-outlined text-4xl text-primary mb-6" data-icon="shopping_cart">shopping_cart</span>
+<h3 class="text-3xl font-bold font-headline mb-4">التجارة الإلكترونية</h3>
+<p class="text-on-surface-variant max-w-md mb-8">قم بتحويل متجرك إلى آلة بيع لا تتوقف. استخدم تحليلاتنا التنبؤية لتوقع احتياجات عملائك قبل أن يطلبوها.</p>
+<ul class="space-y-4 mb-10">
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="check_circle">check_circle</span>
+<span>تحسين معدلات التحويل التلقائي</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="check_circle">check_circle</span>
+<span>إدارة المخزون الذكي</span>
+</li>
+</ul>
+<button class="flex items-center gap-2 font-bold text-primary group-hover:gap-4 transition-all">
+<span>استكشف حلول التجارة</span>
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+</div>
+<div class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+<img alt="" class="w-full h-full object-cover grayscale" data-alt="modern retail space with digital displays and sleek interior design reflecting future of ecommerce" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbZ-CI4wO8_uYmrCjpoPfyYxB_ku4H_1y9wkufop8fAG10VTgITb0p-hyIE-hbXcJ7-8e2545o9wjSIvJNNfQkPZKEOVSVy5hgArQ8wYiiQeU91CSBjLGhlAy1flPN9NTcCQGdk8P30XydGl7FZutmPJOYrlu-BK3w20xq1okXbNSZZFDeGCleIQq1rxOoZcIKBYh036RKI1FloaQR2rWCsGxYcBqT29RRor9BbPUp5tY_TN5tZ1uEj_5wy10jWtkhcPd1hPzkqgXc"/>
+</div>
+</div>
+<!-- Agencies Section -->
+<div class="md:col-span-4 bg-surface-container-lowest rounded-3xl p-10 flex flex-col justify-between border-b-2 border-outline-variant/15">
+<div>
+<span class="material-symbols-outlined text-4xl text-secondary mb-6" data-icon="hub">hub</span>
+<h3 class="text-3xl font-bold font-headline mb-4">الوكالات</h3>
+<p class="text-on-surface-variant">ارتقِ بنتائج عملائك من خلال أدوات التشغيل الآلي والتقارير العميقة التي توفر الوقت وتزيد الربحية.</p>
+</div>
+<div class="mt-12 bg-surface-container-low rounded-2xl p-6">
+<div class="flex items-center justify-between mb-2">
+<span class="text-sm font-label uppercase">زيادة الكفاءة</span>
+<span class="text-secondary font-bold">+45%</span>
+</div>
+<div class="w-full bg-outline-variant/20 h-1 rounded-full">
+<div class="bg-secondary h-1 rounded-full w-3/4"></div>
+</div>
+</div>
+</div>
+<!-- SaaS Section -->
+<div class="md:col-span-5 bg-surface-container-lowest rounded-3xl p-10 flex flex-col justify-between relative overflow-hidden">
+<div class="relative z-10">
+<span class="material-symbols-outlined text-4xl text-tertiary mb-6" data-icon="cloud_done">cloud_done</span>
+<h3 class="text-3xl font-bold font-headline mb-4">البرمجيات كخدمة (SaaS)</h3>
+<p class="text-on-surface-variant">قلل معدلات الإلغاء وزد القيمة الدائمة للعميل عبر تخصيص تجربة المستخدم باستخدام البيانات اللحظية.</p>
+</div>
+<div class="relative mt-8 h-48 rounded-xl overflow-hidden shadow-2xl">
+<img alt="" class="w-full h-full object-cover" data-alt="clean minimalist software dashboard with glowing data visualization charts and purple accents" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBknZSN3tKnrr7oo_HnUVnBe0xQPf3f9YNxDCpDICULTv9XwKD2IS8Fhui00ZNPlaRuRE_v0ytgnQhrRrHE9Q0wxTIm98kllz4tq2KUgDR57CfyHiAsSXBYZGRmks4scai8si6mBO8dl4MtN919Dg33CiFSZYmBeEcCUNXD7ComydiDjRQ1M2zl4f0Rr23wGqzaUSzE1ikyt0gZ3HbroreVZiz6RpRSe-FLVHq0ojoZbOaLpbpkx3Wgmd1PXuz7GID5asVUfKrq3ULl"/>
+</div>
+</div>
+<!-- Local Business Section -->
+<div class="md:col-span-7 bg-surface-container-lowest rounded-3xl p-10 flex flex-row-reverse gap-8 items-center border-b-2 border-outline-variant/15">
+<div class="flex-1">
+<span class="material-symbols-outlined text-4xl text-surface-tint mb-6" data-icon="storefront">storefront</span>
+<h3 class="text-3xl font-bold font-headline mb-4">الأعمال المحلية</h3>
+<p class="text-on-surface-variant mb-6">سيطر على منطقتك الجغرافية. نساعدك في الوصول إلى العملاء القريبين منك بالضبط عندما يبحثون عن خدماتك.</p>
+<button class="px-8 py-3 rounded-xl border border-outline-variant/30 text-surface-tint font-bold hover:bg-surface-container-low transition-all">
+                                حلول النمو المحلي
+                            </button>
+</div>
+<div class="hidden lg:block w-1/3 aspect-square brand-gradient rounded-full opacity-5 hover:opacity-10 transition-opacity"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="py-32 px-6">
+<div class="max-w-4xl mx-auto text-center">
+<h2 class="text-4xl md:text-5xl font-bold font-headline mb-8">هل أنت مستعد لتغيير قواعد اللعبة؟</h2>
+<p class="text-lg text-on-surface-variant mb-12">انضم إلى آلاف الشركات التي أعادت تعريف مفهوم النمو مع إجنيفاى.</p>
+<div class="flex flex-col md:flex-row-reverse justify-center gap-6">
+<button class="px-10 py-5 rounded-2xl brand-gradient text-white text-lg font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-transform">
+                        تحدث مع خبير حلول
+                    </button>
+<button class="px-10 py-5 rounded-2xl border border-outline-variant text-on-surface text-lg font-bold hover:bg-surface-container-lowest transition-colors">
+                        عرض جميع الخدمات
+                    </button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-12 px-6 mt-auto bg-slate-100 dark:bg-slate-900">
+<div class="flex flex-col md:flex-row-reverse justify-between items-center gap-8 max-w-7xl mx-auto w-full rtl">
+<div class="text-xl font-bold text-slate-900 dark:text-white font-['Space_Grotesk']">
+                إجنيفاى
+            </div>
+<div class="flex flex-row-reverse gap-6">
+<a class="text-slate-600 dark:text-slate-400 hover:text-orange-500 hover:underline decoration-orange-500 underline-offset-4 font-['Space_Grotesk']" href="#">خصوصية البيانات</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-orange-500 hover:underline decoration-orange-500 underline-offset-4 font-['Space_Grotesk']" href="#">الشروط والأحكام</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-orange-500 hover:underline decoration-orange-500 underline-offset-4 font-['Space_Grotesk']" href="#">اتصل بنا</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-orange-500 hover:underline decoration-orange-500 underline-offset-4 font-['Space_Grotesk']" href="#">المدونة</a>
+</div>
+<p class="text-slate-600 dark:text-slate-400 font-['Space_Grotesk']">
+                © 2024 إجنيفاى. جميع الحقوق محفوظة.
+            </p>
+</div>
+</footer>
+</body></html>

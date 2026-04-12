@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+
+<html dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>إجنيفاي - الأسعار</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-tint": "#ab3500",
+                    "on-primary-fixed-variant": "#832600",
+                    "tertiary-fixed": "#f1dbff",
+                    "on-tertiary-fixed-variant": "#680eac",
+                    "on-surface-variant": "#594139",
+                    "tertiary-container": "#bf79ff",
+                    "on-secondary": "#ffffff",
+                    "tertiary": "#8234c6",
+                    "on-tertiary-fixed": "#2d0050",
+                    "inverse-on-surface": "#f0f0f5",
+                    "secondary-container": "#df215c",
+                    "surface-container-low": "#f3f3f8",
+                    "on-primary": "#ffffff",
+                    "on-primary-fixed": "#390c00",
+                    "surface-container": "#ededf2",
+                    "on-primary-container": "#5f1900",
+                    "primary-fixed": "#ffdbd0",
+                    "on-tertiary-container": "#4b0081",
+                    "on-tertiary": "#ffffff",
+                    "on-background": "#1a1c1f",
+                    "outline": "#8d7168",
+                    "on-surface": "#1a1c1f",
+                    "secondary": "#b80046",
+                    "on-error": "#ffffff",
+                    "surface-dim": "#d9dade",
+                    "background": "#f9f9fe",
+                    "surface-bright": "#f9f9fe",
+                    "surface-container-highest": "#e2e2e7",
+                    "inverse-primary": "#ffb59d",
+                    "secondary-fixed-dim": "#ffb2bc",
+                    "primary": "#ab3500",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed-dim": "#deb7ff",
+                    "surface-variant": "#e2e2e7",
+                    "on-error-container": "#93000a",
+                    "inverse-surface": "#2e3034",
+                    "on-secondary-fixed": "#400013",
+                    "on-secondary-container": "#fffbff",
+                    "secondary-fixed": "#ffd9dd",
+                    "on-secondary-fixed-variant": "#910035",
+                    "surface": "#f9f9fe",
+                    "surface-container-high": "#e8e8ed",
+                    "error": "#ba1a1a",
+                    "primary-fixed-dim": "#ffb59d",
+                    "outline-variant": "#e1bfb5",
+                    "error-container": "#ffdad6",
+                    "primary-container": "#ff6b35"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Space Grotesk"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .brand-font { font-family: 'Space Grotesk', sans-serif; }
+        .gradient-text {
+            background: linear-gradient(to right, #FF6B35, #FF3D71, #7B2CBF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #FF6B35, #FF3D71, #7B2CBF);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopNavBar -->
+<nav class="sticky top-0 w-full z-50 bg-slate-50/80 backdrop-blur-xl shadow-sm rtl">
+<div class="flex flex-row-reverse justify-between items-center px-6 py-4 max-w-7xl mx-auto w-full">
+<div class="flex items-center gap-8">
+<a class="text-2xl font-bold bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 bg-clip-text text-transparent" href="#">إجنيفاي</a>
+<div class="hidden md:flex flex-row-reverse gap-6 font-['Space_Grotesk'] text-right leading-relaxed">
+<a class="text-slate-700 hover:text-orange-500 transition-colors" href="#">المنصة</a>
+<a class="text-slate-700 hover:text-orange-500 transition-colors" href="#">الحلول</a>
+<a class="text-slate-700 hover:text-orange-500 transition-colors" href="#">الموارد</a>
+<a class="text-orange-600 font-bold border-b-2 border-orange-500 pb-1" href="#">الأسعار</a>
+<a class="text-slate-700 hover:text-orange-500 transition-colors" href="#">الشركة</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-slate-700 hover:opacity-80 transition-all duration-300">English</button>
+<button class="px-6 py-2 gradient-bg text-white font-bold rounded-xl scale-95 active:scale-90 transition-transform">ابدأ الآن</button>
+</div>
+</div>
+</nav>
+<main>
+<!-- Hero Section -->
+<section class="relative py-24 overflow-hidden">
+<div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 opacity-10">
+<div class="absolute top-0 right-0 w-96 h-96 bg-primary-container rounded-full blur-[120px]"></div>
+<div class="absolute bottom-0 left-0 w-96 h-96 bg-tertiary-container rounded-full blur-[120px]"></div>
+</div>
+<div class="max-w-7xl mx-auto px-6 text-center">
+<span class="inline-block px-4 py-1 rounded-full bg-tertiary/10 text-tertiary font-medium text-sm mb-6 tracking-wide">خطط مرنة لكل مرحلة</span>
+<h1 class="text-6xl md:text-7xl font-bold text-slate-900 mb-8 tracking-tight leading-tight">
+                    أسعار مصممة <br/> <span class="gradient-text">لنمو مشرق</span>
+</h1>
+<p class="text-xl text-slate-600 max-w-2xl mx-auto mb-12">
+                    اختر الخطة التي تناسب طموحاتك. لا توجد تكاليف خفية، فقط أدوات قوية لمساعدتك على التألق في العالم الرقمي.
+                </p>
+</div>
+</section>
+<!-- Pricing Cards Section (Asymmetric Bento-ish Grid) -->
+<section class="max-w-7xl mx-auto px-6 pb-24">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-end">
+<!-- Starter Tier -->
+<div class="bg-surface-container-lowest p-10 rounded-[2rem] border-b-4 border-slate-200 transition-all duration-300 hover:border-primary-container group">
+<div class="mb-8">
+<span class="text-slate-500 font-bold tracking-widest text-xs block mb-2 uppercase">أساسي</span>
+<h3 class="text-3xl font-bold text-slate-900 mb-4">مبتدئ</h3>
+<div class="flex items-baseline gap-2">
+<span class="text-5xl font-bold text-slate-900 tracking-tighter">0</span>
+<span class="text-slate-500 text-lg">ر.س / شهر</span>
+</div>
+<p class="mt-4 text-slate-600 leading-relaxed">مثالي للأفراد والمشاريع الناشئة التي ترغب في تجربة قوة إجنيفاي.</p>
+</div>
+<ul class="space-y-4 mb-10">
+<li class="flex items-center gap-3 text-slate-700">
+<span class="material-symbols-outlined text-primary" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>3 مشاريع نشطة</span>
+</li>
+<li class="flex items-center gap-3 text-slate-700">
+<span class="material-symbols-outlined text-primary" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>أدوات التصميم الأساسية</span>
+</li>
+<li class="flex items-center gap-3 text-slate-700">
+<span class="material-symbols-outlined text-primary" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>دعم عبر المجتمع</span>
+</li>
+</ul>
+<button class="w-full py-4 rounded-xl border-2 border-outline-variant/30 text-primary font-bold hover:bg-slate-50 transition-colors">ابدأ مجاناً</button>
+</div>
+<!-- Growth Tier (Highlighted) -->
+<div class="bg-surface-container-lowest p-10 rounded-[2.5rem] relative lg:scale-110 shadow-2xl shadow-primary/10 border-t-8 border-primary-container z-10">
+<div class="absolute -top-5 left-1/2 -translate-x-1/2 px-4 py-1 gradient-bg text-white text-xs font-bold rounded-full tracking-widest">الأكثر شعبية</div>
+<div class="mb-8">
+<span class="text-primary font-bold tracking-widest text-xs block mb-2 uppercase">نمو متسارع</span>
+<h3 class="text-3xl font-bold text-slate-900 mb-4">نمو</h3>
+<div class="flex items-baseline gap-2">
+<span class="text-5xl font-bold text-slate-900 tracking-tighter">299</span>
+<span class="text-slate-500 text-lg">ر.س / شهر</span>
+</div>
+<p class="mt-4 text-slate-600 leading-relaxed">للشركات المتنامية التي تحتاج إلى ميزات متقدمة ودعم أسرع.</p>
+</div>
+<ul class="space-y-4 mb-10">
+<li class="flex items-center gap-3 text-slate-700">
+<span class="material-symbols-outlined text-primary" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>مشاريع غير محدودة</span>
+</li>
+<li class="flex items-center gap-3 text-slate-700">
+<span class="material-symbols-outlined text-primary" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>مكتبة القوالب المميزة</span>
+</li>
+<li class="flex items-center gap-3 text-slate-700">
+<span class="material-symbols-outlined text-primary" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>دعم فني على مدار الساعة</span>
+</li>
+<li class="flex items-center gap-3 text-slate-700">
+<span class="material-symbols-outlined text-primary" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>إحصائيات متقدمة</span>
+</li>
+</ul>
+<button class="w-full py-4 rounded-xl gradient-bg text-white font-bold shadow-lg shadow-primary/20 hover:opacity-90 transition-opacity">ابدأ التجربة المجانية</button>
+</div>
+<!-- Agency Tier -->
+<div class="bg-surface-container-lowest p-10 rounded-[2rem] border-b-4 border-slate-200 transition-all duration-300 hover:border-tertiary-container group">
+<div class="mb-8">
+<span class="text-slate-500 font-bold tracking-widest text-xs block mb-2 uppercase">مؤسسي</span>
+<h3 class="text-3xl font-bold text-slate-900 mb-4">وكالة</h3>
+<div class="flex items-baseline gap-2">
+<span class="text-5xl font-bold text-slate-900 tracking-tighter">899</span>
+<span class="text-slate-500 text-lg">ر.س / شهر</span>
+</div>
+<p class="mt-4 text-slate-600 leading-relaxed">حلول شاملة للوكالات الكبيرة التي تدير عملاء متعددين بمقاييس عالمية.</p>
+</div>
+<ul class="space-y-4 mb-10">
+<li class="flex items-center gap-3 text-slate-700">
+<span class="material-symbols-outlined text-tertiary" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>كل ميزات "نمو" +</span>
+</li>
+<li class="flex items-center gap-3 text-slate-700">
+<span class="material-symbols-outlined text-tertiary" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>تخصيص العلامة التجارية (White Label)</span>
+</li>
+<li class="flex items-center gap-3 text-slate-700">
+<span class="material-symbols-outlined text-tertiary" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>مدير حساب مخصص</span>
+</li>
+</ul>
+<button class="w-full py-4 rounded-xl border-2 border-outline-variant/30 text-tertiary font-bold hover:bg-slate-50 transition-colors">تواصل معنا</button>
+</div>
+</div>
+</section>
+<!-- FAQ Section -->
+<section class="bg-surface-container-low py-24">
+<div class="max-w-4xl mx-auto px-6">
+<h2 class="text-4xl font-bold text-slate-900 mb-4 text-center">الأسئلة الشائعة</h2>
+<p class="text-slate-600 text-center mb-16">كل ما تحتاج لمعرفته حول خططنا وأسعارنا.</p>
+<div class="space-y-6">
+<!-- FAQ Item 1 -->
+<div class="bg-surface-container-lowest p-8 rounded-2xl transition-all duration-300 hover:bg-white cursor-pointer group">
+<div class="flex justify-between items-center">
+<h4 class="text-lg font-bold text-slate-900">هل يمكنني تغيير خطتي في أي وقت؟</h4>
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors" data-icon="expand_more">expand_more</span>
+</div>
+<div class="mt-4 text-slate-600 leading-relaxed">
+                            نعم، يمكنك ترقية خطتك أو خفضها في أي وقت من إعدادات حسابك. سيتم تطبيق التغييرات فوراً مع تسوية الرسوم بشكل تناسبي.
+                        </div>
+</div>
+<!-- FAQ Item 2 -->
+<div class="bg-surface-container-lowest p-8 rounded-2xl transition-all duration-300 hover:bg-white cursor-pointer group">
+<div class="flex justify-between items-center">
+<h4 class="text-lg font-bold text-slate-900">هل تقدمون تجربة مجانية للخطط المدفوعة؟</h4>
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors" data-icon="expand_more">expand_more</span>
+</div>
+<div class="mt-4 text-slate-600 leading-relaxed">
+                            نعم، نحن نقدم تجربة مجانية لمدة 14 يوماً لخطة "نمو" لتمكينك من استكشاف كافة الميزات المتقدمة دون أي التزام.
+                        </div>
+</div>
+<!-- FAQ Item 3 -->
+<div class="bg-surface-container-lowest p-8 rounded-2xl transition-all duration-300 hover:bg-white cursor-pointer group">
+<div class="flex justify-between items-center">
+<h4 class="text-lg font-bold text-slate-900">ما هي طرق الدفع المقبولة؟</h4>
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors" data-icon="expand_more">expand_more</span>
+</div>
+<div class="mt-4 text-slate-600 leading-relaxed">
+                            نحن نقبل جميع البطاقات الائتمانية الرئيسية (Visa, MasterCard)، بالإضافة إلى Apple Pay و mada لتسهيل عمليات الدفع محلياً.
+                        </div>
+</div>
+</div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="py-24 px-6">
+<div class="max-w-5xl mx-auto gradient-bg rounded-[3rem] p-12 md:p-20 text-center text-white relative overflow-hidden">
+<div class="absolute top-0 right-0 w-full h-full opacity-10 pointer-events-none" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAu6eac07ci_KmihpFd47LUGdysO2Hy0Iz6QIs7I29e25e-49jfq7vB3aCah_-NAyV-q1fp2WYsgIjsxbO5hBNoQ0Ry8kXZmrRww2xDs6H4uUsy82yCb9ZknbpnlfcYnSTbFam083MD_xRvuhHcwapgqM4wDFU709APD98C8ozPfTv0SAlgSN1ArsnxoGEtIWwRCyr0_pmFvwFjjuBhGT9u5spLUF60WT-bZ92s8Xfy8VxHQCY9YNVD7UxYX3BTNhaFn_FHNKyszb2Z')"></div>
+<h2 class="text-4xl md:text-5xl font-bold mb-8">جاهز للارتقاء بأعمالك؟</h2>
+<p class="text-xl mb-12 opacity-90 max-w-2xl mx-auto">انضم إلى آلاف الشركات التي تستخدم إجنيفاي يومياً لتحقيق نتائج استثنائية.</p>
+<div class="flex flex-col md:flex-row justify-center gap-6">
+<button class="px-10 py-4 bg-white text-primary font-bold rounded-xl shadow-xl hover:scale-105 transition-transform">ابدأ مجاناً الآن</button>
+<button class="px-10 py-4 bg-white/10 backdrop-blur-md border border-white/20 font-bold rounded-xl hover:bg-white/20 transition-colors">تحدث مع المبيعات</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-slate-100 w-full py-12 px-6 mt-auto rtl">
+<div class="flex flex-col md:flex-row-reverse justify-between items-center gap-8 max-w-7xl mx-auto w-full">
+<div class="flex flex-col items-center md:items-end gap-4">
+<span class="text-xl font-bold text-slate-900">إجنيفاي</span>
+<p class="text-slate-600 font-['Space_Grotesk'] text-right">© 2024 إجنيفاي. جميع الحقوق محفوظة.</p>
+</div>
+<div class="flex flex-wrap justify-center gap-8 font-['Space_Grotesk'] text-right">
+<a class="text-slate-600 hover:text-orange-500 hover:underline decoration-orange-500 underline-offset-4 transition-all" href="#">خصوصية البيانات</a>
+<a class="text-slate-600 hover:text-orange-500 hover:underline decoration-orange-500 underline-offset-4 transition-all" href="#">الشروط والأحكام</a>
+<a class="text-slate-600 hover:text-orange-500 hover:underline decoration-orange-500 underline-offset-4 transition-all" href="#">اتصل بنا</a>
+<a class="text-slate-600 hover:text-orange-500 hover:underline decoration-orange-500 underline-offset-4 transition-all" href="#">المدونة</a>
+</div>
+<div class="flex gap-4">
+<a class="w-10 h-10 flex items-center justify-center rounded-full bg-white text-slate-900 hover:bg-primary-container hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="language">language</span>
+</a>
+<a class="w-10 h-10 flex items-center justify-center rounded-full bg-white text-slate-900 hover:bg-primary-container hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="share">share</span>
+</a>
+</div>
+</div>
+</footer>
+</body></html>

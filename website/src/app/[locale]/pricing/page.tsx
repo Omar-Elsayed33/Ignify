@@ -1,224 +1,336 @@
 "use client";
 
-import React, { useState } from "react";
-import { useTranslations } from "next-intl";
-import { motion, AnimatePresence } from "framer-motion";
-import Button from "@/components/Button";
-import { Check, ChevronDown, ChevronUp, Zap, Crown, Building2 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { motion } from "framer-motion";
+import { Check, ChevronDown, ArrowRight, Sparkles } from "lucide-react";
+import { useAutoCurrency } from "@/lib/useAutoCurrency";
 
-const fadeInUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
+type Currency = "usd" | "egp" | "sar" | "aed";
+type Billing = "monthly" | "yearly";
+
+const RATES: Record<Currency, { rate: number; symbol: string }> = {
+  usd: { rate: 1, symbol: "$" },
+  egp: { rate: 48, symbol: "E£" },
+  sar: { rate: 3.75, symbol: "﷼" },
+  aed: { rate: 3.67, symbol: "AED " },
 };
 
-const stagger = {
-  visible: { transition: { staggerChildren: 0.1 } },
+interface ApiPlan {
+  id: string;
+  code: string;
+  name_en: string;
+  name_ar: string;
+  price_usd: number;
+  prices?: Record<string, { monthly: number; yearly: number }>;
+}
+
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+const DASHBOARD_URL =
+  process.env.NEXT_PUBLIC_DASHBOARD_URL || "http://localhost:3000";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
 export default function PricingPage() {
-  const t = useTranslations("pricing_page");
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const t = useTranslations("pricing");
+  const locale = useLocale();
+  const [billing, setBilling] = useState<Billing>("monthly");
+  const { currency: autoCurrency, setCurrency: setAutoCurrency } =
+    useAutoCurrency("USD");
+  const currency = autoCurrency.toLowerCase() as Currency;
+  const setCurrency = (c: Currency) => setAutoCurrency(c.toUpperCase());
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [apiPlans, setApiPlans] = useState<Record<string, ApiPlan>>({});
 
-  const plans = [
-    {
-      key: "starter" as const,
-      icon: Zap,
-      popular: false,
-      color: "border-gray-200",
-    },
-    {
-      key: "professional" as const,
-      icon: Crown,
-      popular: true,
-      color: "border-primary",
-    },
-    {
-      key: "enterprise" as const,
-      icon: Building2,
-      popular: false,
-      color: "border-gray-200",
-    },
-  ];
+  useEffect(() => {
+    fetch(`${API_BASE}/api/v1/billing/plans`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((rows: ApiPlan[]) => {
+        const byCode: Record<string, ApiPlan> = {};
+        for (const p of rows) byCode[p.code] = p;
+        setApiPlans(byCode);
+      })
+      .catch(() => {});
+  }, []);
 
-  const faqKeys = ["q1", "q2", "q3", "q4", "q5", "q6"] as const;
+  const plans = ["free", "starter", "pro", "agency"] as const;
+
+  const formatPrice = (usdFallback: number, code: string) => {
+    const apiPlan = apiPlans[code];
+    const curUpper = currency.toUpperCase();
+    const entry = apiPlan?.prices?.[curUpper];
+    const yearly = billing === "yearly";
+    if (entry) {
+      const amount = yearly ? entry.yearly : entry.monthly;
+      const { symbol } = RATES[currency];
+      return `${symbol}${Math.round(amount).toLocaleString()}`;
+    }
+    // fallback to legacy FX conversion
+    const base = yearly ? usdFallback * 12 * 0.8 : usdFallback;
+    const { rate, symbol } = RATES[currency];
+    const amount = Math.round(base * rate);
+    return `${symbol}${amount.toLocaleString()}`;
+  };
+
+  const featureKeys = [
+    "articles",
+    "images",
+    "videos",
+    "aiTokens",
+    "teamMembers",
+    "socialAccounts",
+    "leads",
+    "analytics",
+    "support",
+  ] as const;
+
+  const faqItems = t.raw("faq.items") as { q: string; a: string }[];
+  const registerHref = `${DASHBOARD_URL}/${locale}/register`;
 
   return (
     <>
       {/* Hero */}
-      <section className="pt-32 pb-16 lg:pt-40 lg:pb-24 gradient-hero relative overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/3 start-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 end-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
-        </div>
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-6"
-          >
-            {t("title")}{" "}
-            <span className="gradient-text">{t("titleHighlight")}</span>
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0, transition: { delay: 0.2 } }}
-            className="text-lg sm:text-xl text-white/70 max-w-2xl mx-auto"
-          >
+      <section className="relative overflow-hidden pt-20 pb-16 bg-background">
+        <div className="absolute -top-20 end-[-10%] light-leak-orange" />
+        <div className="relative max-w-4xl mx-auto px-4 text-center">
+          <h1 className="text-5xl sm:text-6xl font-bold mb-6 text-ink leading-tight">
+            <span className="brand-gradient-text">{t("title")}</span>
+          </h1>
+          <p className="text-lg sm:text-xl text-on-surface-variant max-w-2xl mx-auto">
             {t("subtitle")}
-          </motion.p>
+          </p>
         </div>
       </section>
 
-      {/* Pricing cards */}
-      <section className="py-20 lg:py-32 bg-white">
+      {/* Toggles */}
+      <section className="pb-12 bg-background">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="inline-flex items-center bg-surface-container-low rounded-full p-1">
+              <button
+                onClick={() => setBilling("monthly")}
+                className={`px-5 py-2 rounded-full text-sm font-semibold transition ${
+                  billing === "monthly"
+                    ? "bg-surface-container-lowest shadow-soft text-ink"
+                    : "text-on-surface-variant"
+                }`}
+              >
+                {t("monthly")}
+              </button>
+              <button
+                onClick={() => setBilling("yearly")}
+                className={`px-5 py-2 rounded-full text-sm font-semibold transition flex items-center gap-2 ${
+                  billing === "yearly"
+                    ? "bg-surface-container-lowest shadow-soft text-ink"
+                    : "text-on-surface-variant"
+                }`}
+              >
+                {t("yearly")}
+                <span className="inline-block text-xs brand-gradient-bg text-white rounded-full px-2 py-0.5">
+                  {t("save20")}
+                </span>
+              </button>
+            </div>
+
+            <div className="inline-flex items-center bg-surface-container-low rounded-full p-1">
+              {(["usd", "egp", "sar", "aed"] as Currency[]).map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setCurrency(c)}
+                  className={`px-4 py-2 rounded-full text-xs font-semibold uppercase transition ${
+                    currency === c
+                      ? "bg-surface-container-lowest shadow-soft text-ink"
+                      : "text-on-surface-variant"
+                  }`}
+                >
+                  {t(`currency.${c}`)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Plans */}
+      <section className="pb-20 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-6"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            variants={stagger}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
           >
-            {plans.map((plan) => (
-              <motion.div
-                key={plan.key}
-                variants={fadeInUp}
-                className={`relative rounded-2xl border-2 ${plan.color} p-8 lg:p-10 ${
-                  plan.popular
-                    ? "shadow-xl shadow-primary/10 scale-105 lg:scale-105"
-                    : "hover:shadow-lg"
-                } transition-shadow duration-300 bg-white`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-4 start-1/2 -translate-x-1/2 px-4 py-1 gradient-primary rounded-full text-white text-sm font-semibold">
-                    {t("popular")}
-                  </div>
-                )}
-
-                <div className="flex items-center gap-3 mb-4">
-                  <div
-                    className={`w-10 h-10 rounded-xl ${
-                      plan.popular
-                        ? "gradient-primary"
-                        : "bg-surface"
-                    } flex items-center justify-center`}
-                  >
-                    <plan.icon
-                      className={`w-5 h-5 ${
-                        plan.popular ? "text-white" : "text-secondary"
-                      }`}
-                    />
-                  </div>
-                  <h3 className="text-xl font-bold text-secondary">
-                    {t(`${plan.key}.name`)}
-                  </h3>
-                </div>
-
-                <div className="mb-4">
-                  <span className="text-4xl sm:text-5xl font-extrabold text-secondary">
-                    {t(`${plan.key}.price`)}
-                  </span>
-                  <span className="text-secondary/50 ms-1">
-                    {t(`${plan.key}.period`)}
-                  </span>
-                </div>
-
-                <p className="text-secondary/60 mb-8 text-sm leading-relaxed">
-                  {t(`${plan.key}.description`)}
-                </p>
-
-                <Button
-                  variant={plan.popular ? "primary" : "secondary"}
-                  size="md"
-                  className="w-full mb-8"
+            {plans.map((plan) => {
+              const usd = parseFloat(t(`plans.${plan}.price`)) || 0;
+              const popular = plan === "pro";
+              return (
+                <motion.div
+                  key={plan}
+                  variants={fadeUp}
+                  className={`relative rounded-3xl p-8 transition-all ${
+                    popular
+                      ? "brand-gradient-border shadow-soft"
+                      : "bg-surface-container-lowest hover:bg-white shadow-soft"
+                  }`}
                 >
-                  {t(`${plan.key}.cta`)}
-                </Button>
-
-                <ul className="space-y-3">
-                  {(t.raw(`${plan.key}.features`) as string[]).map(
-                    (feature: string, i: number) => (
-                      <li key={i} className="flex items-start gap-3">
-                        <Check className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                        <span className="text-sm text-secondary/70">
-                          {feature}
+                  {popular && (
+                    <span className="absolute -top-3 start-6 brand-gradient-bg text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      {t("popular")}
+                    </span>
+                  )}
+                  <h3 className="text-xl font-bold text-ink mb-2">
+                    {t(`plans.${plan}.name`)}
+                  </h3>
+                  <p className="text-sm text-on-surface-variant mb-6 min-h-[3rem]">
+                    {t(`plans.${plan}.tagline`)}
+                  </p>
+                  <div className="mb-6">
+                    <span className="text-5xl font-extrabold text-ink">
+                      {formatPrice(usd, plan)}
+                    </span>
+                    <span className="text-sm text-on-surface-variant ms-1">
+                      {billing === "monthly" ? t("perMonth") : t("perYear")}
+                    </span>
+                  </div>
+                  <a
+                    href={registerHref}
+                    className={`block w-full text-center py-3 rounded-xl font-semibold text-sm transition ${
+                      popular
+                        ? "brand-gradient-bg text-white hover:opacity-95"
+                        : "bg-surface-container-low text-ink hover:bg-surface-container"
+                    }`}
+                  >
+                    {t(`plans.${plan}.cta`)}
+                  </a>
+                  <ul className="mt-6 space-y-2.5">
+                    {featureKeys.slice(0, 6).map((fk) => (
+                      <li
+                        key={fk}
+                        className="flex items-start gap-2 text-sm text-on-surface-variant"
+                      >
+                        <Check className="w-4 h-4 text-primary-container mt-0.5 shrink-0" />
+                        <span>
+                          <strong className="text-ink">
+                            {t(`comparison.values.${plan}.${fk}`)}
+                          </strong>{" "}
+                          {t(`comparison.features.${fk}`)}
                         </span>
                       </li>
-                    )
-                  )}
-                </ul>
-              </motion.div>
-            ))}
+                    ))}
+                  </ul>
+                </motion.div>
+              );
+            })}
           </motion.div>
+        </div>
+      </section>
+
+      {/* Comparison */}
+      <section className="py-20 bg-surface-container-low">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl sm:text-4xl font-bold text-center text-ink mb-12">
+            {t("comparison.title")}
+          </h2>
+          <div className="overflow-x-auto bg-surface-container-lowest rounded-3xl shadow-soft">
+            <table className="w-full text-sm">
+              <thead>
+                <tr>
+                  <th className="text-start p-4 font-semibold text-ink">
+                    {t("comparison.feature")}
+                  </th>
+                  {plans.map((p) => (
+                    <th
+                      key={p}
+                      className="text-center p-4 font-semibold text-ink"
+                    >
+                      {t(`plans.${p}.name`)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {featureKeys.map((fk, i) => (
+                  <tr
+                    key={fk}
+                    className={i % 2 === 0 ? "bg-surface-container-low/40" : ""}
+                  >
+                    <td className="p-4 text-on-surface-variant">
+                      {t(`comparison.features.${fk}`)}
+                    </td>
+                    {plans.map((p) => (
+                      <td
+                        key={p}
+                        className="p-4 text-center text-on-surface-variant"
+                      >
+                        {t(`comparison.values.${p}.${fk}`)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
       {/* FAQ */}
-      <section className="py-20 lg:py-32 bg-surface">
+      <section className="py-20 bg-background">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            className="text-center mb-12"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={stagger}
-          >
-            <motion.h2
-              variants={fadeInUp}
-              className="text-3xl sm:text-4xl font-bold text-secondary"
-            >
-              {t("faq_title")}
-            </motion.h2>
-          </motion.div>
-
-          <motion.div
-            className="space-y-4"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={stagger}
-          >
-            {faqKeys.map((key, index) => (
-              <motion.div
-                key={key}
-                variants={fadeInUp}
-                className="bg-white rounded-xl border border-gray-100 overflow-hidden"
+          <h2 className="text-3xl sm:text-4xl font-bold text-center text-ink mb-12">
+            {t("faq.title")}
+          </h2>
+          <div className="space-y-3">
+            {faqItems.map((item, i) => (
+              <div
+                key={i}
+                className="rounded-2xl bg-surface-container-lowest shadow-soft overflow-hidden"
               >
                 <button
-                  onClick={() =>
-                    setOpenFaq(openFaq === index ? null : index)
-                  }
-                  className="w-full flex items-center justify-between p-6 text-start hover:bg-gray-50 transition-colors"
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="w-full flex items-center justify-between p-5 text-start"
                 >
-                  <span className="font-semibold text-secondary pe-4">
-                    {t(`faq.${key}`)}
-                  </span>
-                  {openFaq === index ? (
-                    <ChevronUp className="w-5 h-5 text-primary shrink-0" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-secondary/40 shrink-0" />
-                  )}
+                  <span className="font-semibold text-ink">{item.q}</span>
+                  <ChevronDown
+                    className={`w-5 h-5 text-on-surface-variant transition-transform ${
+                      openFaq === i ? "rotate-180" : ""
+                    }`}
+                  />
                 </button>
-                <AnimatePresence>
-                  {openFaq === index && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="px-6 pb-6 text-secondary/60 leading-relaxed">
-                        {t(
-                          `faq.${key.replace("q", "a") as `a${string}`}`
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
+                {openFaq === i && (
+                  <div className="px-5 pb-5 text-on-surface-variant leading-relaxed">
+                    {item.a}
+                  </div>
+                )}
+              </div>
             ))}
-          </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-24 bg-background">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <div className="rounded-3xl p-12 lg:p-16 bg-inverse-surface relative overflow-hidden">
+            <div className="absolute -top-1/2 -start-1/2 w-full h-full brand-gradient-bg blur-[120px] opacity-30 pointer-events-none" />
+            <div className="relative">
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-8">
+                {t("cta.title")}
+              </h2>
+              <a
+                href={registerHref}
+                className="inline-flex items-center gap-2 brand-gradient-bg text-white font-semibold px-10 py-4 rounded-2xl hover:scale-105 transition-transform"
+              >
+                {t("cta.button")}
+                <ArrowRight className="w-5 h-5 rtl:rotate-180" />
+              </a>
+            </div>
+          </div>
         </div>
       </section>
     </>

@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import { useRouter, usePathname } from "@/i18n/navigation";
 import Sidebar from "@/components/Sidebar";
+import BrandedLayout from "@/components/BrandedLayout";
+import QuotaBanner from "@/components/QuotaBanner";
+import EmailVerificationBanner from "@/components/EmailVerificationBanner";
 import { Menu, X } from "lucide-react";
+import { api } from "@/lib/api";
 
 export default function DashboardLayout({
   children,
@@ -30,6 +34,26 @@ export default function DashboardLayout({
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!hydrated || !isAuthenticated) return;
+    if (pathname.includes("/onboarding")) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const status = await api.get<{ completed: boolean }>("/api/v1/onboarding/status");
+        if (!cancelled && !status.completed) {
+          router.replace("/onboarding/business");
+        }
+      } catch {
+        // ignore; keep user on current page
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, isAuthenticated]);
 
   if (!hydrated) {
     return (
@@ -68,7 +92,9 @@ export default function DashboardLayout({
           <span className="text-lg font-bold text-primary">Ignify</span>
         </div>
 
-        {children}
+        <QuotaBanner />
+        <EmailVerificationBanner />
+        <BrandedLayout>{children}</BrandedLayout>
       </main>
     </div>
   );

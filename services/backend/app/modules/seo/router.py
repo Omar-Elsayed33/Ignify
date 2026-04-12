@@ -8,10 +8,13 @@ from app.dependencies import CurrentUser, DbSession
 from app.modules.seo.schemas import (
     SEOAuditCreate,
     SEOAuditResponse,
+    SEOKeywordBulkCreate,
     SEOKeywordCreate,
     SEOKeywordResponse,
     SEOKeywordUpdate,
     SEORankingResponse,
+    SEOAuditUrlRequest,
+    SEOSuggestRequest,
 )
 
 router = APIRouter(prefix="/seo", tags=["seo"])
@@ -39,12 +42,37 @@ async def create_keyword(data: SEOKeywordCreate, user: CurrentUser, db: DbSessio
         keyword=data.keyword,
         search_volume=data.search_volume,
         difficulty=data.difficulty,
+        cpc=data.cpc,
+        intent=data.intent,
         current_rank=data.current_rank,
         target_url=data.target_url,
+        location=data.location,
+        language=data.language,
     )
     db.add(keyword)
     await db.flush()
     return keyword
+
+
+@router.post("/keywords/bulk", response_model=list[SEOKeywordResponse], status_code=status.HTTP_201_CREATED)
+async def create_keywords_bulk(data: SEOKeywordBulkCreate, user: CurrentUser, db: DbSession):
+    """Bulk-paste keywords (newline or comma separated list, normalised by caller)."""
+    created: list[SEOKeyword] = []
+    for kw in data.keywords:
+        kw_clean = (kw or "").strip()
+        if not kw_clean:
+            continue
+        row = SEOKeyword(
+            tenant_id=user.tenant_id,
+            keyword=kw_clean,
+            target_url=data.target_url,
+            location=data.location,
+            language=data.language,
+        )
+        db.add(row)
+        created.append(row)
+    await db.flush()
+    return created
 
 
 @router.get("/keywords/{keyword_id}", response_model=SEOKeywordResponse)
@@ -317,3 +345,149 @@ async def get_audit(audit_id: uuid.UUID, user: CurrentUser, db: DbSession):
     if not audit:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Audit not found")
     return audit
+
+
+# ── Live providers: real SERP rank tracking + on-page audit + suggestions ──
+
+
+@router.post("/keywords/{keyword_id}/track", response_model=SEORankingResponse, status_code=status.HTTP_201_CREATED)
+async def track_keyword_ranking(keyword_id: uuid.UUID, user: CurrentUser, db: DbSession):
+    """Run a live SERP check for the keyword and store a SEORanking row."""
+    from datetime import date as _date
+
+    from app.core.seo import find_ranking, keyword_metrics
+
+    result = await db.execute(
+        select(SEOKeyword).where(SEOKeyword.id == keyword_id, SEOKeyword.tenant_id == user.tenant_id)
+    )
+    keyword = result.scalar_one_or_none()
+    if not keyword:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Keyword not found")
+
+    target_url = keyword.target_url or ""
+    domain = target_url.replace("https://", "").replace("http://", "").split("/")[0]
+    hl = keyword.language or "ar"
+    loc = keyword.location or "Egypt"
+
+    rank_info = await find_ranking(keyword.keyword, domain, location=loc, hl=hl)
+    position = rank_info.get("position")
+
+    # Also try to enrich metrics in the background (non-fatal)
+    if keyword.search_volume is None:
+        metrics = await keyword_metrics(keyword.keyword)
+        if metrics.get("search_volume") is not None:
+            keyword.search_volume = metrics.get("search_volume")
+        if metrics.get("cpc") is not None:
+            keyword.cpc = float(metrics.get("cpc") or 0.0) or None
+
+    ranking = SEORanking(
+        keyword_id=keyword.id,
+        rank=position or 0,
+        url=rank_info.get("url"),
+        title=rank_info.get("title"),
+        serp_features=rank_info.get("serp_features") or [],
+        date=_date.today(),
+    )
+    db.add(ranking)
+    if position is not None:
+        keyword.current_rank = position
+    await db.flush()
+    return ranking
+
+
+@router.post("/audit", response_model=SEOAuditResponse, status_code=status.HTTP_201_CREATED)
+async def audit_url_endpoint(data: SEOAuditUrlRequest, user: CurrentUser, db: DbSession):
+    """Run an on-page audit for a URL + orchestrate SEOAgent for recommendations."""
+    from app.agents.registry import get_agent
+    from app.core.seo_audit import audit_url as _audit
+
+    raw = await _audit(data.url)
+
+    recommendations: list[dict] = []
+    content_suggestions: dict = {}
+    linking_strategy: list[dict] = []
+    rankings: list[dict] = []
+
+    try:
+        agent = get_agent("seo", tenant_id=str(user.tenant_id))
+        agent_out = await agent.run(
+            {
+                "tenant_id": str(user.tenant_id),
+                "url": data.url,
+                "language": data.language or "ar",
+                "target_keywords": data.target_keywords or [],
+                "audit_result": raw,
+            },
+            thread_id=f"seo-audit-{uuid.uuid4()}",
+        )
+        recommendations = agent_out.get("recommendations") or []
+        content_suggestions = agent_out.get("content_suggestions") or {}
+        linking_strategy = agent_out.get("linking_strategy") or []
+        rankings = agent_out.get("rankings") or []
+    except Exception as e:  # noqa: BLE001
+        recommendations = [
+            {"priority": "info", "category": "system", "title": "Agent unavailable", "description": str(e)}
+        ]
+
+    # Build issues list from raw audit
+    issues = [
+        {"severity": "medium", "category": "on-page", "title": iss, "description": iss}
+        for iss in (raw.get("issues") or [])
+    ]
+
+    # Stash suggestions and linking into recommendations as metadata items too
+    if content_suggestions:
+        recommendations.append(
+            {
+                "priority": "info",
+                "category": "content",
+                "title": "Content Suggestions",
+                "description": content_suggestions,
+            }
+        )
+    if linking_strategy:
+        recommendations.append(
+            {
+                "priority": "info",
+                "category": "linking",
+                "title": "Internal Linking Strategy",
+                "description": linking_strategy,
+            }
+        )
+    if rankings:
+        recommendations.append(
+            {
+                "priority": "info",
+                "category": "rankings",
+                "title": "Live Rankings",
+                "description": rankings,
+            }
+        )
+
+    audit = SEOAudit(
+        tenant_id=user.tenant_id,
+        audit_type="on-page",
+        score=raw.get("score"),
+        issues=issues,
+        recommendations=recommendations,
+    )
+    db.add(audit)
+    await db.flush()
+    return audit
+
+
+@router.post("/suggest")
+async def suggest_content(data: SEOSuggestRequest, user: CurrentUser):
+    """Produce title/meta/H1/outline suggestions for a topic."""
+    from app.agents.seo.subagents.content_suggester import ContentSuggester
+
+    sub = ContentSuggester(tenant_id=str(user.tenant_id))
+    out = await sub.execute(
+        {
+            "tenant_id": str(user.tenant_id),
+            "language": data.language or "ar",
+            "target_keywords": data.keywords or [data.topic],
+            "audit_result": {"title": data.topic},
+        }
+    )
+    return out.get("content_suggestions") or {}

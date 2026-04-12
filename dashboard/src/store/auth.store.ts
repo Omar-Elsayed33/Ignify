@@ -8,6 +8,8 @@ export interface User {
   role: string;
   lang_preference: string;
   is_active: boolean;
+  email_verified?: boolean;
+  email_verified_at?: string | null;
   tenant_id?: string;
 }
 

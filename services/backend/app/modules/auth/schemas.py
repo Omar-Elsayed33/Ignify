@@ -38,6 +38,17 @@ class UserResponse(BaseModel):
     role: UserRole
     lang_preference: str
     is_active: bool
+    email_verified: bool = False
+    email_verified_at: Optional[datetime] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class VerifyEmailRequest(BaseModel):
+    token: str
+
+
+class ResendVerificationResponse(BaseModel):
+    success: bool
+    message: str

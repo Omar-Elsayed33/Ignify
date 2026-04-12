@@ -3,13 +3,16 @@
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import { Link, useRouter, usePathname } from "@/i18n/navigation";
-import { Flame, LayoutDashboard, Building2, Cpu, ChevronLeft } from "lucide-react";
+import { Flame, LayoutDashboard, Building2, Cpu, Settings, ChevronLeft, Network, CreditCard } from "lucide-react";
 import { clsx } from "clsx";
 
 const adminNav = [
   { key: "dashboard", href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { key: "tenants", href: "/admin/tenants", icon: Building2, label: "Tenants" },
+  { key: "plans", href: "/admin/plans", icon: CreditCard, label: "Plans" },
+  { key: "agents", href: "/admin/agents", icon: Network, label: "Agents" },
   { key: "aiProviders", href: "/admin/ai-providers", icon: Cpu, label: "AI Providers" },
+  { key: "settings", href: "/admin/settings", icon: Settings, label: "Settings" },
 ];
 
 export default function AdminLayout({

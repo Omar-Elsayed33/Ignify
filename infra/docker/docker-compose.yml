@@ -8,7 +8,7 @@ name: ignify
 services:
   # ─── Infrastructure ───────────────────────────────────────
   postgres:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg16
     container_name: ignify-postgres
     restart: unless-stopped
     environment:
@@ -66,7 +66,6 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ignify}:${POSTGRES_PASSWORD:-ignify_dev_2024}@postgres:5432/${POSTGRES_DB:-ignify}
       REDIS_URL: redis://redis:6379/0
-      AGNO_RUNTIME_URL: http://agno-runtime:8001
       MINIO_ENDPOINT: minio:9000
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/2
@@ -81,21 +80,6 @@ services:
     volumes:
       - ../../services/backend:/app
 
-  # ─── AI Runtime ───────────────────────────────────────────
-  agno-runtime:
-    build:
-      context: ../../services/agno-runtime
-      dockerfile: Dockerfile
-    container_name: ignify-agno
-    restart: unless-stopped
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
-    env_file:
-      - .env
-    ports:
-      - "8001:8001"
-    volumes:
-      - ../../services/agno-runtime:/app
-
   # ─── Celery Worker ────────────────────────────────────────
   worker:
     build:
@@ -104,6 +88,29 @@ services:
     container_name: ignify-worker
     restart: unless-stopped
     command: celery -A app.worker worker --loglevel=info
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ignify}:${POSTGRES_PASSWORD:-ignify_dev_2024}@postgres:5432/${POSTGRES_DB:-ignify}
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../../services/backend:/app
+
+  # ─── Celery Beat (scheduler) ──────────────────────────────
+  worker-beat:
+    build:
+      context: ../../services/backend
+      dockerfile: Dockerfile
+    container_name: ignify-worker-beat
+    restart: unless-stopped
+    command: celery -A app.worker beat --loglevel=info
     env_file:
       - .env
     environment:
@@ -170,6 +177,7 @@ services:
       - whatsapp_sessions:/app/sessions
 
   messenger-connector:
+    profiles: ["channels"]
     build:
       context: ../../services/messenger-connector
       dockerfile: Dockerfile
@@ -184,6 +192,7 @@ services:
       - backend
 
   instagram-connector:
+    profiles: ["channels"]
     build:
       context: ../../services/instagram-connector
       dockerfile: Dockerfile
@@ -198,6 +207,7 @@ services:
       - backend
 
   email-connector:
+    profiles: ["channels"]
     build:
       context: ../../services/email-connector
       dockerfile: Dockerfile
@@ -212,6 +222,7 @@ services:
       - backend
 
   slack-connector:
+    profiles: ["channels"]
     build:
       context: ../../services/slack-connector
       dockerfile: Dockerfile
@@ -227,6 +238,7 @@ services:
 
   # ─── Gateway ──────────────────────────────────────────────
   gateway:
+    profiles: ["gateway"]
     image: nginx:alpine
     container_name: ignify-gateway
     restart: unless-stopped

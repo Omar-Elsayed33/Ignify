@@ -1,14 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useAuthStore } from "@/store/auth.store";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { clsx } from "clsx";
+import { hasPermission } from "@/lib/rbac";
 import * as Avatar from "@radix-ui/react-avatar";
 import {
   LayoutDashboard,
+  Compass,
+  Sparkles,
   FileText,
+  Image as ImageIcon,
+  Video,
   Palette,
   Megaphone,
   Search,
@@ -19,7 +24,9 @@ import {
   Eye,
   Globe,
   MessagesSquare,
+  Inbox,
   Bot,
+  Brain,
   Puzzle,
   Settings,
   CreditCard,
@@ -29,12 +36,20 @@ import {
   ChevronRight,
   Languages,
   Flame,
+  Calendar,
+  HelpCircle,
+  FlaskConical,
+  Shield,
+  Database,
 } from "lucide-react";
+import { api } from "@/lib/api";
 
 interface NavItem {
   key: string;
   href: string;
   icon: React.ElementType;
+  /** Optional permission required to see this item */
+  perm?: string;
 }
 
 interface NavSection {
@@ -49,6 +64,22 @@ export default function Sidebar() {
   const locale = useLocale();
   const { user } = useAuthStore();
   const [collapsed, setCollapsed] = useState(false);
+  const [isAgency, setIsAgency] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await api.get<{ is_agency: boolean }>("/api/v1/white-label/settings");
+        if (!cancelled) setIsAgency(Boolean(res.is_agency));
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const otherLocale = locale === "en" ? "ar" : "en";
 
@@ -57,11 +88,17 @@ export default function Sidebar() {
       label: t("marketing"),
       items: [
         { key: "dashboard", href: "/dashboard", icon: LayoutDashboard },
+        { key: "plans", href: "/plans", icon: Compass },
+        { key: "contentGen", href: "/content-gen", icon: Sparkles },
+        { key: "experiments", href: "/content-gen/experiments", icon: FlaskConical },
         { key: "content", href: "/content", icon: FileText },
+        { key: "creativeGen", href: "/creative/generate", icon: ImageIcon },
+        { key: "videoGen", href: "/video/generate", icon: Video },
         { key: "creative", href: "/creative", icon: Palette },
         { key: "ads", href: "/ads", icon: Megaphone },
         { key: "seo", href: "/seo", icon: Search },
         { key: "social", href: "/social", icon: Share2 },
+        { key: "scheduler", href: "/scheduler", icon: Calendar },
       ],
     },
     {
@@ -70,6 +107,7 @@ export default function Sidebar() {
         { key: "leads", href: "/leads", icon: Users },
         { key: "campaigns", href: "/campaigns", icon: Target },
         { key: "analytics", href: "/analytics", icon: BarChart3 },
+        { key: "analyticsDash", href: "/analytics/overview", icon: BarChart3 },
         { key: "competitors", href: "/competitors", icon: Eye },
       ],
     },
@@ -78,6 +116,7 @@ export default function Sidebar() {
       items: [
         { key: "channels", href: "/channels", icon: Globe },
         { key: "conversations", href: "/conversations", icon: MessagesSquare },
+        { key: "inbox", href: "/inbox", icon: Inbox },
         { key: "assistant", href: "/assistant", icon: Bot },
       ],
     },
@@ -87,11 +126,25 @@ export default function Sidebar() {
         { key: "profile", href: "/profile", icon: UserCircle },
         { key: "integrations", href: "/integrations", icon: Puzzle },
         { key: "settings", href: "/settings", icon: Settings },
-        { key: "billing", href: "/billing", icon: CreditCard },
-        { key: "team", href: "/team", icon: UserPlus },
+        { key: "aiAgents", href: "/settings/ai-agents", icon: Brain },
+        { key: "knowledgeBase", href: "/settings/knowledge", icon: Database },
+        ...(isAgency
+          ? [{ key: "whiteLabel", href: "/settings/white-label", icon: Shield }]
+          : []),
+        { key: "billing", href: "/billing", icon: CreditCard, perm: "billing" },
+        { key: "team", href: "/settings/team", icon: UserPlus },
+        { key: "help", href: "/help", icon: HelpCircle },
       ],
     },
   ];
+
+  const userRole = user?.role;
+  const visibleSections: NavSection[] = sections
+    .map((s) => ({
+      ...s,
+      items: s.items.filter((it) => !it.perm || hasPermission(userRole, it.perm)),
+    }))
+    .filter((s) => s.items.length > 0);
 
   const isActive = (href: string) => pathname === href;
 
@@ -118,7 +171,7 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-2 py-4">
-        {sections.map((section) => (
+        {visibleSections.map((section) => (
           <div key={section.label} className="mb-4">
             {!collapsed && (
               <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
