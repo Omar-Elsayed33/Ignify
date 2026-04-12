@@ -56,6 +56,16 @@ class CampaignStepResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class CampaignGenerateRequest(BaseModel):
+    goal: str
+    campaign_type: CampaignType = CampaignType.multi_channel
+    target_audience: Optional[str] = None
+    budget: Optional[str] = None
+    duration_days: int = 30
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+
+
 class CampaignAudienceCreate(BaseModel):
     name: str
     filters: Optional[dict[str, Any]] = None

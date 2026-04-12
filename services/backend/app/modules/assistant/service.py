@@ -7,26 +7,43 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.db.models import (
-    AdCampaign,
-    BrandSettings,
     Campaign,
     Channel,
     ContentPost,
     CreditBalance,
     Lead,
     SocialPost,
+    Tenant,
 )
+
+
+async def get_tenant_ai_config(db: AsyncSession, tenant_id: uuid.UUID) -> dict[str, str]:
+    """Get tenant's AI provider config from tenant.config JSON."""
+    result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
+    tenant = result.scalar_one_or_none()
+    if not tenant or not tenant.config:
+        return {}
+    cfg = tenant.config if isinstance(tenant.config, dict) else {}
+    return {
+        "provider": cfg.get("ai_provider", ""),
+        "model": cfg.get("ai_model", ""),
+        "api_key": cfg.get("ai_api_key", ""),
+        "base_url": cfg.get("ai_base_url", ""),
+    }
 
 
 async def build_marketing_context(db: AsyncSession, tenant_id: uuid.UUID) -> str:
     """Build a marketing-aware context string from tenant data."""
     parts = []
 
-    # Brand info
-    brand_result = await db.execute(select(BrandSettings).where(BrandSettings.tenant_id == tenant_id))
-    brand = brand_result.scalar_one_or_none()
-    if brand:
-        parts.append(f"Brand: {brand.brand_name or 'N/A'}, Voice: {brand.brand_voice or 'N/A'}, Tone: {brand.tone or 'N/A'}")
+    # Tenant info
+    tenant_result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
+    tenant = tenant_result.scalar_one_or_none()
+    if tenant:
+        cfg = tenant.config or {}
+        brand_name = cfg.get("brand_name", tenant.name)
+        brand_voice = cfg.get("brand_voice", "professional")
+        parts.append(f"Business: {brand_name}, Voice: {brand_voice}")
 
     # Stats
     leads_count = (await db.execute(select(func.count(Lead.id)).where(Lead.tenant_id == tenant_id))).scalar() or 0
@@ -34,7 +51,7 @@ async def build_marketing_context(db: AsyncSession, tenant_id: uuid.UUID) -> str
     channels_count = (await db.execute(select(func.count(Channel.id)).where(Channel.tenant_id == tenant_id))).scalar() or 0
     content_count = (await db.execute(select(func.count(ContentPost.id)).where(ContentPost.tenant_id == tenant_id))).scalar() or 0
 
-    parts.append(f"Current stats - Leads: {leads_count}, Campaigns: {campaigns_count}, Channels: {channels_count}, Content pieces: {content_count}")
+    parts.append(f"Current stats - Leads: {leads_count}, Campaigns: {campaigns_count}, Channels: {channels_count}, Content: {content_count}")
 
     balance_result = await db.execute(select(CreditBalance).where(CreditBalance.tenant_id == tenant_id))
     balance = balance_result.scalar_one_or_none()
@@ -66,6 +83,46 @@ async def chat_with_assistant(
     context: Optional[dict[str, Any]] = None,
     conversation_history: Optional[list[dict[str, str]]] = None,
 ) -> dict[str, Any]:
+    # Get tenant AI config
+    ai_config = await get_tenant_ai_config(db, tenant_id)
+
+    provider = ai_config.get("provider", "")
+    api_key = ai_config.get("api_key", "")
+    model = ai_config.get("model", "")
+
+    # Check if AI is configured
+    if not provider or not api_key:
+        # Fall back to platform defaults from env
+        if settings.OPENAI_API_KEY:
+            provider = "openai"
+            api_key = settings.OPENAI_API_KEY
+            model = model or "gpt-4o"
+        elif settings.ANTHROPIC_API_KEY:
+            provider = "anthropic"
+            api_key = settings.ANTHROPIC_API_KEY
+            model = model or "claude-sonnet-4-20250514"
+        elif settings.GOOGLE_API_KEY:
+            provider = "google"
+            api_key = settings.GOOGLE_API_KEY
+            model = model or "gemini-2.0-flash"
+        else:
+            return {
+                "response": (
+                    "**AI provider not configured.**\n\n"
+                    "To use the AI Assistant, please configure an AI provider:\n\n"
+                    "1. Go to **Settings** > **AI Configuration**\n"
+                    "2. Select a provider (OpenAI, Anthropic, Google, or OpenRouter)\n"
+                    "3. Enter your API key\n"
+                    "4. Select a model\n"
+                    "5. Click **Save Settings**\n\n"
+                    "Or ask your platform admin to set default AI provider keys."
+                ),
+                "metadata": {"error": "no_ai_provider_configured"},
+            }
+
+    if not model:
+        model = "gpt-4o" if provider == "openai" else "claude-sonnet-4-20250514" if provider == "anthropic" else "gemini-2.0-flash"
+
     system_prompt = await build_system_prompt(db, tenant_id)
 
     messages = []
@@ -74,24 +131,48 @@ async def chat_with_assistant(
     messages.append({"role": "user", "content": message})
 
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=120.0) as client:
             resp = await client.post(
-                f"{settings.AGNO_RUNTIME_URL}/v1/chat",
+                f"{settings.AGNO_RUNTIME_URL}/execute",
                 json={
+                    "provider": provider,
+                    "api_key": api_key,
+                    "model": model,
                     "system_prompt": system_prompt,
                     "messages": messages,
                     "tools": [],
-                    "context": context or {},
+                    "temperature": 0.7,
+                    "max_tokens": 4096,
                 },
             )
-            resp.raise_for_status()
+            if resp.status_code != 200:
+                error_detail = resp.text[:200]
+                return {
+                    "response": f"**AI provider error** ({provider}/{model}):\n\n{error_detail}\n\nPlease check your API key in **Settings > AI Configuration**.",
+                    "metadata": {"error": f"agno_{resp.status_code}", "detail": error_detail},
+                }
             data = resp.json()
             return {
-                "response": data.get("response", data.get("content", "I apologize, I could not process that.")),
-                "metadata": {"model": data.get("model"), "usage": data.get("usage")},
+                "response": data.get("response", "No response from AI."),
+                "metadata": {
+                    "model": model,
+                    "provider": provider,
+                    "usage": data.get("usage"),
+                    "tool_calls_made": data.get("tool_calls_made", 0),
+                },
             }
+    except httpx.TimeoutException:
+        return {
+            "response": "**Request timed out.** The AI took too long to respond. Try a shorter message or a faster model.",
+            "metadata": {"error": "timeout", "provider": provider, "model": model},
+        }
+    except httpx.ConnectError:
+        return {
+            "response": "**Cannot reach AI runtime.** The AGNO service may be down. Please contact your admin.",
+            "metadata": {"error": "agno_unreachable"},
+        }
     except Exception as e:
         return {
-            "response": "I'm temporarily unable to process your request. Please try again shortly.",
-            "metadata": {"error": str(e)},
+            "response": f"**Unexpected error:** {str(e)}\n\nPlease try again or check your AI configuration in Settings.",
+            "metadata": {"error": str(type(e).__name__), "detail": str(e)},
         }

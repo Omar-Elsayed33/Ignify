@@ -2,10 +2,10 @@
 
 import { useTranslations } from "next-intl";
 import { useAuthStore } from "@/store/auth.store";
+import { useRouter } from "@/i18n/navigation";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Avatar from "@radix-ui/react-avatar";
 import { Search, Bell, User, Settings, LogOut } from "lucide-react";
-import { useRouter, usePathname } from "next/navigation";
 
 interface DashboardHeaderProps {
   title: string;
@@ -15,12 +15,10 @@ export default function DashboardHeader({ title }: DashboardHeaderProps) {
   const t = useTranslations("header");
   const { user, logout } = useAuthStore();
   const router = useRouter();
-  const pathname = usePathname();
-  const locale = pathname.split("/")[1] || "en";
 
   const handleLogout = () => {
     logout();
-    router.push(`/${locale}/login`);
+    router.push("/login");
   };
 
   return (
@@ -28,7 +26,6 @@ export default function DashboardHeader({ title }: DashboardHeaderProps) {
       <h1 className="text-xl font-bold text-text-primary">{title}</h1>
 
       <div className="flex items-center gap-4">
-        {/* Search */}
         <div className="relative hidden md:block">
           <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
           <input
@@ -38,7 +35,6 @@ export default function DashboardHeader({ title }: DashboardHeaderProps) {
           />
         </div>
 
-        {/* Notifications */}
         <button
           className="relative rounded-lg p-2 text-text-secondary hover:bg-surface-hover hover:text-text-primary"
           title={t("notifications")}
@@ -47,22 +43,16 @@ export default function DashboardHeader({ title }: DashboardHeaderProps) {
           <span className="absolute end-1.5 top-1.5 h-2 w-2 rounded-full bg-primary" />
         </button>
 
-        {/* User dropdown */}
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
             <button className="flex items-center gap-2 rounded-lg p-1 hover:bg-surface-hover">
               <Avatar.Root className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-primary">
-                <Avatar.Image
-                  src={user?.avatarUrl}
-                  alt={user?.fullName || "User"}
-                  className="h-full w-full object-cover"
-                />
                 <Avatar.Fallback className="text-xs font-semibold text-white">
-                  {user?.fullName?.charAt(0)?.toUpperCase() || "U"}
+                  {user?.full_name?.charAt(0)?.toUpperCase() || "U"}
                 </Avatar.Fallback>
               </Avatar.Root>
               <span className="hidden text-sm font-medium text-text-primary md:block">
-                {user?.fullName || "User"}
+                {user?.full_name || "User"}
               </span>
             </button>
           </DropdownMenu.Trigger>
@@ -75,14 +65,14 @@ export default function DashboardHeader({ title }: DashboardHeaderProps) {
             >
               <DropdownMenu.Item
                 className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-text-secondary outline-none hover:bg-surface-hover hover:text-text-primary"
-                onSelect={() => router.push(`/${locale}/settings`)}
+                onSelect={() => router.push("/settings")}
               >
                 <User className="h-4 w-4" />
                 {t("profile")}
               </DropdownMenu.Item>
               <DropdownMenu.Item
                 className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-text-secondary outline-none hover:bg-surface-hover hover:text-text-primary"
-                onSelect={() => router.push(`/${locale}/settings`)}
+                onSelect={() => router.push("/settings")}
               >
                 <Settings className="h-4 w-4" />
                 {t("settings")}

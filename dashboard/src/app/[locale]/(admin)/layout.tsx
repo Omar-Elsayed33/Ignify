@@ -1,16 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
+import { Link, useRouter, usePathname } from "@/i18n/navigation";
 import { Flame, LayoutDashboard, Building2, Cpu, ChevronLeft } from "lucide-react";
 import { clsx } from "clsx";
-import Link from "next/link";
 
 const adminNav = [
-  { key: "dashboard", href: "dashboard", icon: LayoutDashboard },
-  { key: "tenants", href: "tenants", icon: Building2 },
-  { key: "aiProviders", href: "ai-providers", icon: Cpu },
+  { key: "dashboard", href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { key: "tenants", href: "/admin/tenants", icon: Building2, label: "Tenants" },
+  { key: "aiProviders", href: "/admin/ai-providers", icon: Cpu, label: "AI Providers" },
 ];
 
 export default function AdminLayout({
@@ -21,7 +20,6 @@ export default function AdminLayout({
   const { isAuthenticated, user } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
-  const locale = pathname.split("/")[1] || "en";
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -29,10 +27,10 @@ export default function AdminLayout({
   }, []);
 
   useEffect(() => {
-    if (hydrated && (!isAuthenticated || user?.role !== "owner")) {
-      router.push(`/${locale}/login`);
+    if (hydrated && (!isAuthenticated || (user?.role !== "superadmin" && user?.role !== "owner"))) {
+      router.push("/login");
     }
-  }, [hydrated, isAuthenticated, user, router, locale]);
+  }, [hydrated, isAuthenticated, user, router]);
 
   if (!hydrated) {
     return (
@@ -44,7 +42,6 @@ export default function AdminLayout({
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Admin Sidebar */}
       <aside className="fixed start-0 top-0 z-40 flex h-screen w-64 flex-col border-e border-border bg-secondary">
         <div className="flex h-16 items-center gap-2 px-4">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
@@ -57,12 +54,11 @@ export default function AdminLayout({
           <ul className="space-y-1">
             {adminNav.map((item) => {
               const Icon = item.icon;
-              const href = `/${locale}/${item.href === "dashboard" ? "" : ""}${item.href}`;
-              const active = pathname.includes(item.href);
+              const active = pathname.includes(item.key === "dashboard" ? "/admin/dashboard" : item.href);
               return (
                 <li key={item.key}>
                   <Link
-                    href={`/${locale}/${item.href}`}
+                    href={item.href}
                     className={clsx(
                       "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                       active
@@ -71,7 +67,7 @@ export default function AdminLayout({
                     )}
                   >
                     <Icon className="h-5 w-5" />
-                    {item.key === "dashboard" ? "Dashboard" : item.key === "tenants" ? "Tenants" : "AI Providers"}
+                    {item.label}
                   </Link>
                 </li>
               );
@@ -81,7 +77,7 @@ export default function AdminLayout({
 
         <div className="border-t border-white/10 p-3">
           <Link
-            href={`/${locale}/dashboard`}
+            href="/dashboard"
             className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/60 hover:bg-white/5 hover:text-white"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -90,7 +86,6 @@ export default function AdminLayout({
         </div>
       </aside>
 
-      {/* Main */}
       <main className="flex-1 ps-64">{children}</main>
     </div>
   );

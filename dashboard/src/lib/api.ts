@@ -6,11 +6,6 @@ interface RequestOptions extends Omit<RequestInit, "body"> {
   body?: unknown;
 }
 
-interface TokenResponse {
-  accessToken: string;
-  refreshToken: string;
-}
-
 function getAccessToken(): string | null {
   return useAuthStore.getState().accessToken;
 }
@@ -35,7 +30,7 @@ async function refreshAccessToken(): Promise<string | null> {
     const response = await fetch(`${BASE_URL}/api/v1/auth/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken }),
+      body: JSON.stringify({ refresh_token: refreshToken }),
     });
 
     if (!response.ok) {
@@ -43,9 +38,9 @@ async function refreshAccessToken(): Promise<string | null> {
       return null;
     }
 
-    const data: TokenResponse = await response.json();
-    setTokens(data.accessToken, data.refreshToken);
-    return data.accessToken;
+    const data = await response.json();
+    setTokens(data.access_token, data.refresh_token);
+    return data.access_token;
   } catch {
     clearTokens();
     return null;
@@ -85,7 +80,7 @@ async function request<T>(
       });
     } else {
       if (typeof window !== "undefined") {
-        window.location.href = "/en/login";
+        window.location.href = "/login";
       }
       throw new Error("Authentication failed");
     }
@@ -93,7 +88,7 @@ async function request<T>(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new ApiError(response.status, errorData.message || "Request failed", errorData);
+    throw new ApiError(response.status, errorData.detail || errorData.message || "Request failed", errorData);
   }
 
   if (response.status === 204) {
@@ -131,4 +126,4 @@ export const api = {
     request<T>(endpoint, { ...options, method: "DELETE" }),
 };
 
-export { getAccessToken, setTokens, clearTokens };
+export { BASE_URL, getAccessToken, setTokens, clearTokens };

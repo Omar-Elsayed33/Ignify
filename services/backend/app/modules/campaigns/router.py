@@ -9,6 +9,7 @@ from app.modules.campaigns.schemas import (
     CampaignAudienceCreate,
     CampaignAudienceResponse,
     CampaignCreate,
+    CampaignGenerateRequest,
     CampaignResponse,
     CampaignStepCreate,
     CampaignStepResponse,
@@ -28,6 +29,116 @@ async def list_campaigns(user: CurrentUser, db: DbSession, skip: int = 0, limit:
         .limit(limit)
     )
     return result.scalars().all()
+
+
+@router.post("/generate", response_model=CampaignResponse, status_code=status.HTTP_201_CREATED)
+async def generate_campaign(data: CampaignGenerateRequest, user: CurrentUser, db: DbSession):
+    """AI generates a full campaign with steps based on user's goal."""
+    from app.modules.assistant.service import get_tenant_ai_config
+    from app.core.config import settings
+    import httpx
+
+    ai_config = await get_tenant_ai_config(db, user.tenant_id)
+    provider = ai_config.get("provider") or ""
+    api_key = ai_config.get("api_key") or ""
+    model = ai_config.get("model") or ""
+
+    if not provider or not api_key:
+        if settings.OPENAI_API_KEY:
+            provider, api_key, model = "openai", settings.OPENAI_API_KEY, model or "gpt-4o"
+        elif settings.ANTHROPIC_API_KEY:
+            provider, api_key, model = "anthropic", settings.ANTHROPIC_API_KEY, model or "claude-sonnet-4-20250514"
+        else:
+            raise HTTPException(status_code=400, detail="No AI provider configured. Go to Settings > AI Configuration.")
+
+    prompt = (
+        f"Create a marketing campaign plan for the following goal:\n\n"
+        f"Goal: {data.goal}\n"
+        f"Campaign Type: {data.campaign_type}\n"
+        f"Target Audience: {data.target_audience or 'General'}\n"
+        f"Budget: {data.budget or 'Not specified'}\n"
+        f"Duration: {data.duration_days or 30} days\n\n"
+        f"Generate a JSON response with this exact structure:\n"
+        f'{{"name": "campaign name", "description": "brief description", '
+        f'"steps": [{{"step_order": 1, "action_type": "social_post|email|ad|blog|sms", '
+        f'"title": "step title", "content": "the actual content text", '
+        f'"platform": "instagram|facebook|twitter|linkedin|email|google_ads|meta_ads", '
+        f'"delay_hours": 0}}]}}\n\n'
+        f"Create 3-7 actionable steps with real content. Each step should have actual copy/text ready to use."
+    )
+
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            resp = await client.post(
+                f"{settings.AGNO_RUNTIME_URL}/execute",
+                json={
+                    "provider": provider,
+                    "api_key": api_key,
+                    "model": model or "gpt-4o",
+                    "system_prompt": "You are an expert marketing campaign planner. Always respond with valid JSON only, no markdown code blocks.",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "tools": [],
+                    "temperature": 0.7,
+                    "max_tokens": 4096,
+                },
+            )
+            resp.raise_for_status()
+            ai_data = resp.json()
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"AI generation failed: {str(e)}")
+
+    # Parse AI response
+    import json as json_module
+    ai_text = ai_data.get("response", "")
+    # Try to extract JSON from response
+    try:
+        # Remove markdown code blocks if present
+        clean = ai_text.strip()
+        if clean.startswith("```"):
+            clean = clean.split("\n", 1)[1] if "\n" in clean else clean[3:]
+            clean = clean.rsplit("```", 1)[0]
+        plan = json_module.loads(clean)
+    except json_module.JSONDecodeError:
+        raise HTTPException(status_code=502, detail="AI returned invalid campaign plan. Try again.")
+
+    # Create campaign
+    campaign = Campaign(
+        tenant_id=user.tenant_id,
+        name=plan.get("name", data.goal[:100]),
+        campaign_type=data.campaign_type,
+        status=CampaignStatus.draft,
+        start_date=data.start_date,
+        end_date=data.end_date,
+        config={
+            "goal": data.goal,
+            "target_audience": data.target_audience,
+            "budget": data.budget,
+            "description": plan.get("description", ""),
+            "ai_generated": True,
+            "model_used": model,
+        },
+    )
+    db.add(campaign)
+    await db.flush()
+
+    # Create steps
+    for step_data in plan.get("steps", []):
+        step = CampaignStep(
+            campaign_id=campaign.id,
+            step_order=step_data.get("step_order", 1),
+            action_type=step_data.get("action_type", "social_post"),
+            config={
+                "title": step_data.get("title", ""),
+                "content": step_data.get("content", ""),
+                "platform": step_data.get("platform", ""),
+                "status": "pending",
+            },
+            delay_hours=step_data.get("delay_hours", 0),
+        )
+        db.add(step)
+
+    await db.flush()
+    return campaign
 
 
 @router.post("/", response_model=CampaignResponse, status_code=status.HTTP_201_CREATED)
@@ -90,9 +201,54 @@ async def launch_campaign(campaign_id: uuid.UUID, user: CurrentUser, db: DbSessi
     )
     campaign = result.scalar_one_or_none()
     if not campaign:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found")
+        raise HTTPException(status_code=404, detail="Campaign not found")
     if campaign.status != CampaignStatus.draft:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Campaign can only be launched from draft status")
+        raise HTTPException(status_code=400, detail="Only draft campaigns can be launched")
+
+    # Get campaign steps
+    steps_result = await db.execute(
+        select(CampaignStep).where(CampaignStep.campaign_id == campaign_id).order_by(CampaignStep.step_order)
+    )
+    steps = steps_result.scalars().all()
+
+    # Create content from steps
+    from app.db.models import ContentPost, SocialPost
+    from datetime import datetime, timezone, timedelta
+
+    now = datetime.now(timezone.utc)
+    for step in steps:
+        cfg = step.config or {}
+        content_text = cfg.get("content", "")
+        platform = cfg.get("platform", "")
+        title = cfg.get("title", f"Campaign Step {step.step_order}")
+        scheduled_at = now + timedelta(hours=step.delay_hours)
+
+        if step.action_type in ("social_post", "ad") and platform:
+            # Create a social post
+            post = SocialPost(
+                tenant_id=user.tenant_id,
+                content=content_text,
+                platform=platform,
+                status="scheduled",
+                scheduled_at=scheduled_at,
+            )
+            db.add(post)
+
+        if step.action_type in ("blog", "email"):
+            # Create a content post
+            post = ContentPost(
+                tenant_id=user.tenant_id,
+                title=title,
+                body=content_text,
+                post_type=step.action_type,
+                platform=platform or "website",
+                status="draft",
+            )
+            db.add(post)
+
+        # Mark step as scheduled
+        step.config = {**cfg, "status": "scheduled", "scheduled_at": scheduled_at.isoformat()}
+
     campaign.status = CampaignStatus.active
     await db.flush()
     return campaign
@@ -165,3 +321,29 @@ async def create_audience(campaign_id: uuid.UUID, data: CampaignAudienceCreate, 
     db.add(audience)
     await db.flush()
     return audience
+
+
+@router.get("/{campaign_id}/detail")
+async def get_campaign_detail(campaign_id: uuid.UUID, user: CurrentUser, db: DbSession):
+    result = await db.execute(
+        select(Campaign).where(Campaign.id == campaign_id, Campaign.tenant_id == user.tenant_id)
+    )
+    campaign = result.scalar_one_or_none()
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+
+    steps_result = await db.execute(
+        select(CampaignStep).where(CampaignStep.campaign_id == campaign_id).order_by(CampaignStep.step_order)
+    )
+    steps = steps_result.scalars().all()
+
+    audiences_result = await db.execute(
+        select(CampaignAudience).where(CampaignAudience.campaign_id == campaign_id)
+    )
+    audiences = audiences_result.scalars().all()
+
+    return {
+        "campaign": CampaignResponse.model_validate(campaign),
+        "steps": [CampaignStepResponse.model_validate(s) for s in steps],
+        "audiences": [CampaignAudienceResponse.model_validate(a) for a in audiences],
+    }

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { usePathname, useRouter } from "next/navigation";
+import { useTranslations, useLocale } from "next-intl";
 import { useAuthStore } from "@/store/auth.store";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { clsx } from "clsx";
 import * as Avatar from "@radix-ui/react-avatar";
 import {
@@ -18,13 +18,13 @@ import {
   BarChart3,
   Eye,
   Globe,
-  MessageSquare,
   MessagesSquare,
   Bot,
   Puzzle,
   Settings,
   CreditCard,
   UserPlus,
+  UserCircle,
   ChevronLeft,
   ChevronRight,
   Languages,
@@ -46,48 +46,49 @@ export default function Sidebar() {
   const t = useTranslations("sidebar");
   const pathname = usePathname();
   const router = useRouter();
+  const locale = useLocale();
   const { user } = useAuthStore();
   const [collapsed, setCollapsed] = useState(false);
 
-  const locale = pathname.split("/")[1] || "en";
   const otherLocale = locale === "en" ? "ar" : "en";
 
   const sections: NavSection[] = [
     {
       label: t("marketing"),
       items: [
-        { key: "dashboard", href: `/${locale}/dashboard`, icon: LayoutDashboard },
-        { key: "content", href: `/${locale}/content`, icon: FileText },
-        { key: "creative", href: `/${locale}/creative`, icon: Palette },
-        { key: "ads", href: `/${locale}/ads`, icon: Megaphone },
-        { key: "seo", href: `/${locale}/seo`, icon: Search },
-        { key: "social", href: `/${locale}/social`, icon: Share2 },
+        { key: "dashboard", href: "/dashboard", icon: LayoutDashboard },
+        { key: "content", href: "/content", icon: FileText },
+        { key: "creative", href: "/creative", icon: Palette },
+        { key: "ads", href: "/ads", icon: Megaphone },
+        { key: "seo", href: "/seo", icon: Search },
+        { key: "social", href: "/social", icon: Share2 },
       ],
     },
     {
       label: t("management"),
       items: [
-        { key: "leads", href: `/${locale}/leads`, icon: Users },
-        { key: "campaigns", href: `/${locale}/campaigns`, icon: Target },
-        { key: "analytics", href: `/${locale}/analytics`, icon: BarChart3 },
-        { key: "competitors", href: `/${locale}/competitors`, icon: Eye },
+        { key: "leads", href: "/leads", icon: Users },
+        { key: "campaigns", href: "/campaigns", icon: Target },
+        { key: "analytics", href: "/analytics", icon: BarChart3 },
+        { key: "competitors", href: "/competitors", icon: Eye },
       ],
     },
     {
       label: t("communication"),
       items: [
-        { key: "channels", href: `/${locale}/channels`, icon: Globe },
-        { key: "conversations", href: `/${locale}/conversations`, icon: MessagesSquare },
-        { key: "assistant", href: `/${locale}/assistant`, icon: Bot },
+        { key: "channels", href: "/channels", icon: Globe },
+        { key: "conversations", href: "/conversations", icon: MessagesSquare },
+        { key: "assistant", href: "/assistant", icon: Bot },
       ],
     },
     {
       label: t("settingsGroup"),
       items: [
-        { key: "integrations", href: `/${locale}/integrations`, icon: Puzzle },
-        { key: "settings", href: `/${locale}/settings`, icon: Settings },
-        { key: "billing", href: `/${locale}/billing`, icon: CreditCard },
-        { key: "team", href: `/${locale}/team`, icon: UserPlus },
+        { key: "profile", href: "/profile", icon: UserCircle },
+        { key: "integrations", href: "/integrations", icon: Puzzle },
+        { key: "settings", href: "/settings", icon: Settings },
+        { key: "billing", href: "/billing", icon: CreditCard },
+        { key: "team", href: "/team", icon: UserPlus },
       ],
     },
   ];
@@ -95,8 +96,7 @@ export default function Sidebar() {
   const isActive = (href: string) => pathname === href;
 
   const switchLocale = () => {
-    const newPath = pathname.replace(`/${locale}`, `/${otherLocale}`);
-    router.push(newPath);
+    router.push(pathname, { locale: otherLocale });
   };
 
   return (
@@ -131,7 +131,7 @@ export default function Sidebar() {
                 const active = isActive(item.href);
                 return (
                   <li key={item.key}>
-                    <a
+                    <Link
                       href={item.href}
                       className={clsx(
                         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
@@ -143,7 +143,7 @@ export default function Sidebar() {
                     >
                       <Icon className="h-5 w-5 shrink-0" />
                       {!collapsed && <span>{t(item.key)}</span>}
-                    </a>
+                    </Link>
                   </li>
                 );
               })}
@@ -182,22 +182,17 @@ export default function Sidebar() {
         {/* User avatar */}
         <div className="flex items-center gap-3 rounded-lg px-3 py-2">
           <Avatar.Root className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary">
-            <Avatar.Image
-              src={user?.avatarUrl}
-              alt={user?.fullName || "User"}
-              className="h-full w-full object-cover"
-            />
             <Avatar.Fallback className="text-xs font-semibold text-white">
-              {user?.fullName?.charAt(0)?.toUpperCase() || "U"}
+              {user?.full_name?.charAt(0)?.toUpperCase() || "U"}
             </Avatar.Fallback>
           </Avatar.Root>
           {!collapsed && (
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-text-primary">
-                {user?.fullName || "User"}
+                {user?.full_name || "User"}
               </p>
               <p className="truncate text-xs text-text-muted">
-                {user?.email || "user@example.com"}
+                {user?.email || ""}
               </p>
             </div>
           )}

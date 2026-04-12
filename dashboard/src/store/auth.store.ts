@@ -4,17 +4,19 @@ import { persist } from "zustand/middleware";
 export interface User {
   id: string;
   email: string;
-  fullName: string;
-  avatarUrl?: string;
-  role: "owner" | "admin" | "editor" | "viewer";
+  full_name: string;
+  role: string;
+  lang_preference: string;
+  is_active: boolean;
+  tenant_id?: string;
 }
 
 export interface Tenant {
   id: string;
   name: string;
   slug: string;
-  plan: "starter" | "pro" | "enterprise";
-  logoUrl?: string;
+  plan_id?: string;
+  is_active: boolean;
 }
 
 interface AuthState {

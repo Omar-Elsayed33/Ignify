@@ -9,12 +9,24 @@ class CompetitorCreate(BaseModel):
     name: str
     website: Optional[str] = None
     description: Optional[str] = None
+    instagram_url: Optional[str] = None
+    facebook_url: Optional[str] = None
+    twitter_url: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    tiktok_url: Optional[str] = None
+    youtube_url: Optional[str] = None
 
 
 class CompetitorUpdate(BaseModel):
     name: Optional[str] = None
     website: Optional[str] = None
     description: Optional[str] = None
+    instagram_url: Optional[str] = None
+    facebook_url: Optional[str] = None
+    twitter_url: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    tiktok_url: Optional[str] = None
+    youtube_url: Optional[str] = None
 
 
 class CompetitorResponse(BaseModel):
@@ -23,6 +35,12 @@ class CompetitorResponse(BaseModel):
     name: str
     website: Optional[str] = None
     description: Optional[str] = None
+    instagram_url: Optional[str] = None
+    facebook_url: Optional[str] = None
+    twitter_url: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    tiktok_url: Optional[str] = None
+    youtube_url: Optional[str] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

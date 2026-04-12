@@ -2,17 +2,14 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
-import { api } from "@/lib/api";
+import { api, BASE_URL } from "@/lib/api";
+import { Link, useRouter } from "@/i18n/navigation";
 import { Flame, Mail, Lock, User, Building } from "lucide-react";
-import Link from "next/link";
 
 export default function RegisterPage() {
   const t = useTranslations("auth");
   const router = useRouter();
-  const pathname = usePathname();
-  const locale = pathname.split("/")[1] || "en";
   const { login } = useAuthStore();
 
   const [fullName, setFullName] = useState("");
@@ -28,15 +25,27 @@ export default function RegisterPage() {
     setError("");
 
     try {
-      const response = await api.post<{
-        user: { id: string; email: string; fullName: string; role: "owner" | "admin" | "editor" | "viewer" };
-        tenant: { id: string; name: string; slug: string; plan: "starter" | "pro" | "enterprise" };
-        accessToken: string;
-        refreshToken: string;
-      }>("/api/v1/auth/register", { fullName, email, password, companyName });
+      const tokens = await api.post<{
+        access_token: string;
+        refresh_token: string;
+        token_type: string;
+      }>("/api/v1/auth/register", {
+        full_name: fullName,
+        email,
+        password,
+        company_name: companyName,
+      });
 
-      login(response.user, response.tenant, response.accessToken, response.refreshToken);
-      router.push(`/${locale}/dashboard`);
+      const user = await fetch(`${BASE_URL}/api/v1/auth/me`, {
+        headers: { Authorization: `Bearer ${tokens.access_token}` },
+      }).then((r) => r.json());
+
+      const tenant = await fetch(`${BASE_URL}/api/v1/tenants/me`, {
+        headers: { Authorization: `Bearer ${tokens.access_token}` },
+      }).then((r) => r.json());
+
+      login(user, tenant, tokens.access_token, tokens.refresh_token);
+      router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
     } finally {
@@ -144,7 +153,7 @@ export default function RegisterPage() {
       <p className="mt-6 text-center text-sm text-text-secondary">
         {t("hasAccount")}{" "}
         <Link
-          href={`/${locale}/login`}
+          href="/login"
           className="font-medium text-primary hover:text-primary-dark"
         >
           {t("login")}

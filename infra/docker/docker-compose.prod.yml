@@ -1,7 +1,11 @@
-version: "3.9"
+name: ignify-prod
+
+# ============================================================
+# IGNIFY - Production Docker Compose
+# Run: docker compose -f docker-compose.prod.yml up -d --build
+# ============================================================
 
 services:
-  # ─── Infrastructure ───
   postgres:
     image: postgres:16-alpine
     container_name: ignify-postgres
@@ -9,7 +13,7 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_DB: ${POSTGRES_DB:-ignify}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -17,14 +21,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - ignify-net
 
   redis:
     image: redis:7-alpine
     container_name: ignify-redis
     restart: always
-    command: redis-server --requirepass ${REDIS_PASSWORD:-}
     volumes:
       - redis_data:/data
     healthcheck:
@@ -32,8 +33,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - ignify-net
 
   minio:
     image: minio/minio:latest
@@ -45,10 +44,8 @@ services:
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
-    networks:
-      - ignify-net
 
-  # ─── Backend Services ───
+  # Entrypoint auto-runs: alembic upgrade head + seed
   backend:
     build:
       context: ../../services/backend
@@ -56,14 +53,20 @@ services:
     container_name: ignify-backend
     restart: always
     env_file:
-      - .env
+      - .env.prod
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ignify}
+      REDIS_URL: redis://redis:6379/0
+      AGNO_RUNTIME_URL: http://agno-runtime:8001
+      MINIO_ENDPOINT: minio:9000
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      DEBUG: "false"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    networks:
-      - ignify-net
 
   agno-runtime:
     build:
@@ -72,9 +75,7 @@ services:
     container_name: ignify-agno
     restart: always
     env_file:
-      - .env
-    networks:
-      - ignify-net
+      - .env.prod
 
   worker:
     build:
@@ -82,44 +83,41 @@ services:
       dockerfile: Dockerfile
     container_name: ignify-worker
     restart: always
-    command: celery -A app.worker worker --loglevel=info --concurrency=4
+    command: ["./entrypoint.sh", "celery", "-A", "app.worker", "worker", "--loglevel=info"]
     env_file:
-      - .env
+      - .env.prod
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ignify}
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    networks:
-      - ignify-net
 
-  # ─── Frontend ───
   dashboard:
     build:
       context: ../../dashboard
       dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_API_URL: https://${APP_HOST}/api
-        NEXT_PUBLIC_APP_NAME: Ignify
     container_name: ignify-dashboard
     restart: always
-    networks:
-      - ignify-net
+    environment:
+      NEXT_PUBLIC_API_URL: https://${APP_HOST}
+      NEXT_PUBLIC_APP_NAME: Ignify
 
   website:
     build:
       context: ../../website
       dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_API_URL: https://${APP_HOST}/api
-        NEXT_PUBLIC_APP_NAME: Ignify
-        NEXT_PUBLIC_DASHBOARD_URL: https://${APP_HOST}/app
     container_name: ignify-website
     restart: always
-    networks:
-      - ignify-net
+    environment:
+      NEXT_PUBLIC_API_URL: https://${APP_HOST}
+      NEXT_PUBLIC_APP_NAME: Ignify
+      NEXT_PUBLIC_DASHBOARD_URL: https://app.${APP_HOST}
 
-  # ─── Channel Connectors ───
   whatsapp-connector:
     build:
       context: ../../services/whatsapp-connector
@@ -129,10 +127,10 @@ services:
     environment:
       BACKEND_URL: http://backend:8000
       PORT: 3001
+    depends_on:
+      - backend
     volumes:
       - whatsapp_sessions:/app/sessions
-    networks:
-      - ignify-net
 
   messenger-connector:
     build:
@@ -143,9 +141,8 @@ services:
     environment:
       BACKEND_URL: http://backend:8000
       PORT: 3003
-      MESSENGER_VERIFY_TOKEN: ${MESSENGER_VERIFY_TOKEN}
-    networks:
-      - ignify-net
+    depends_on:
+      - backend
 
   instagram-connector:
     build:
@@ -156,9 +153,8 @@ services:
     environment:
       BACKEND_URL: http://backend:8000
       PORT: 3006
-      META_APP_SECRET: ${META_APP_SECRET}
-    networks:
-      - ignify-net
+    depends_on:
+      - backend
 
   email-connector:
     build:
@@ -169,8 +165,8 @@ services:
     environment:
       BACKEND_URL: http://backend:8000
       PORT: 3004
-    networks:
-      - ignify-net
+    depends_on:
+      - backend
 
   slack-connector:
     build:
@@ -181,38 +177,9 @@ services:
     environment:
       BACKEND_URL: http://backend:8000
       PORT: 3005
-    networks:
-      - ignify-net
+    depends_on:
+      - backend
 
-  snapchat-connector:
-    build:
-      context: ../../services/snapchat-connector
-      dockerfile: Dockerfile
-    container_name: ignify-snapchat
-    restart: always
-    environment:
-      BACKEND_URL: http://backend:8000
-      PORT: 3007
-      SNAPCHAT_APP_ID: ${SNAPCHAT_APP_ID}
-      SNAPCHAT_APP_SECRET: ${SNAPCHAT_APP_SECRET}
-    networks:
-      - ignify-net
-
-  youtube-connector:
-    build:
-      context: ../../services/youtube-connector
-      dockerfile: Dockerfile
-    container_name: ignify-youtube
-    restart: always
-    environment:
-      BACKEND_URL: http://backend:8000
-      PORT: 3008
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-    networks:
-      - ignify-net
-
-  # ─── Gateway ───
   gateway:
     image: nginx:alpine
     container_name: ignify-gateway
@@ -221,23 +188,25 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-      - letsencrypt_data:/etc/letsencrypt
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - certbot_data:/var/www/certbot:ro
+      - certbot_certs:/etc/nginx/ssl:ro
     depends_on:
       - backend
       - dashboard
       - website
-    networks:
-      - ignify-net
+
+  certbot:
+    image: certbot/certbot
+    container_name: ignify-certbot
+    volumes:
+      - certbot_certs:/etc/letsencrypt
+      - certbot_data:/var/www/certbot
 
 volumes:
   postgres_data:
   redis_data:
   minio_data:
   whatsapp_sessions:
-  letsencrypt_data:
-
-networks:
-  ignify-net:
-    driver: bridge
+  certbot_data:
+  certbot_certs:

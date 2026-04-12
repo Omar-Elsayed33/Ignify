@@ -2,17 +2,14 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
-import { api } from "@/lib/api";
+import { api, BASE_URL } from "@/lib/api";
+import { Link, useRouter } from "@/i18n/navigation";
 import { Flame, Mail, Lock } from "lucide-react";
-import Link from "next/link";
 
 export default function LoginPage() {
   const t = useTranslations("auth");
   const router = useRouter();
-  const pathname = usePathname();
-  const locale = pathname.split("/")[1] || "en";
   const { login } = useAuthStore();
 
   const [email, setEmail] = useState("");
@@ -26,15 +23,27 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const response = await api.post<{
-        user: { id: string; email: string; fullName: string; role: "owner" | "admin" | "editor" | "viewer" };
-        tenant: { id: string; name: string; slug: string; plan: "starter" | "pro" | "enterprise" };
-        accessToken: string;
-        refreshToken: string;
+      const tokens = await api.post<{
+        access_token: string;
+        refresh_token: string;
+        token_type: string;
       }>("/api/v1/auth/login", { email, password });
 
-      login(response.user, response.tenant, response.accessToken, response.refreshToken);
-      router.push(`/${locale}/dashboard`);
+      const user = await fetch(`${BASE_URL}/api/v1/auth/me`, {
+        headers: { Authorization: `Bearer ${tokens.access_token}` },
+      }).then((r) => r.json());
+
+      const tenant = await fetch(`${BASE_URL}/api/v1/tenants/me`, {
+        headers: { Authorization: `Bearer ${tokens.access_token}` },
+      }).then((r) => r.json());
+
+      login(user, tenant, tokens.access_token, tokens.refresh_token);
+
+      if (user.role === "superadmin") {
+        router.push("/admin/dashboard");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
@@ -113,7 +122,7 @@ export default function LoginPage() {
       <p className="mt-6 text-center text-sm text-text-secondary">
         {t("noAccount")}{" "}
         <Link
-          href={`/${locale}/register`}
+          href="/register"
           className="font-medium text-primary hover:text-primary-dark"
         >
           {t("register")}

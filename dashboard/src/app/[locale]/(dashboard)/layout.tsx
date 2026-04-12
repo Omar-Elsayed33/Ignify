@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
+import { useRouter, usePathname } from "@/i18n/navigation";
 import Sidebar from "@/components/Sidebar";
 import { Menu, X } from "lucide-react";
 
@@ -14,7 +14,6 @@ export default function DashboardLayout({
   const { isAuthenticated } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
-  const locale = pathname.split("/")[1] || "en";
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
@@ -24,9 +23,9 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (hydrated && !isAuthenticated) {
-      router.push(`/${locale}/login`);
+      router.push("/login");
     }
-  }, [hydrated, isAuthenticated, router, locale]);
+  }, [hydrated, isAuthenticated, router]);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -42,7 +41,6 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Mobile sidebar overlay */}
       {mobileOpen && (
         <div
           className="fixed inset-0 z-30 bg-black/50 lg:hidden"
@@ -50,7 +48,6 @@ export default function DashboardLayout({
         />
       )}
 
-      {/* Sidebar - desktop always visible, mobile toggled */}
       <div className="hidden lg:block">
         <Sidebar />
       </div>
@@ -60,9 +57,7 @@ export default function DashboardLayout({
         </div>
       )}
 
-      {/* Main content */}
       <main className="lg:ps-64">
-        {/* Mobile header */}
         <div className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-surface px-4 lg:hidden">
           <button
             onClick={() => setMobileOpen(!mobileOpen)}

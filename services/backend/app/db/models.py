@@ -744,6 +744,12 @@ class Competitor(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     website: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    instagram_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    facebook_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    twitter_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    linkedin_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    tiktok_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    youtube_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     snapshots: Mapped[list["CompetitorSnapshot"]] = relationship(back_populates="competitor")
