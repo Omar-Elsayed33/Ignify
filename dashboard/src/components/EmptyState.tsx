@@ -1,7 +1,9 @@
 "use client";
 
+import { Inbox } from "lucide-react";
+
 interface EmptyStateProps {
-  icon: React.ElementType;
+  icon?: React.ElementType;
   title: string;
   description: string;
   actionLabel?: string;
@@ -9,7 +11,7 @@ interface EmptyStateProps {
 }
 
 export default function EmptyState({
-  icon: Icon,
+  icon: Icon = Inbox,
   title,
   description,
   actionLabel,

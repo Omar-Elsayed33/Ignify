@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import DashboardHeader from "@/components/DashboardHeader";
 import StatCard from "@/components/StatCard";
-import { useAuthStore } from "@/store/auth.store";
 import { api } from "@/lib/api";
 import {
   Users,
@@ -57,7 +56,6 @@ function SkeletonStatCard() {
 
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
-  const { user } = useAuthStore();
 
   const [overview, setOverview] = useState<OverviewData | null>(null);
   const [reports, setReports] = useState<Report[]>([]);
@@ -91,8 +89,6 @@ export default function DashboardPage() {
     { label: t("generateReport"), icon: BarChart3, tint: "bg-primary-fixed text-primary" },
   ];
 
-  const firstName = user?.full_name?.split(" ")[0] || "there";
-
   return (
     <div>
       <DashboardHeader title={t("title")} />
@@ -111,15 +107,13 @@ export default function DashboardPage() {
             <div className="space-y-3">
               <span className="insight-chip">
                 <Sparkles className="h-3 w-3" />
-                EMBER INSIGHT
+                {t("welcome")}
               </span>
               <h2 className="font-headline text-4xl font-bold tracking-tight text-on-surface md:text-5xl">
-                {t("title")},{" "}
-                <span className="brand-gradient-text">{firstName}.</span>
+                {t("title")}
               </h2>
               <p className="max-w-lg text-sm font-medium leading-relaxed text-on-surface-variant">
-                Your marketing cockpit is live. Spark AI is watching performance
-                and will surface opportunities as they emerge.
+                {t("heroDesc") ?? "لوحة تحكم التسويق جاهزة. تابع أداء حملاتك ومنصاتك من مكان واحد."}
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -266,31 +260,8 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Right 1/3 — Insights + activity */}
+            {/* Right 1/3 — activity */}
             <div className="space-y-6">
-              {/* Spark Insight */}
-              <div className="brand-gradient rounded-2xl p-[2px] shadow-soft-lg">
-                <div className="space-y-4 rounded-[14px] bg-surface-container-lowest p-6">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-primary" />
-                    <h4 className="font-headline text-lg font-bold text-on-surface">
-                      Spark AI Insight
-                    </h4>
-                  </div>
-                  <p className="text-sm font-medium leading-relaxed text-on-surface-variant">
-                    We've detected an{" "}
-                    <span className="font-bold text-tertiary">opportunity</span>{" "}
-                    in the Northeast segment. Re-allocating $450 from
-                    underperforming Social ads could yield{" "}
-                    <span className="font-bold">14% more leads</span>.
-                  </p>
-                  <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-tertiary-fixed py-3 text-sm font-bold text-on-tertiary-fixed-variant transition-all hover:brightness-95">
-                    Apply Strategy
-                    <ArrowRight className="h-4 w-4 rtl:rotate-180" />
-                  </button>
-                </div>
-              </div>
-
               {/* Recent Activity */}
               <div className="rounded-2xl bg-surface-container-lowest p-6 shadow-soft ghost-border">
                 <h4 className="mb-5 font-headline text-lg font-bold text-on-surface">
@@ -332,18 +303,6 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Small Insight Chip strip */}
-              <div className="flex items-center justify-between rounded-2xl bg-tertiary-fixed p-4 shadow-soft">
-                <div className="flex items-center gap-3">
-                  <Sparkles className="h-5 w-5 text-on-tertiary-fixed-variant" />
-                  <span className="text-xs font-bold text-on-tertiary-fixed-variant">
-                    Spark Predictive Model v2.4
-                  </span>
-                </div>
-                <span className="rounded-full bg-white/60 px-2 py-0.5 text-[10px] font-bold text-on-tertiary-fixed-variant">
-                  Stable
-                </span>
-              </div>
             </div>
           </section>
         </div>

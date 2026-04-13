@@ -14,6 +14,7 @@ class VideoGenerateRequest(BaseModel):
     video_type: str = Field("ad", pattern="^(ad|educational|entertainment)$")
     aspect_ratio: str = Field("9:16", pattern="^(9:16|1:1|16:9)$")
     brand_voice: dict[str, Any] | None = None
+    plan_id: uuid.UUID | None = None
 
 
 class SceneOut(BaseModel):

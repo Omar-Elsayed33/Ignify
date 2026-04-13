@@ -29,6 +29,37 @@ def lang_directive(lang: str) -> str:
     return _LANG_DIRECTIVES.get(lang, _LANG_DIRECTIVES["en"])
 
 
+CONSTRAINT_DIRECTIVE = """
+⚠️ HARD CONSTRAINTS — NEVER VIOLATE:
+1. Budget: stay within the user's monthly budget. If missing, assume $500/mo.
+2. Team capacity: assume solo founder or team of 2-3 unless specified. Don't recommend strategies requiring 10 people.
+3. Realistic numbers: use industry benchmarks for MENA SMB (CPL $3-$15, CAC $50-$200, retention 60-80%).
+4. 3 scenarios always: conservative (80% confidence), expected (50%), aggressive (20%).
+5. Every recommendation must have a specific, measurable expected outcome.
+6. No generic filler: "engage with audience", "increase brand awareness" are BANNED unless attached to specific numbers.
+"""
+
+
+def constraint_directive() -> str:
+    """Universal hard-constraint directive prepended to every sub-agent prompt."""
+    return CONSTRAINT_DIRECTIVE
+
+
+def budget_context(state: dict) -> str:
+    """Formatted budget/goal/urgency block to inject into every sub-agent prompt."""
+    budget = state.get("budget_monthly_usd")
+    if budget is None:
+        budget = 500.0  # sensible default when user skipped
+    currency = state.get("budget_currency", "usd")
+    primary_goal = state.get("primary_goal") or "(not specified — infer from business profile)"
+    urgency = state.get("urgency_days", 30)
+    return (
+        f"Monthly marketing budget: ${budget:.0f} USD (source currency: {currency.upper()})\n"
+        f"Primary goal (next {urgency} days): {primary_goal}\n"
+        f"Urgency: results needed within {urgency} days."
+    )
+
+
 def parse_json_response(content: str, fallback: Any) -> Any:
     """Extract JSON from LLM response, tolerating code fences and prose."""
     if not content:

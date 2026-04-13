@@ -16,6 +16,7 @@ from app.db.models import (
     MarketingPlan,
     Message,
     Plan,
+    PlanModeConfig,
     PlatformChannel,
     Skill,
     Tenant,
@@ -41,6 +42,8 @@ from app.modules.admin.schemas import (
     PlanAdminCreate,
     PlanAdminResponse,
     PlanAdminUpdate,
+    PlanModeConfigItem,
+    PlanModeConfigUpdate,
     PlatformChannelCreate,
     PlatformChannelResponse,
     SkillResponse,
@@ -736,3 +739,75 @@ async def list_audit_logs(db: DbSession, skip: int = 0, limit: int = 100):
         select(AuditLog).order_by(AuditLog.created_at.desc()).offset(skip).limit(limit)
     )
     return result.scalars().all()
+
+
+# ── Plan Mode Configuration ──
+
+
+@router.get("/plan-modes", response_model=dict, dependencies=[superadmin_dep])
+async def get_all_plan_modes(db: DbSession):
+    """Return all mode configs grouped by mode: {fast: [...], medium: [...], deep: [...]}"""
+    from app.agents.plan_modes import ALL_SUBAGENTS, DEFAULT_MODE_CONFIG
+
+    result = await db.execute(select(PlanModeConfig).order_by(PlanModeConfig.mode, PlanModeConfig.subagent_name))
+    rows = result.scalars().all()
+
+    # Build output grouped by mode
+    out: dict = {"fast": [], "medium": [], "deep": []}
+    db_map: dict[str, dict[str, str]] = {}
+    for row in rows:
+        db_map.setdefault(row.mode, {})[row.subagent_name] = row.model
+
+    for mode in ("fast", "medium", "deep"):
+        defaults = DEFAULT_MODE_CONFIG.get(mode, {})
+        overrides = db_map.get(mode, {})
+        merged = {**defaults, **overrides}
+        out[mode] = [{"subagent_name": s, "model": merged.get(s, "")} for s in ALL_SUBAGENTS]
+
+    return out
+
+
+@router.put("/plan-modes/{mode}", response_model=list[PlanModeConfigItem], dependencies=[superadmin_dep])
+async def update_plan_mode(mode: str, data: PlanModeConfigUpdate, db: DbSession):
+    """Update model assignments for a plan mode. Pass list of {subagent_name, model}."""
+    if mode not in ("fast", "medium", "deep"):
+        raise HTTPException(status_code=400, detail="mode must be fast | medium | deep")
+
+    updated: list[PlanModeConfig] = []
+    for item in data.assignments:
+        subagent_name = item.get("subagent_name")
+        model = item.get("model")
+        if not subagent_name or not model:
+            continue
+
+        existing = (
+            await db.execute(
+                select(PlanModeConfig).where(
+                    PlanModeConfig.mode == mode,
+                    PlanModeConfig.subagent_name == subagent_name,
+                )
+            )
+        ).scalar_one_or_none()
+
+        if existing:
+            existing.model = model
+            updated.append(existing)
+        else:
+            cfg = PlanModeConfig(mode=mode, subagent_name=subagent_name, model=model)
+            db.add(cfg)
+            updated.append(cfg)
+
+    await db.commit()
+    for cfg in updated:
+        await db.refresh(cfg)
+
+    return updated
+
+
+@router.post("/plan-modes/reset", response_model=dict, dependencies=[superadmin_dep])
+async def reset_plan_modes(db: DbSession):
+    """Delete all DB overrides and revert to hardcoded defaults."""
+    from sqlalchemy import delete
+    await db.execute(delete(PlanModeConfig))
+    await db.commit()
+    return {"ok": True, "message": "Plan mode configs reset to defaults"}

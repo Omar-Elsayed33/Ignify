@@ -58,6 +58,20 @@ class AIProviderResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class PlanModeConfigItem(BaseModel):
+    """One subagent entry within a plan mode."""
+    subagent_name: str
+    model: str
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class PlanModeConfigUpdate(BaseModel):
+    """Body for PUT /admin/plan-modes/{mode} — list of subagent→model assignments."""
+    assignments: list[dict]  # [{subagent_name, model}]
+
+
 class PlatformChannelCreate(BaseModel):
     channel_type: str
     name: str

@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(ls d:/Ignify/website/src/app/[locale])"
+      "Bash(ls d:/Ignify/website/src/app/[locale])",
+      "Bash(ls d:/Ignify/docker-compose*.yml d:/Ignify/dashboard/Dockerfile*)"
     ]
   }
 }

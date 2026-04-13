@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/lib/api";
-import { Loader2, Plus, X } from "lucide-react";
+import { Loader2, Plus, X, Globe } from "lucide-react";
+import AIAssistButton from "@/components/AIAssistButton";
 
 const INDUSTRIES = ["ecommerce", "restaurant", "clinic", "real_estate", "services", "saas", "other"] as const;
 const COUNTRIES = ["EG", "SA", "AE", "KW", "QA", "BH", "OM", "other"] as const;
@@ -12,6 +13,7 @@ const LANGS = ["ar", "en", "both"] as const;
 
 export default function BusinessProfilePage() {
   const t = useTranslations("onboarding");
+  const tAI = useTranslations("aiAssist");
   const router = useRouter();
 
   const [industry, setIndustry] = useState<string>("ecommerce");
@@ -23,6 +25,46 @@ export default function BusinessProfilePage() {
   const [competitors, setCompetitors] = useState<string[]>([""]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzeMsg, setAnalyzeMsg] = useState<string | null>(null);
+
+  const analyzeWebsite = async () => {
+    if (!websiteUrl.trim()) return;
+    setAnalyzing(true);
+    setAnalyzeMsg(null);
+    try {
+      const data = await api.post<{
+        business_name?: string;
+        industry?: string;
+        description?: string;
+        target_audience?: string;
+        main_products?: string[];
+        main_services?: string[];
+        probable_competitors?: Array<{ name?: string; url?: string } | string>;
+      }>("/api/v1/ai-assistant/draft-business-profile", {
+        website_url: websiteUrl,
+        lang: primaryLanguage === "ar" ? "ar" : "en",
+        country,
+      });
+      if (data.description) setDescription(data.description);
+      if (data.target_audience) setTargetAudience(data.target_audience);
+      const prods = [
+        ...(data.main_products || []),
+        ...(data.main_services || []),
+      ].filter(Boolean);
+      if (prods.length) setProducts(prods);
+      const comps = (data.probable_competitors || [])
+        .map((c) => (typeof c === "string" ? c : c.name || c.url || ""))
+        .filter(Boolean);
+      if (comps.length) setCompetitors(comps);
+      setAnalyzeMsg(tAI("analyzeWebsite.success"));
+    } catch {
+      setAnalyzeMsg(tAI("analyzeWebsite.error"));
+    } finally {
+      setAnalyzing(false);
+    }
+  };
 
   const updateList = (
     setter: React.Dispatch<React.SetStateAction<string[]>>,
@@ -63,6 +105,36 @@ export default function BusinessProfilePage() {
       <div>
         <h2 className="text-xl font-semibold text-text-primary">{t("business.title")}</h2>
         <p className="mt-1 text-sm text-text-secondary">{t("business.subtitle")}</p>
+      </div>
+
+      {/* AI Website analyzer */}
+      <div className="rounded-lg border border-border bg-surface-container-lowest p-4">
+        <div className="mb-2 flex items-center gap-2 text-sm font-medium text-text-primary">
+          <Globe className="h-4 w-4" />
+          {tAI("analyzeWebsite.title")}
+        </div>
+        <p className="mb-3 text-xs text-text-secondary">
+          {tAI("analyzeWebsite.subtitle")}
+        </p>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input
+            type="url"
+            value={websiteUrl}
+            onChange={(e) => setWebsiteUrl(e.target.value)}
+            placeholder={tAI("analyzeWebsite.placeholder")}
+            className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm"
+          />
+          <AIAssistButton
+            onClick={analyzeWebsite}
+            loading={analyzing}
+            disabled={!websiteUrl.trim()}
+            label={tAI("analyzeWebsite.button")}
+            loadingLabel={tAI("analyzeWebsite.analyzing")}
+          />
+        </div>
+        {analyzeMsg && (
+          <p className="mt-2 text-xs text-text-secondary">{analyzeMsg}</p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

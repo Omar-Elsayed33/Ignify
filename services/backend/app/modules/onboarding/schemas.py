@@ -11,6 +11,8 @@ class BusinessProfileStep(BaseModel):
     target_audience: Optional[str] = None
     products: list[str] = Field(default_factory=list)
     competitors: list[str] = Field(default_factory=list)
+    website: Optional[str] = None
+    business_name: Optional[str] = None
 
 
 class BrandVoiceStep(BaseModel):

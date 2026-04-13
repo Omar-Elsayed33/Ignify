@@ -11,14 +11,18 @@ from typing import List, Tuple
 
 _EN_FONT = "Space Grotesk, Manrope, Arial, sans-serif"
 _EN_BODY = "Manrope, Arial, sans-serif"
-_AR_FONT = "'Reem Kufi', 'Tajawal', 'Noto Sans Arabic', sans-serif"
-_AR_BODY = "'Tajawal', 'Noto Sans Arabic', sans-serif"
+_AR_FONT = "'Reem Kufi', 'Tajawal', 'Noto Sans Arabic', 'Noto Naskh Arabic', serif"
+_AR_BODY = "'Tajawal', 'Noto Sans Arabic', 'Noto Naskh Arabic', serif"
 
 
 def _fonts(lang: str) -> tuple[str, str, str]:
-    """Return (heading_font, body_font, direction_attr)."""
+    """Return (heading_font, body_font, direction_attr).
+
+    For Arabic we also emit xml:lang="ar" so WeasyPrint's bidi/shaping engine
+    kicks in and glyphs render connected (not isolated forms).
+    """
     if lang == "ar":
-        return _AR_FONT, _AR_BODY, ' direction="rtl"'
+        return _AR_FONT, _AR_BODY, ' direction="rtl" xml:lang="ar"'
     return _EN_FONT, _EN_BODY, ""
 
 

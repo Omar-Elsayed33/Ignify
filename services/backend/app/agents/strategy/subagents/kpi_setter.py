@@ -3,16 +3,37 @@ from __future__ import annotations
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from app.agents.base import BaseSubAgent
-from app.agents.strategy.subagents._helpers import parse_json_response, lang_directive
+from app.agents.strategy.subagents._helpers import (
+    parse_json_response,
+    lang_directive,
+    budget_context,
+    constraint_directive,
+)
 
 
 class KPISetter(BaseSubAgent):
     name = "kpi_setter"
-    model_tier = "fast"
+    model_tier = "balanced"
     system_prompt = (
-        "Define 5-8 measurable KPIs (SMART) for the plan. "
-        "Return JSON array of {metric, target, unit, timeframe_days, channel}. "
-        "Match the user's requested language exactly."
+        "For EACH AARRR funnel stage (Awareness, Acquisition, Conversion, Retention, Referral) "
+        "define ONE KPI tied to the budget reality.\n"
+        "Return STRICT JSON array. Each KPI: {stage, metric, target (number), unit, "
+        "timeframe_days, measurement_method, why, channel}.\n"
+        "RULES:\n"
+        " - If budget is $0, DO NOT set paid-CPM or CAC-from-ads KPIs — use organic reach / "
+        "referrals / WA replies.\n"
+        " - Targets must be ACHIEVABLE given the budget (use industry CPL benchmarks).\n"
+        " - No vanity metrics like 'followers' unless clearly tied to revenue.\n"
+        "\nMANDATORY: regardless of budget, ALL plans MUST include these KPIs in the array:\n"
+        " 1. CAC (Customer Acquisition Cost) — target\n"
+        " 2. LTV (Lifetime Value) — target\n"
+        " 3. LTV:CAC ratio — target 3:1 minimum\n"
+        " 4. Payback period in months\n"
+        " 5. Monthly new leads\n"
+        " 6. Lead-to-customer conversion rate\n"
+        " 7. Monthly recurring revenue (or monthly revenue)\n"
+        " 8. Customer retention rate (month 2)\n"
+        "These 8 KPIs are in ADDITION to the per-AARRR-stage KPIs."
     )
 
     async def execute(self, state):
@@ -20,11 +41,14 @@ class KPISetter(BaseSubAgent):
         channels = state.get("channels", [])
         period = state.get("period_days", 30)
         lang = state.get("language", "ar")
+        funnel = state.get("funnel", {})
         user = (
             lang_directive(lang) + "\n\n"
-            f"Language: {lang}\nPeriod: {period} days\n"
-            f"Business: {bp}\nChannels: {channels}\n\n"
-            "Return KPIs JSON array."
+            + constraint_directive() + "\n\n"
+            f"{budget_context(state)}\n\n"
+            f"Period: {period} days\nBusiness: {bp}\nChannels: {channels}\n"
+            f"AARRR funnel context: {funnel}\n\n"
+            "Return KPIs as JSON array — ONE KPI per AARRR stage."
         )
         resp = await self.llm.ainvoke([
             SystemMessage(content=self.system_prompt),
@@ -33,6 +57,8 @@ class KPISetter(BaseSubAgent):
         kpis = parse_json_response(resp.content, fallback=[])
         if isinstance(kpis, dict):
             kpis = kpis.get("kpis", [])
-        # Derive top-level goals summary
-        goals = [f"{k.get('metric')}: {k.get('target')} {k.get('unit', '')}" for k in kpis if isinstance(k, dict)]
+        goals = [
+            f"{k.get('metric')}: {k.get('target')} {k.get('unit', '')}"
+            for k in kpis if isinstance(k, dict)
+        ]
         return {"kpis": kpis, "goals": goals}

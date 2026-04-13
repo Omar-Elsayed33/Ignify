@@ -42,6 +42,12 @@ async def lifespan(app: FastAPI):
         async with async_session() as db:
             await run_seed(db)
 
+        # Seed default plan mode configs if table is empty
+        from app.agents.plan_modes import seed_default_mode_configs
+
+        async with async_session() as db:
+            await seed_default_mode_configs(db)
+
     yield
 
     # Shutdown
@@ -145,6 +151,7 @@ from app.modules.integrations.router import router as integrations_router
 from app.modules.leads.router import router as leads_router
 from app.modules.public_leads.router import router as public_leads_router
 from app.modules.onboarding.router import router as onboarding_router
+from app.modules.tenant_settings.router import router as tenant_settings_router
 from app.modules.ops.router import router as ops_router
 from app.modules.plans.router import router as plans_router
 from app.modules.seo.router import router as seo_router
@@ -157,6 +164,8 @@ from app.modules.webhooks.meta import router as webhooks_router
 from app.modules.experiments.router import router as experiments_router
 from app.modules.geo.router import router as geo_router
 from app.modules.white_label.router import router as white_label_router
+from app.modules.ai_assistant.router import router as ai_assistant_router
+from app.modules.media.router import router as media_router
 
 prefix = settings.API_V1_PREFIX
 
@@ -185,6 +194,7 @@ app.include_router(admin_router, prefix=prefix)
 app.include_router(agent_configs_router, prefix=prefix)
 app.include_router(plans_router, prefix=prefix)
 app.include_router(onboarding_router, prefix=prefix)
+app.include_router(tenant_settings_router, prefix=prefix)
 app.include_router(content_gen_router, prefix=prefix)
 app.include_router(content_templates_router, prefix=prefix)
 app.include_router(creative_gen_router, prefix=prefix)
@@ -195,6 +205,8 @@ app.include_router(webhooks_router, prefix=prefix)
 app.include_router(experiments_router, prefix=prefix)
 app.include_router(geo_router, prefix=prefix)
 app.include_router(white_label_router, prefix=prefix)
+app.include_router(ai_assistant_router, prefix=prefix)
+app.include_router(media_router, prefix=prefix)
 
 # Ops endpoints mounted at root so external probes don't need /api/v1.
 app.include_router(ops_router)

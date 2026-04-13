@@ -53,8 +53,11 @@ async function request<T>(
 ): Promise<T> {
   const { body, headers: customHeaders, ...rest } = options;
 
+  const isFormData =
+    typeof FormData !== "undefined" && body instanceof FormData;
+
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...(customHeaders as Record<string, string>),
   };
 
@@ -63,10 +66,16 @@ async function request<T>(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
+  const serializedBody = isFormData
+    ? (body as FormData)
+    : body
+      ? JSON.stringify(body)
+      : undefined;
+
   let response = await fetch(`${BASE_URL}${endpoint}`, {
     ...rest,
     headers,
-    body: body ? JSON.stringify(body) : undefined,
+    body: serializedBody,
   });
 
   if (response.status === 401) {
@@ -76,7 +85,7 @@ async function request<T>(
       response = await fetch(`${BASE_URL}${endpoint}`, {
         ...rest,
         headers,
-        body: body ? JSON.stringify(body) : undefined,
+        body: serializedBody,
       });
     } else {
       if (typeof window !== "undefined") {

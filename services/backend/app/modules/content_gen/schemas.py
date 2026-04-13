@@ -13,6 +13,7 @@ class ContentGenerateRequest(BaseModel):
     language: str = Field("ar", pattern="^(ar|en|both)$")
     brand_voice: dict[str, Any] | None = None
     model_override: str | None = None
+    plan_id: uuid.UUID | None = None
 
 
 class ContentGenerateResponse(BaseModel):

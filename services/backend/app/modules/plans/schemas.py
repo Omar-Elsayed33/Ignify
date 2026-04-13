@@ -11,8 +11,14 @@ class PlanGenerateRequest(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
     period_days: int = Field(30, ge=7, le=180)
     language: str = Field("ar", pattern="^(ar|en|both)$")
+    plan_mode: str = Field("fast", pattern="^(fast|medium|deep)$")
     business_profile: dict[str, Any] | None = None  # if omitted, pulled from BrandSettings
-    model_override: str | None = None
+    model_override: str | None = None  # superadmin-only global override
+    # Strategic inputs
+    budget_monthly_usd: float | None = None
+    budget_currency: str = Field("usd", pattern="^(usd|egp|sar|aed)$")
+    primary_goal: str | None = None
+    urgency_days: int = Field(30, ge=7, le=180)
 
 
 class PlanResponse(BaseModel):
@@ -30,6 +36,18 @@ class PlanResponse(BaseModel):
     kpis: list[Any] = []
     market_analysis: dict[str, Any] = {}
     ad_strategy: dict[str, Any] | None = None
+    # Strategic sections
+    positioning: dict[str, Any] | None = None
+    customer_journey: dict[str, Any] | None = None
+    offer: dict[str, Any] | None = None
+    funnel: dict[str, Any] | None = None
+    conversion: dict[str, Any] | None = None
+    retention: dict[str, Any] | None = None
+    growth_loops: dict[str, Any] | None = None
+    execution_roadmap: list[Any] = []
+    budget_monthly_usd: float | None = None
+    primary_goal: str | None = None
+    plan_mode: str = "fast"
     created_at: datetime
     updated_at: datetime
 

@@ -11,15 +11,50 @@ import InsightChip from "@/components/InsightChip";
 import Badge from "@/components/Badge";
 import { Input } from "@/components/FormField";
 import { api, BASE_URL, getAccessToken } from "@/lib/api";
-import { AlertCircle, Check, Loader2, RefreshCw, Sparkles, X } from "lucide-react";
+import { AlertCircle, Check, Loader2, RefreshCw, Sparkles, Zap, BarChart2, Brain, X } from "lucide-react";
 import { clsx } from "clsx";
 import Link from "next/link";
+
+type PlanMode = "fast" | "medium" | "deep";
 
 interface GenerateForm {
   title: string;
   period_days: 30 | 60 | 90;
   language: "ar" | "en" | "both";
+  plan_mode: PlanMode;
+  budget_monthly_usd: number | null;
+  budget_currency: "usd" | "egp" | "sar" | "aed" | "kwd";
+  primary_goal: string;
+  urgency_days: 30 | 60 | 90;
 }
+
+// null = AI will recommend best budget based on business profile
+const BUDGET_TIERS = [null, 0, 100, 300, 500, 1000, 2000, 5000] as const;
+
+// 1 USD ≈ these (approximate — used only for display suggestions)
+const FX: Record<string, { rate: number; symbol: string; code: string; label_ar: string; label_en: string }> = {
+  usd: { rate: 1, symbol: "$", code: "USD", label_ar: "دولار أمريكي", label_en: "US Dollar" },
+  egp: { rate: 48, symbol: "ج.م", code: "EGP", label_ar: "جنيه مصري", label_en: "Egyptian Pound" },
+  sar: { rate: 3.75, symbol: "ر.س", code: "SAR", label_ar: "ريال سعودي", label_en: "Saudi Riyal" },
+  aed: { rate: 3.67, symbol: "د.إ", code: "AED", label_ar: "درهم إماراتي", label_en: "UAE Dirham" },
+  kwd: { rate: 0.31, symbol: "د.ك", code: "KWD", label_ar: "دينار كويتي", label_en: "Kuwaiti Dinar" },
+};
+
+// Round to nice-looking local amounts (e.g. 500 USD = 1875 SAR ≈ round to 2000)
+function toLocal(usd: number, currency: string): number {
+  if (usd === 0) return 0;
+  const rate = FX[currency]?.rate ?? 1;
+  const local = usd * rate;
+  if (currency === "kwd") return Math.round(local * 10) / 10; // KWD: 1 decimal
+  if (local < 500) return Math.round(local / 10) * 10;
+  if (local < 5000) return Math.round(local / 50) * 50;
+  return Math.round(local / 100) * 100;
+}
+
+const COUNTRY_CURRENCY: Record<string, "usd" | "egp" | "sar" | "aed" | "kwd"> = {
+  EG: "egp", SA: "sar", AE: "aed", KW: "kwd",
+  QA: "aed", BH: "aed", OM: "aed",
+};
 
 interface ReadinessField {
   key: string;
@@ -41,15 +76,38 @@ interface MarketingPlan {
   [key: string]: unknown;
 }
 
-type NodeKey = "market" | "audience" | "channels" | "calendar" | "kpis";
+type NodeKey =
+  | "market"
+  | "audience"
+  | "positioning"
+  | "customer_journey"
+  | "offer"
+  | "funnel"
+  | "channels"
+  | "conversion"
+  | "retention"
+  | "growth_loops"
+  | "calendar"
+  | "kpis"
+  | "ads"
+  | "execution_roadmap";
 type NodeStatus = "pending" | "running" | "done" | "failed";
 
 const NODE_KEYS: readonly NodeKey[] = [
   "market",
   "audience",
+  "positioning",
+  "customer_journey",
+  "offer",
+  "funnel",
   "channels",
+  "conversion",
+  "retention",
+  "growth_loops",
   "calendar",
   "kpis",
+  "ads",
+  "execution_roadmap",
 ] as const;
 
 interface NodeState {
@@ -120,6 +178,23 @@ export default function NewPlanPage() {
     }
   }, []);
 
+  // Auto-detect currency by country once (cached in localStorage)
+  useEffect(() => {
+    const stored = typeof window !== "undefined" ? localStorage.getItem("ignify_currency") : null;
+    if (stored && FX[stored.toLowerCase()]) {
+      setForm((f) => ({ ...f, budget_currency: stored.toLowerCase() as "usd" | "egp" | "sar" | "aed" | "kwd" }));
+      return;
+    }
+    fetch(`${BASE_URL}/api/v1/geo/detect`)
+      .then((r) => r.json())
+      .then((d) => {
+        const cur = COUNTRY_CURRENCY[String(d.country || "").toUpperCase()] || "usd";
+        setForm((f) => ({ ...f, budget_currency: cur }));
+        localStorage.setItem("ignify_currency", cur.toUpperCase());
+      })
+      .catch(() => {});
+  }, []);
+
   const loadReadiness = async () => {
     setReadinessLoading(true);
     try {
@@ -140,6 +215,11 @@ export default function NewPlanPage() {
     title: "",
     period_days: 30,
     language: "en",
+    plan_mode: "fast",
+    budget_monthly_usd: null,
+    budget_currency: "usd",
+    primary_goal: "",
+    urgency_days: 30,
   });
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -213,6 +293,11 @@ export default function NewPlanPage() {
           title: form.title,
           period_days: form.period_days,
           language: form.language,
+          plan_mode: form.plan_mode,
+          budget_monthly_usd: form.budget_monthly_usd,
+          budget_currency: form.budget_currency,
+          primary_goal: form.primary_goal || null,
+          urgency_days: form.urgency_days,
         }),
         signal: ctrl.signal,
       });
@@ -266,6 +351,11 @@ export default function NewPlanPage() {
         title: form.title,
         period_days: form.period_days,
         language: form.language,
+        plan_mode: form.plan_mode,
+        budget_monthly_usd: form.budget_monthly_usd,
+        budget_currency: form.budget_currency,
+        primary_goal: form.primary_goal || null,
+        urgency_days: form.urgency_days,
       });
       setNodes((prev) => {
         const next = { ...prev };
@@ -525,6 +615,51 @@ export default function NewPlanPage() {
           ) : (
             <Card padding="lg">
               <form onSubmit={handleSubmit} className="space-y-5">
+                {/* ── Plan Mode Selector ── */}
+                <div className="space-y-3">
+                  <span className="font-headline text-xs font-semibold uppercase tracking-widest text-on-surface-variant">
+                    {t("form.planMode")}
+                  </span>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    {(
+                      [
+                        { mode: "fast" as PlanMode, icon: <Zap className="h-5 w-5" />, color: "text-amber-500" },
+                        { mode: "medium" as PlanMode, icon: <BarChart2 className="h-5 w-5" />, color: "text-blue-500" },
+                        { mode: "deep" as PlanMode, icon: <Brain className="h-5 w-5" />, color: "text-purple-500" },
+                      ] as const
+                    ).map(({ mode, icon, color }) => {
+                      const active = form.plan_mode === mode;
+                      return (
+                        <button
+                          key={mode}
+                          type="button"
+                          onClick={() => setForm((f) => ({ ...f, plan_mode: mode }))}
+                          className={clsx(
+                            "flex flex-col gap-2 rounded-2xl border-2 p-4 text-start transition-all",
+                            active
+                              ? "border-primary bg-primary/5 shadow-soft"
+                              : "border-transparent bg-surface-container-low hover:bg-surface-container"
+                          )}
+                        >
+                          <div className={clsx("flex items-center gap-2 font-headline font-bold text-on-surface", color)}>
+                            {icon}
+                            <span className="text-sm">{t(`form.mode.${mode}.name`)}</span>
+                          </div>
+                          <p className="text-xs text-on-surface-variant leading-relaxed">
+                            {t(`form.mode.${mode}.desc`)}
+                          </p>
+                          {active && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <Check className="h-3 w-3 text-primary" />
+                              <span className="text-[11px] font-bold text-primary">{t("form.mode.selected")}</span>
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <Input
                   label={t("form.titleLabel")}
                   required
@@ -558,6 +693,118 @@ export default function NewPlanPage() {
                     <option value="both">{t("form.languageBoth")}</option>
                   </StyledSelect>
                 </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-headline text-xs font-semibold uppercase tracking-widest text-on-surface-variant">
+                      {t("form.budget")}
+                    </span>
+                    {/* Currency pills */}
+                    <div className="flex gap-1 rounded-full bg-surface-container-low p-1">
+                      {(["sar", "aed", "egp", "kwd", "usd"] as const).map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => {
+                            setForm((f) => ({ ...f, budget_currency: c }));
+                            localStorage.setItem("ignify_currency", c.toUpperCase());
+                          }}
+                          className={clsx(
+                            "rounded-full px-3 py-1 text-[11px] font-bold uppercase transition-all",
+                            form.budget_currency === c
+                              ? "brand-gradient-bg text-white shadow-soft"
+                              : "text-on-surface-variant hover:bg-surface-container"
+                          )}
+                        >
+                          {FX[c].code}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Budget tier cards */}
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-8">
+                    {BUDGET_TIERS.map((tier) => {
+                      const isActive = form.budget_monthly_usd === tier;
+                      const local = tier !== null ? toLocal(tier, form.budget_currency) : 0;
+                      const fx = FX[form.budget_currency];
+                      return (
+                        <button
+                          key={tier ?? "ai"}
+                          type="button"
+                          onClick={() => setForm((f) => ({ ...f, budget_monthly_usd: tier }))}
+                          className={clsx(
+                            "flex flex-col items-center justify-center rounded-xl border-2 p-3 transition-all",
+                            isActive
+                              ? "border-primary bg-primary/5 shadow-soft"
+                              : "border-transparent bg-surface-container-low hover:bg-surface-container",
+                            tier === null && "col-span-2 sm:col-span-1"
+                          )}
+                        >
+                          {tier === null ? (
+                            <div className="flex flex-col items-center gap-0.5">
+                              <Sparkles className={clsx("h-4 w-4", isActive ? "text-primary" : "text-amber-500")} />
+                              <span className="font-headline text-xs font-bold text-on-surface text-center leading-tight">
+                                {locale === "ar" ? "AI يختار" : "AI picks"}
+                              </span>
+                              <span className="text-[9px] text-on-surface-variant text-center">
+                                {locale === "ar" ? "الأنسب لنشاطك" : "best for you"}
+                              </span>
+                            </div>
+                          ) : tier === 0 ? (
+                            <span className="font-headline text-xs font-bold text-on-surface">
+                              {locale === "ar" ? "عضوي فقط" : "Organic"}
+                            </span>
+                          ) : (
+                            <>
+                              <span className="font-headline text-base font-bold text-on-surface">
+                                {fx.symbol} {local.toLocaleString(locale === "ar" ? "ar-EG" : "en-US")}
+                              </span>
+                              <span className="text-[10px] text-on-surface-variant">
+                                {locale === "ar" ? "شهرياً" : "/month"}
+                              </span>
+                            </>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <p className="text-xs text-on-surface-variant">
+                    {locale === "ar"
+                      ? `العملة المختارة: ${FX[form.budget_currency].label_ar}. القيم معروضة بما يعادل الدولار للعمليات الداخلية.`
+                      : `Selected currency: ${FX[form.budget_currency].label_en}. Values stored in USD equivalent.`}
+                  </p>
+                </div>
+
+                <StyledSelect
+                  label={t("form.urgency")}
+                  value={form.urgency_days}
+                  onChange={(v) =>
+                    setForm((f) => ({ ...f, urgency_days: Number(v) as 30 | 60 | 90 }))
+                  }
+                >
+                  <option value={30}>{t("form.urgency30")}</option>
+                  <option value={60}>{t("form.urgency60")}</option>
+                  <option value={90}>{t("form.urgency90")}</option>
+                </StyledSelect>
+
+                <p className="text-xs text-on-surface-variant">{t("form.budgetHelp")}</p>
+
+                <label className="block space-y-1.5">
+                  <span className="font-headline text-xs font-semibold uppercase tracking-widest text-on-surface-variant">
+                    {t("form.primaryGoal")}
+                  </span>
+                  <textarea
+                    value={form.primary_goal}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, primary_goal: e.target.value }))
+                    }
+                    placeholder={t("form.primaryGoalPlaceholder")}
+                    rows={3}
+                    className="w-full resize-none rounded-xl bg-surface-container-low px-4 py-2.5 text-sm text-on-surface outline-none transition-all focus:ring-2 focus:ring-primary/30"
+                  />
+                </label>
 
                 <div className="flex justify-end gap-3 pt-2">
                   <Button

@@ -971,6 +971,18 @@ class MarketingPlan(Base):
     kpis: Mapped[Optional[list[Any]]] = mapped_column(JSON, default=list)
     market_analysis: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, default=dict)
     ad_strategy: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, default=dict, nullable=True)
+    # Strategic sections (migration k1f2a3b4c5d6)
+    positioning: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, default=dict, nullable=True)
+    customer_journey: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, default=dict, nullable=True)
+    offer: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, default=dict, nullable=True)
+    funnel: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, default=dict, nullable=True)
+    conversion: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, default=dict, nullable=True)
+    retention: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, default=dict, nullable=True)
+    growth_loops: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, default=dict, nullable=True)
+    execution_roadmap: Mapped[Optional[list[Any]]] = mapped_column(JSON, default=list, nullable=True)
+    budget_monthly_usd: Mapped[Optional[float]] = mapped_column(Numeric(10, 2), nullable=True)
+    primary_goal: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    plan_mode: Mapped[str] = mapped_column(String(32), default="fast", nullable=False)
     status: Mapped[str] = mapped_column(String(32), default="draft", nullable=False)
     version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     created_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
@@ -996,6 +1008,24 @@ class AgentRun(Base):
     latency_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     finished_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class PlanMode(str, enum.Enum):
+    fast = "fast"
+    medium = "medium"
+    deep = "deep"
+
+
+class PlanModeConfig(Base):
+    """Superadmin-configurable model assignments per plan mode and subagent."""
+    __tablename__ = "plan_mode_configs"
+    __table_args__ = (UniqueConstraint("mode", "subagent_name", name="uq_mode_subagent"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
+    mode: Mapped[str] = mapped_column(String(32), nullable=False, index=True)  # fast | medium | deep
+    subagent_name: Mapped[str] = mapped_column(String(64), nullable=False)
+    model: Mapped[str] = mapped_column(String(128), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
 
 
 class TenantAgentConfig(Base):

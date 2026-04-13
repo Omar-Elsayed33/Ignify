@@ -54,7 +54,11 @@
     "registerTitle": "Create Your Account",
     "registerSubtitle": "Start your AI-powered marketing journey",
     "signingIn": "Signing in...",
-    "signingUp": "Creating account..."
+    "signingUp": "Creating account...",
+    "brandTagline": "AI-powered marketing platform that transforms your business growth with intelligent automation and data-driven insights.",
+    "statFasterContent": "Faster Content",
+    "statCostReduction": "Cost Reduction",
+    "statMoreLeads": "More Leads"
   },
   "sidebar": {
     "marketing": "Marketing",
@@ -93,7 +97,15 @@
     "help": "Help",
     "collapse": "Collapse sidebar",
     "experiments": "A/B Tests",
-    "whiteLabel": "White Label"
+    "whiteLabel": "White Label",
+    "mySiteSEO": "My Website SEO",
+    "businessProfile": "Company Profile",
+    "home": "Home",
+    "createGroup": "Create",
+    "distributeGroup": "Distribute",
+    "engageGroup": "Engage",
+    "insightsGroup": "Insights",
+    "workspaceGroup": "Workspace"
   },
   "experiments": {
     "title": "A/B Content Tests",
@@ -239,6 +251,10 @@
     "launchCampaign": "Launch Campaign",
     "addLead": "Add Lead",
     "generateReport": "Generate Report",
+    "exportReport": "Export Report",
+    "last7Days": "Last 7 Days",
+    "last30Days": "Last 30 Days",
+    "last90Days": "Last 90 Days",
     "newLeadCaptured": "New lead captured from landing page",
     "campaignLaunched": "Email campaign 'Summer Sale' launched",
     "contentPublishedActivity": "Blog post 'AI Marketing Trends' published",
@@ -536,7 +552,19 @@
     "costPerLead": "Cost Per Lead",
     "totalRevenue": "Total Revenue",
     "channelPerformance": "Channel Performance",
-    "campaignComparison": "Campaign Comparison"
+    "campaignComparison": "Campaign Comparison",
+    "overviewBreakdown": "Overview Breakdown",
+    "totalLeads": "Total Leads",
+    "totalCampaigns": "Total Campaigns",
+    "totalContent": "Total Content",
+    "creditBalance": "Credit Balance",
+    "reports": "Reports",
+    "chartLeads": "Leads",
+    "chartCampaigns": "Campaigns",
+    "chartChannels": "Channels",
+    "chartContent": "Content",
+    "chartSocial": "Social Posts",
+    "chartAds": "Ad Campaigns"
   },
   "competitorsPage": {
     "title": "Competitor Monitoring",
@@ -647,7 +675,14 @@
     "hubspot": "HubSpot",
     "shopify": "Shopify",
     "wordpress": "WordPress",
-    "zapier": "Zapier"
+    "zapier": "Zapier",
+    "google_ads": "Google Ads",
+    "meta_ads": "Meta Ads",
+    "snapchat_ads": "Snapchat Ads",
+    "tiktok_ads": "TikTok Ads",
+    "twitter_ads": "Twitter Ads",
+    "google_analytics": "Google Analytics",
+    "search_console": "Search Console"
   },
   "settingsPage": {
     "title": "Settings",
@@ -664,7 +699,80 @@
     "brandTone": "Brand Tone",
     "brandColors": "Brand Colors",
     "saveSettings": "Save Settings",
-    "saved": "Settings saved successfully"
+    "saved": "Settings saved successfully",
+    "businessProfile": "Company Profile",
+    "channels": "Channels",
+    "aiAgents": "AI Agents",
+    "knowledgeBase": "Knowledge Base",
+    "team": "Team",
+    "whiteLabel": "White Label"
+  },
+  "settingsBusiness": {
+    "title": "Company Profile",
+    "subtitle": "Edit your business, brand, and competitors. Used across all AI-generated content.",
+    "tabs": {
+      "business": "Business",
+      "brand": "Brand & Identity",
+      "competitors": "Competitors"
+    },
+    "form": {
+      "businessName": "Business name",
+      "industry": "Industry",
+      "country": "Country",
+      "language": "Primary language",
+      "description": "Business description",
+      "audience": "Target audience",
+      "products": "Products / Services",
+      "competitors": "Competitors",
+      "website": "Website",
+      "phone": "Phone",
+      "businessEmail": "Business email"
+    },
+    "competitors": "Competitors",
+    "save": "Save changes",
+    "saving": "Saving...",
+    "saved": "Business profile saved",
+    "saveAll": "Save all changes",
+    "saveAllSuccess": "Company profile saved",
+    "aiAnalyze": "Analyze website",
+    "aiDiscoverCompetitors": "Discover with AI",
+    "discoverCompetitors": {
+      "button": "Discover Competitors with AI",
+      "loading": "Discovering...",
+      "suggestionsTitle": "Suggested competitors",
+      "accept": "Accept",
+      "reject": "Reject"
+    },
+    "errors": { "failed": "Failed to save" }
+  },
+  "settingsBrand": {
+    "title": "Brand & Identity",
+    "subtitle": "Your brand name, tone, colors, fonts and logo.",
+    "form": {
+      "name": "Brand name",
+      "tone": "Brand tone",
+      "forbiddenWords": "Forbidden words",
+      "colors": "Brand colors",
+      "primaryColor": "Primary",
+      "secondaryColor": "Secondary",
+      "accentColor": "Accent",
+      "fonts": "Fonts",
+      "logo": "Logo",
+      "uploadLogo": "Paste logo URL or upload a file",
+      "dragDrop": "Drag & drop a logo or click to upload"
+    },
+    "extractColors": "Extract colors from logo",
+    "save": "Save changes",
+    "saved": "Brand settings saved",
+    "errors": { "failed": "Failed to save" }
+  },
+  "settingsChannels": {
+    "title": "Channels",
+    "subtitle": "Toggle the channels you want Ignify to manage for your brand.",
+    "save": "Save channels",
+    "saved": "Channels updated",
+    "connected": "Connected",
+    "notConnected": "Not connected"
   },
   "billing": {
     "title": "Billing & Subscription",
@@ -1021,8 +1129,33 @@
       "languageAr": "Arabic",
       "languageEn": "English",
       "languageBoth": "Both",
+      "planMode": "Generation Mode",
+      "mode": {
+        "selected": "Selected",
+        "fast": {
+          "name": "Fast",
+          "desc": "Quick results optimized for speed. Best for exploring ideas or tight deadlines."
+        },
+        "medium": {
+          "name": "Medium",
+          "desc": "Balanced depth. Deep analysis for strategy, optimized execution for results."
+        },
+        "deep": {
+          "name": "Deep",
+          "desc": "Full power thinking. Best strategy models for each phase of your plan."
+        }
+      },
       "submit": "Generate Plan",
-      "generating": "Generating your plan..."
+      "generating": "Generating your plan...",
+      "budget": "Monthly marketing budget",
+      "budgetHelp": "Set realistic spend — the AI will cap recommendations at your budget and tell you what to skip at lower tiers.",
+      "budgetOrganic": "$0 (organic only)",
+      "primaryGoal": "What do you want to achieve in the next 30 days?",
+      "primaryGoalPlaceholder": "e.g. Get 50 new WhatsApp inquiries per month / Sell 20 units of the new collection / Add 1,000 qualified leads to our list",
+      "urgency": "How fast do you need results?",
+      "urgency30": "30 days (quick wins)",
+      "urgency60": "60 days (balanced)",
+      "urgency90": "90 days (compound growth)"
     },
     "status": {
       "draft": "Draft",
@@ -1033,9 +1166,17 @@
       "overview": "Overview",
       "market": "Market Analysis",
       "audience": "Audience",
+      "positioning": "Positioning",
+      "journey": "Customer Journey",
+      "offer": "Offer",
+      "funnel": "Funnel (AARRR)",
       "channels": "Channels",
+      "conversion": "Conversion",
+      "retention": "Retention",
+      "growthLoops": "Growth Loops",
       "calendar": "Calendar",
-      "kpis": "KPIs"
+      "kpis": "KPIs",
+      "roadmap": "30-Day Roadmap"
     },
     "actions": {
       "view": "View",
@@ -1075,7 +1216,25 @@
         "calendar": "Content Calendar",
         "calendarDesc": "Scheduling posts across the period",
         "kpis": "KPI Setting",
-        "kpisDesc": "Defining measurable success metrics"
+        "kpisDesc": "Defining measurable success metrics",
+        "positioning": "Positioning",
+        "positioningDesc": "Value prop, differentiation and tagline",
+        "customer_journey": "Customer Journey",
+        "customer_journeyDesc": "Mapping emotions, triggers and objections",
+        "offer": "Offer Design",
+        "offerDesc": "Crafting an irresistible why-buy-now",
+        "funnel": "AARRR Funnel",
+        "funnelDesc": "Stage-by-stage math that reconciles",
+        "conversion": "Conversion System",
+        "conversionDesc": "Landing page + WhatsApp scripts",
+        "retention": "Retention Plan",
+        "retentionDesc": "Loyalty, upsells and reactivation",
+        "growth_loops": "Growth Loop",
+        "growth_loopsDesc": "Compounding acquisition mechanism",
+        "ads": "Ad Strategy",
+        "adsDesc": "Budget-capped paid media plan",
+        "execution_roadmap": "30-Day Roadmap",
+        "execution_roadmapDesc": "Day-by-day priority actions"
       },
       "status": {
         "pending": "Waiting",
@@ -1741,5 +1900,46 @@
         "content": "Ignify is keyboard-friendly. Press ? anywhere to open the shortcut sheet.\n\nGlobal:\n- Cmd/Ctrl + K — command palette (jump anywhere, search anything).\n- G then D — go to Dashboard.\n- G then P — go to Marketing Plans.\n- G then C — go to AI Content.\n- G then I — go to AI Creative (images).\n- G then A — go to Analytics.\n- G then S — go to Settings.\n- / — focus search.\n- ? — open shortcut sheet.\n- Esc — close any modal.\n\nContent editor:\n- Cmd/Ctrl + Enter — generate / regenerate.\n- Cmd/Ctrl + S — save draft.\n- Cmd/Ctrl + Shift + P — publish (if you have permission).\n- Alt + 1/2/3 — switch between variants.\n- Cmd/Ctrl + B — bold, Cmd/Ctrl + I — italic.\n\nCalendar / scheduler:\n- J / K — move selection down / up.\n- T — go to today.\n- W / M — switch to week / month view.\n- N — new post at selected slot.\n- Del — delete selected post.\n\nInbox:\n- E — archive, R — reply with AI suggestion, Shift + R — reply manually.\n- 1–5 — apply quick label.\n\nArabic keyboard: all shortcuts use physical key positions, so they work identically whether you're typing in Arabic or English layout.\n\nAccessibility: full screen-reader support, focus indicators, and respect for prefers-reduced-motion. If a shortcut conflicts with your assistive tech, you can rebind it in Settings → Preferences → Shortcuts."
       }
     }
+  },
+  "aiAssist": {
+    "accentColor": "Accent Color",
+    "analyzeWebsite": {
+      "title": "Analyze your website with AI",
+      "subtitle": "Paste your website URL and we'll auto-fill your business profile.",
+      "button": "Analyze website",
+      "placeholder": "https://yourbusiness.com",
+      "analyzing": "Analyzing…",
+      "success": "Website analyzed — review and adjust the fields below.",
+      "error": "We couldn't analyze that URL. You can still fill the form manually."
+    },
+    "extractLogo": {
+      "button": "Extract colors",
+      "analyzing": "Extracting…"
+    },
+    "discoverCompetitors": {
+      "button": "Find competitors",
+      "analyzing": "Searching…"
+    },
+    "uploadLogo": {
+      "button": "Upload logo",
+      "dragHere": "Drag & drop your logo or click to upload",
+      "processing": "Uploading…",
+      "replace": "Click to replace logo"
+    }
+  },
+  "seoAudit": {
+    "title": "My Website SEO",
+    "subtitle": "Run an AI-powered audit on your website and get prioritized fixes.",
+    "websiteUrl": "Website URL",
+    "runAudit": "Run SEO Audit",
+    "reAudit": "Re-audit",
+    "running": "Auditing…",
+    "overallScore": "Overall Score",
+    "issues": "Issues",
+    "recommendations": "Recommendations",
+    "issuesCount": "issues",
+    "recsCount": "recommendations",
+    "noIssues": "No critical issues found.",
+    "error": "Audit failed. Please try again."
   }
 }

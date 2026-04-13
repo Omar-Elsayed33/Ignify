@@ -14,6 +14,7 @@ from app.modules.video_gen.schemas import (
     VideoRunStatusResponse,
 )
 from app.modules.video_gen.service import generate_video, get_video_run
+from app.modules.plans.context import fetch_plan_context
 
 router = APIRouter(prefix="/video-gen", tags=["video-gen"])
 
@@ -30,12 +31,14 @@ router = APIRouter(prefix="/video-gen", tags=["video-gen"])
 async def generate(data: VideoGenerateRequest, user: CurrentUser, db: DbSession):
     if not user.tenant_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tenant")
+    plan_ctx = await fetch_plan_context(db, user.tenant_id, data.plan_id, data.language)
+    effective_idea = f"{plan_ctx}\n\nVideo brief: {data.idea}" if plan_ctx else data.idea
     try:
         result = await generate_video(
             db,
             tenant_id=user.tenant_id,
             user_id=user.id,
-            idea=data.idea,
+            idea=effective_idea,
             duration_seconds=data.duration_seconds,
             language=data.language,
             video_type=data.video_type,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import DashboardHeader from "@/components/DashboardHeader";
 import PageHeader from "@/components/PageHeader";
@@ -9,7 +10,7 @@ import Button from "@/components/Button";
 import InsightChip from "@/components/InsightChip";
 import { Textarea } from "@/components/FormField";
 import { api } from "@/lib/api";
-import { AlertCircle, Loader2, Sparkles, Check, Download, ImagePlus, Link2 } from "lucide-react";
+import { AlertCircle, Loader2, Sparkles, Check, Download, ImagePlus, Link2, FileText } from "lucide-react";
 import { clsx } from "clsx";
 
 type Style = "photo" | "illustration" | "3d" | "minimal" | "anime";
@@ -62,6 +63,17 @@ function StyledSelect({
 
 export default function CreativeGeneratePage() {
   const t = useTranslations("creativeGen");
+  const searchParams = useSearchParams();
+  const planId = searchParams.get("plan_id");
+  const [planTitle, setPlanTitle] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!planId) return;
+    api
+      .get<{ title: string }>(`/api/v1/plans/${planId}`)
+      .then((p) => setPlanTitle(p.title))
+      .catch(() => setPlanTitle(null));
+  }, [planId]);
 
   const [form, setForm] = useState<GenerateForm>({
     idea: "",
@@ -129,6 +141,7 @@ export default function CreativeGeneratePage() {
         style: form.style,
         dimensions: form.dimensions,
         language: form.language,
+        plan_id: planId || undefined,
       });
       setResult(res);
       if ((res.image_urls?.length ?? 0) === 0) {
@@ -178,6 +191,17 @@ export default function CreativeGeneratePage() {
             title={t("title")}
             description={t("subtitle")}
           />
+
+          {planId && (
+            <Card padding="sm" className="flex items-center gap-2 !bg-emerald-50">
+              <FileText className="h-4 w-4 shrink-0 text-emerald-600" />
+              <span className="text-sm font-medium text-emerald-800">
+                {planTitle
+                  ? `مرتبط بالخطة: ${planTitle} — الصور ستتماشى مع هوية العلامة والتموضع من الخطة.`
+                  : "مرتبط بالخطة — يتم تحميل التفاصيل..."}
+              </span>
+            </Card>
+          )}
 
           {error && (
             <Card padding="sm" className="flex items-center gap-3 !bg-error-container">

@@ -11,6 +11,7 @@ from app.modules.competitors.schemas import (
     CompetitorSnapshotResponse,
     CompetitorUpdate,
 )
+from app.modules.tenant_settings.service import sync_competitors_to_profile
 
 router = APIRouter(prefix="/competitors", tags=["competitors"])
 
@@ -43,6 +44,7 @@ async def create_competitor(data: CompetitorCreate, user: CurrentUser, db: DbSes
     )
     db.add(competitor)
     await db.flush()
+    await sync_competitors_to_profile(db, user.tenant_id)
     return competitor
 
 
@@ -68,6 +70,7 @@ async def update_competitor(competitor_id: uuid.UUID, data: CompetitorUpdate, us
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(competitor, field, value)
     await db.flush()
+    await sync_competitors_to_profile(db, user.tenant_id)
     return competitor
 
 
@@ -81,6 +84,7 @@ async def delete_competitor(competitor_id: uuid.UUID, user: CurrentUser, db: DbS
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Competitor not found")
     await db.delete(competitor)
     await db.flush()
+    await sync_competitors_to_profile(db, user.tenant_id)
 
 
 # ── Snapshots / Analysis ──
@@ -229,26 +233,14 @@ async def analyze_competitor(competitor_id: uuid.UUID, user: CurrentUser, db: Db
     if not competitor:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Competitor not found")
 
-    # Get tenant AI config
-    from app.modules.assistant.service import get_tenant_ai_config
-    from app.core.config import settings
-    import httpx
+    # Use the unified OpenRouter gateway (replaces old agno-runtime path).
+    from app.core.config import settings as _settings
+    from app.core.llm import get_llm
 
-    ai_config = await get_tenant_ai_config(db, user.tenant_id)
-    provider = ai_config.get("provider") or ""
-    api_key = ai_config.get("api_key") or ""
-    model = ai_config.get("model") or ""
+    has_llm = bool(_settings.OPENROUTER_API_KEY)
+    analysis_data: dict = {}
 
-    # Fallback to platform defaults
-    if not provider or not api_key:
-        if settings.OPENAI_API_KEY:
-            provider, api_key, model = "openai", settings.OPENAI_API_KEY, model or "gpt-4o"
-        elif settings.ANTHROPIC_API_KEY:
-            provider, api_key, model = "anthropic", settings.ANTHROPIC_API_KEY, model or "claude-sonnet-4-20250514"
-
-    analysis_data = {}
-
-    if provider and api_key:
+    if has_llm:
         # Build analysis prompt
         social_info = []
         if competitor.instagram_url: social_info.append(f"Instagram: {competitor.instagram_url}")
@@ -276,42 +268,29 @@ async def analyze_competitor(competitor_id: uuid.UUID, user: CurrentUser, db: Db
         )
 
         try:
-            async with httpx.AsyncClient(timeout=120.0) as client:
-                resp = await client.post(
-                    f"{settings.AGNO_RUNTIME_URL}/execute",
-                    json={
-                        "provider": provider,
-                        "api_key": api_key,
-                        "model": model or "gpt-4o",
-                        "system_prompt": "You are a competitive intelligence analyst. Provide detailed, actionable competitor analysis.",
-                        "messages": [{"role": "user", "content": prompt}],
-                        "tools": [],
-                        "temperature": 0.7,
-                        "max_tokens": 4096,
-                    },
-                )
-                if resp.status_code == 200:
-                    ai_response = resp.json()
-                    analysis_data = {
-                        "analysis": ai_response.get("response", ""),
-                        "model_used": model,
-                        "provider": provider,
-                        "status": "completed",
-                    }
-                else:
-                    analysis_data = {
-                        "analysis": f"AI analysis failed: {resp.text[:200]}",
-                        "status": "failed",
-                        "error": resp.text[:200],
-                    }
+            from langchain_core.messages import SystemMessage, HumanMessage
+            llm = get_llm("google/gemini-2.5-flash", tenant_id=str(user.tenant_id), temperature=0.7)
+            resp = await llm.ainvoke([
+                SystemMessage(content=(
+                    "You are a competitive intelligence analyst. "
+                    "Provide detailed, actionable competitor analysis in the user's language (Arabic if business is MENA)."
+                )),
+                HumanMessage(content=prompt),
+            ])
+            analysis_data = {
+                "analysis": resp.content,
+                "model_used": "google/gemini-2.5-flash",
+                "provider": "openrouter",
+                "status": "completed",
+            }
         except Exception as e:
             analysis_data = {
-                "analysis": f"Analysis error: {str(e)}",
+                "analysis": f"Analysis error: {str(e)[:300]}",
                 "status": "error",
             }
     else:
         analysis_data = {
-            "analysis": "No AI provider configured. Go to Settings > AI Configuration to set up an AI provider.",
+            "analysis": "OPENROUTER_API_KEY not set on server. Add it to .env then restart backend.",
             "status": "no_ai_configured",
         }
 

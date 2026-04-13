@@ -52,6 +52,7 @@ async def generate_content(
     language: str,
     brand_voice: dict[str, Any] | None,
     model_override: str | None,
+    plan_id: uuid.UUID | None = None,
 ) -> dict[str, Any]:
     voice = await _resolve_brand_voice(db, tenant_id, brand_voice)
 
@@ -125,6 +126,7 @@ async def generate_content(
             "draft": draft,
             "agent_run_id": str(run.id),
             "created_by": str(user_id),
+            "plan_id": str(plan_id) if plan_id else None,
         },
     )
     db.add(post)

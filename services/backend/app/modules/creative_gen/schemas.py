@@ -13,6 +13,7 @@ class CreativeGenerateRequest(BaseModel):
     dimensions: str = Field("1:1", pattern="^(1:1|9:16|16:9|4:5)$")
     language: str = Field("en", pattern="^(ar|en|both)$")
     brand_voice: dict[str, Any] | None = None
+    plan_id: uuid.UUID | None = None
 
 
 class CreativeAssetOut(BaseModel):

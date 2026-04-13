@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import DashboardHeader from "@/components/DashboardHeader";
 import { api } from "@/lib/api";
@@ -12,6 +13,7 @@ import {
   Download,
   Video as VideoIcon,
   Info,
+  FileText,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -74,6 +76,17 @@ const STEP_KEYS = [
 
 export default function VideoGeneratePage() {
   const t = useTranslations("videoGen");
+  const searchParams = useSearchParams();
+  const planId = searchParams.get("plan_id");
+  const [planTitle, setPlanTitle] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!planId) return;
+    api
+      .get<{ title: string }>(`/api/v1/plans/${planId}`)
+      .then((p) => setPlanTitle(p.title))
+      .catch(() => setPlanTitle(null));
+  }, [planId]);
 
   const [form, setForm] = useState<GenerateForm>({
     idea: "",
@@ -169,6 +182,7 @@ export default function VideoGeneratePage() {
           language: form.language,
           video_type: form.video_type,
           aspect_ratio: form.aspect_ratio,
+          plan_id: planId || undefined,
         }
       );
       setRunId(res.run_id);
@@ -207,6 +221,17 @@ export default function VideoGeneratePage() {
       <div className="p-6">
         <div className="mx-auto max-w-4xl">
           <p className="mb-6 text-sm text-text-secondary">{t("subtitle")}</p>
+
+          {planId && (
+            <div className="mb-4 flex items-center gap-2 rounded-lg bg-emerald-50 px-4 py-3 text-sm">
+              <FileText className="h-4 w-4 shrink-0 text-emerald-600" />
+              <span className="font-medium text-emerald-800">
+                {planTitle
+                  ? `مرتبط بالخطة: ${planTitle} — الفيديو سيتماشى مع الاستراتيجية والجمهور المستهدف من الخطة.`
+                  : "مرتبط بالخطة — يتم تحميل التفاصيل..."}
+              </span>
+            </div>
+          )}
 
           {error && (
             <div className="mb-4 flex items-center gap-3 rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">

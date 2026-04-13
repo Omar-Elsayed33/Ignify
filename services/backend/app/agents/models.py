@@ -3,12 +3,12 @@
 # Tiered aliases — use these for sub-agents to allow global swaps.
 # Model IDs must match OpenRouter catalog exactly — https://openrouter.ai/models
 MODEL_TIERS = {
-    "fast": "openai/gpt-4o-mini",
-    "balanced": "openai/gpt-4o-mini",
-    "smart": "openai/gpt-4o",
-    "vision": "openai/gpt-4o",
-    "search": "openai/gpt-4o-mini",
-    "long_context": "google/gemini-2.0-flash-exp",
+    "fast": "google/gemini-2.5-flash",
+    "balanced": "google/gemini-2.5-flash",
+    "smart": "google/gemini-2.5-flash",
+    "vision": "google/gemini-2.5-flash",
+    "search": "google/gemini-2.5-flash",
+    "long_context": "google/gemini-2.5-flash",
 }
 
 # Default model per top-level agent.

@@ -90,38 +90,19 @@ async def chat_with_assistant(
     api_key = ai_config.get("api_key", "")
     model = ai_config.get("model", "")
 
-    # Check if AI is configured
-    if not provider or not api_key:
-        # Fall back to platform defaults from env
-        if settings.OPENAI_API_KEY:
-            provider = "openai"
-            api_key = settings.OPENAI_API_KEY
-            model = model or "gpt-4o"
-        elif settings.ANTHROPIC_API_KEY:
-            provider = "anthropic"
-            api_key = settings.ANTHROPIC_API_KEY
-            model = model or "claude-sonnet-4-20250514"
-        elif settings.GOOGLE_API_KEY:
-            provider = "google"
-            api_key = settings.GOOGLE_API_KEY
-            model = model or "gemini-2.0-flash"
-        else:
-            return {
-                "response": (
-                    "**AI provider not configured.**\n\n"
-                    "To use the AI Assistant, please configure an AI provider:\n\n"
-                    "1. Go to **Settings** > **AI Configuration**\n"
-                    "2. Select a provider (OpenAI, Anthropic, Google, or OpenRouter)\n"
-                    "3. Enter your API key\n"
-                    "4. Select a model\n"
-                    "5. Click **Save Settings**\n\n"
-                    "Or ask your platform admin to set default AI provider keys."
-                ),
-                "metadata": {"error": "no_ai_provider_configured"},
-            }
+    # Always route through OpenRouter (unified gateway). Legacy per-tenant
+    # provider/api_key from tenant.config is ignored because OpenRouter is
+    # the platform-managed gateway.
+    if not settings.OPENROUTER_API_KEY:
+        return {
+            "response": (
+                "**OPENROUTER_API_KEY not set on server.**\n\n"
+                "Ask the platform admin to add it to .env and restart backend."
+            ),
+            "metadata": {"error": "no_ai_provider_configured"},
+        }
 
-    if not model:
-        model = "gpt-4o" if provider == "openai" else "claude-sonnet-4-20250514" if provider == "anthropic" else "gemini-2.0-flash"
+    model = model or "google/gemini-2.5-flash"
 
     system_prompt = await build_system_prompt(db, tenant_id)
 
@@ -131,34 +112,40 @@ async def chat_with_assistant(
     messages.append({"role": "user", "content": message})
 
     try:
+        # Call OpenRouter directly (unified chat endpoint).
         async with httpx.AsyncClient(timeout=120.0) as client:
             resp = await client.post(
-                f"{settings.AGNO_RUNTIME_URL}/execute",
+                f"{settings.OPENROUTER_BASE_URL}/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+                    "HTTP-Referer": settings.OPENROUTER_SITE_URL,
+                    "X-Title": settings.OPENROUTER_APP_NAME,
+                    "Content-Type": "application/json",
+                },
                 json={
-                    "provider": provider,
-                    "api_key": api_key,
                     "model": model,
-                    "system_prompt": system_prompt,
-                    "messages": messages,
-                    "tools": [],
+                    "messages": [{"role": "system", "content": system_prompt}] + messages,
                     "temperature": 0.7,
                     "max_tokens": 4096,
                 },
             )
             if resp.status_code != 200:
-                error_detail = resp.text[:200]
+                error_detail = resp.text[:300]
                 return {
-                    "response": f"**AI provider error** ({provider}/{model}):\n\n{error_detail}\n\nPlease check your API key in **Settings > AI Configuration**.",
-                    "metadata": {"error": f"agno_{resp.status_code}", "detail": error_detail},
+                    "response": f"**AI provider error** ({model}):\n\n{error_detail}",
+                    "metadata": {"error": f"openrouter_{resp.status_code}", "detail": error_detail},
                 }
             data = resp.json()
+            content = ""
+            choices = data.get("choices") or []
+            if choices:
+                content = choices[0].get("message", {}).get("content", "")
             return {
-                "response": data.get("response", "No response from AI."),
+                "response": content or "No response from AI.",
                 "metadata": {
                     "model": model,
-                    "provider": provider,
+                    "provider": "openrouter",
                     "usage": data.get("usage"),
-                    "tool_calls_made": data.get("tool_calls_made", 0),
                 },
             }
     except httpx.TimeoutException:

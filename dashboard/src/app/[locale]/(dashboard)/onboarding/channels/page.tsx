@@ -15,9 +15,13 @@ import {
   Music2,
   Ghost,
   Mail,
+  Globe,
+  TrendingUp,
 } from "lucide-react";
 
 const CHANNELS = [
+  { id: "website", label: "الموقع الإلكتروني", Icon: Globe },
+  { id: "google_ads", label: "Google Ads", Icon: TrendingUp },
   { id: "instagram", label: "Instagram", Icon: Instagram },
   { id: "whatsapp", label: "WhatsApp", Icon: MessageCircle },
   { id: "facebook", label: "Facebook", Icon: Facebook },

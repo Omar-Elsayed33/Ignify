@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import DashboardHeader from "@/components/DashboardHeader";
@@ -100,6 +101,17 @@ export default function ContentGenPage() {
   const t = useTranslations("contentGen");
   const tpl = useTranslations("contentTemplates");
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const planId = searchParams.get("plan_id");
+  const [planTitle, setPlanTitle] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!planId) return;
+    api
+      .get<{ title: string }>(`/api/v1/plans/${planId}`)
+      .then((p) => setPlanTitle(p.title))
+      .catch(() => setPlanTitle(null));
+  }, [planId]);
 
   const [form, setForm] = useState<GenerateForm>({
     brief: "",
@@ -183,7 +195,7 @@ export default function ContentGenPage() {
       setResult(null);
       const res = await api.post<GeneratedContent>(
         "/api/v1/content-gen/generate",
-        form
+        { ...form, plan_id: planId || undefined }
       );
       setResult(res);
     } catch (err) {
@@ -220,6 +232,17 @@ export default function ContentGenPage() {
             title={t("title")}
             description={t("subtitle")}
           />
+
+          {planId && (
+            <Card padding="sm" className="flex items-center gap-2 !bg-emerald-50">
+              <FileText className="h-4 w-4 shrink-0 text-emerald-600" />
+              <span className="text-sm font-medium text-emerald-800">
+                {planTitle
+                  ? `مرتبط بالخطة: ${planTitle} — سيستخدم الذكاء الاصطناعي الاستراتيجية والجمهور المستهدف والتموضع من الخطة.`
+                  : "مرتبط بالخطة — يتم تحميل التفاصيل..."}
+              </span>
+            </Card>
+          )}
 
           {error && (
             <Card padding="sm" className="flex items-center gap-3 !bg-error-container">

@@ -133,33 +133,119 @@ export default function HomePage() {
             transition={{ duration: 0.7 }}
             className="lg:col-span-5 relative"
           >
-            <div className="relative bg-surface-container-lowest rounded-3xl p-6 shadow-soft aspect-[4/5] overflow-hidden">
-              {/* Abstract visual composition */}
-              <div className="absolute inset-6 rounded-2xl brand-gradient-bg opacity-90" />
-              <div className="absolute top-10 end-10 w-40 h-40 rounded-full bg-white/30 blur-2xl" />
-              <div className="absolute bottom-16 start-10 w-48 h-48 rounded-full bg-tertiary/40 blur-3xl" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Sparkles className="w-24 h-24 text-white/80" />
+            {/* Ambient glow */}
+            <div className="absolute -inset-6 brand-gradient-bg opacity-20 blur-3xl rounded-[3rem]" />
+
+            {/* Main product card */}
+            <div className="relative bg-surface-container-lowest rounded-3xl p-6 shadow-soft border border-outline-variant/30">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg brand-gradient-bg flex items-center justify-center">
+                    <Sparkles className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="text-sm font-bold text-ink">Ignify AI</span>
+                </div>
+                <div className="flex gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-outline-variant/60" />
+                  <span className="w-2 h-2 rounded-full bg-outline-variant/60" />
+                  <span className="w-2 h-2 rounded-full bg-tertiary" />
+                </div>
+              </div>
+
+              {/* Generated campaign preview */}
+              <div className="relative rounded-2xl overflow-hidden aspect-[4/3] brand-gradient-bg mb-4">
+                <div className="absolute top-6 end-6 w-28 h-28 rounded-full bg-white/25 blur-2xl" />
+                <div className="absolute bottom-4 start-6 w-32 h-32 rounded-full bg-tertiary/50 blur-3xl" />
+                <div className="absolute inset-0 p-5 flex flex-col justify-between">
+                  <span className="self-start inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/25 backdrop-blur-sm text-white text-[10px] font-bold tracking-wider">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                    {locale === "ar" ? "تم التوليد" : "GENERATED"}
+                  </span>
+                  <div>
+                    <div className="h-2 w-3/4 bg-white/70 rounded-full mb-2" />
+                    <div className="h-2 w-1/2 bg-white/40 rounded-full" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Channel chips */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {["Instagram", "TikTok", "Meta Ads", "SEO"].map((ch) => (
+                  <span
+                    key={ch}
+                    className="px-2.5 py-1 rounded-md bg-surface-container-high text-on-surface-variant text-[11px] font-semibold"
+                  >
+                    {ch}
+                  </span>
+                ))}
+              </div>
+
+              {/* Metric rows */}
+              <div className="space-y-2.5">
+                {[
+                  { label: locale === "ar" ? "الوصول" : "Reach", pct: 82 },
+                  { label: locale === "ar" ? "التفاعل" : "Engagement", pct: 64 },
+                  { label: locale === "ar" ? "التحويل" : "Conversion", pct: 48 },
+                ].map((m) => (
+                  <div key={m.label} className="flex items-center gap-3">
+                    <span className="text-[11px] font-semibold text-on-surface-variant w-20">
+                      {m.label}
+                    </span>
+                    <div className="flex-1 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${m.pct}%` }}
+                        transition={{ duration: 1.2, delay: 0.4 }}
+                        className="h-full brand-gradient-bg"
+                      />
+                    </div>
+                    <span className="text-[11px] font-bold text-ink w-8 text-end">
+                      {m.pct}%
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
 
             {/* Floating stat card */}
-            <div className="absolute -bottom-8 -end-4 sm:-end-8 bg-surface-container-lowest p-5 rounded-2xl shadow-soft max-w-[240px]">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-lg bg-primary-container/20 flex items-center justify-center">
-                  <Trending className="w-5 h-5 text-primary-container" />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              className="absolute -bottom-6 -end-4 sm:-end-8 bg-surface-container-lowest p-4 rounded-2xl shadow-soft border border-outline-variant/30 max-w-[220px]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg brand-gradient-bg flex items-center justify-center">
+                  <Trending className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <div className="text-xs text-on-surface-variant">
+                  <div className="text-[11px] text-on-surface-variant">
                     {locale === "ar" ? "معدل النمو" : "Growth rate"}
                   </div>
-                  <div className="font-bold text-lg text-ink">+124%</div>
+                  <div className="font-bold text-lg text-ink leading-none mt-0.5">
+                    +124%
+                  </div>
                 </div>
               </div>
-              <div className="w-full bg-surface-container-high h-1.5 rounded-full overflow-hidden">
-                <div className="brand-gradient-bg h-full w-[80%]" />
+            </motion.div>
+
+            {/* Floating time-saved chip */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.7 }}
+              className="absolute -top-4 -start-4 sm:-start-6 bg-surface-container-lowest px-4 py-2.5 rounded-2xl shadow-soft border border-outline-variant/30 flex items-center gap-2"
+            >
+              <Sparkles className="w-4 h-4 text-tertiary" />
+              <div>
+                <div className="text-[10px] text-on-surface-variant leading-none">
+                  {locale === "ar" ? "وفّرت" : "Saved"}
+                </div>
+                <div className="text-sm font-bold text-ink leading-tight">
+                  {locale === "ar" ? "15 ساعة/أسبوع" : "15 hrs / week"}
+                </div>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         </div>
       </section>

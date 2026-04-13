@@ -9,12 +9,13 @@ from fastapi import APIRouter, HTTPException, Query, status
 from fastapi.responses import Response, StreamingResponse
 from sqlalchemy import select
 
+from app.agents.plan_modes import load_mode_config
 from app.agents.registry import get_agent
 from app.agents.tracing import AgentTracer
 from app.core.pdf import build_plan_pdf
 from app.core.rate_limit import rate_limit_dep  # noqa: F401 — kept for compat
 from app.core.rate_limit_presets import LOOSE, STRICT
-from app.db.models import AgentRun, MarketingPlan, Tenant
+from app.db.models import AgentRun, BrandSettings, MarketingPlan, Tenant
 from app.dependencies import CurrentUser, CurrentUserFlex, DbSession
 from app.modules.plans.schemas import (
     PlanGenerateRequest,
@@ -35,9 +36,30 @@ from pydantic import BaseModel
 class _RegenerateSectionBody(BaseModel):
     section: str
     language: str = "ar"
+    note: str = ""
 
 
-_NODE_NAMES = {"market", "audience", "channels", "calendar", "kpis", "ads"}
+class _RegenerateFullBody(BaseModel):
+    language: str = "ar"
+    note: str = ""
+
+
+_NODE_NAMES = {
+    "market",
+    "audience",
+    "positioning",
+    "customer_journey",
+    "offer",
+    "funnel",
+    "channels",
+    "conversion",
+    "retention",
+    "growth_loops",
+    "calendar",
+    "kpis",
+    "ads",
+    "execution_roadmap",
+}
 
 
 def _sse(payload: dict[str, Any]) -> str:
@@ -123,6 +145,11 @@ async def generate(data: PlanGenerateRequest, user: CurrentUser, db: DbSession):
             language=data.language,
             business_profile=data.business_profile,
             model_override=data.model_override,
+            budget_monthly_usd=data.budget_monthly_usd,
+            budget_currency=data.budget_currency,
+            primary_goal=data.primary_goal,
+            urgency_days=data.urgency_days,
+            plan_mode=data.plan_mode,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Plan generation failed: {e}")
@@ -150,7 +177,12 @@ async def generate_stream(
     title = data.title
     period_days = data.period_days
     language = data.language
+    plan_mode = data.plan_mode
     model_override = data.model_override
+    budget_monthly_usd = data.budget_monthly_usd
+    budget_currency = data.budget_currency
+    primary_goal = data.primary_goal
+    urgency_days = data.urgency_days
 
     # Prepare state before the streaming generator starts so we can fail fast.
     profile = await _build_business_profile(db, tenant_id, data.business_profile)
@@ -170,7 +202,7 @@ async def generate_stream(
     run = AgentRun(
         tenant_id=tenant_id,
         agent_name="strategy",
-        input={"title": title, "period_days": period_days, "language": language},
+        input={"title": title, "period_days": period_days, "language": language, "plan_mode": plan_mode},
         status="running",
     )
     db.add(run)
@@ -189,7 +221,8 @@ async def generate_stream(
         yield _sse({"type": "run_started", "run_id": str(run_id)})
 
         try:
-            agent = get_agent("strategy", str(tenant_id), model_override=model_override)
+            mode_config = await load_mode_config(db, plan_mode)
+            agent = get_agent("strategy", str(tenant_id), model_override=model_override, mode_config=mode_config)
             agent_model = agent.model
 
             async for event in agent.stream(
@@ -198,6 +231,10 @@ async def generate_stream(
                     "business_profile": profile,
                     "language": language,
                     "period_days": period_days,
+                    "budget_monthly_usd": budget_monthly_usd if budget_monthly_usd is not None else 500.0,
+                    "budget_currency": budget_currency,
+                    "primary_goal": primary_goal or "",
+                    "urgency_days": urgency_days,
                 },
                 thread_id=f"plan:{run_id}",
                 tracer=tracer,
@@ -247,6 +284,9 @@ async def generate_stream(
                 model=agent_model,
                 started_perf=started,
                 traces=tracer.traces,
+                budget_monthly_usd=budget_monthly_usd,
+                primary_goal=primary_goal,
+                plan_mode=plan_mode,
             )
             yield _sse({"type": "complete", "plan_id": str(plan.id)})
         except Exception as e:  # noqa: BLE001
@@ -325,8 +365,35 @@ async def regenerate_section(
         raise HTTPException(status_code=404, detail="Plan not found")
     try:
         plan = await regenerate_plan_section(
-            db, user.tenant_id, user.id, plan, data.section, data.language
+            db, user.tenant_id, user.id, plan, data.section, data.language, note=data.note
         )
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"Regeneration failed: {e}")
+    return plan
+
+
+@router.post(
+    "/{plan_id}/regenerate",
+    response_model=PlanResponse,
+    dependencies=[STRICT],
+)
+async def regenerate_full_plan(
+    plan_id: uuid.UUID,
+    data: _RegenerateFullBody,
+    user: CurrentUser,
+    db: DbSession,
+):
+    from app.modules.plans.service import regenerate_full_plan as _regen_full
+    result = await db.execute(
+        select(MarketingPlan).where(
+            MarketingPlan.id == plan_id, MarketingPlan.tenant_id == user.tenant_id
+        )
+    )
+    plan = result.scalar_one_or_none()
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    try:
+        plan = await _regen_full(db, user.tenant_id, user.id, plan, data.language, note=data.note)
     except Exception as e:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=f"Regeneration failed: {e}")
     return plan
@@ -354,8 +421,23 @@ async def export_plan_pdf(
     if tenant:
         tenant_name = tenant.name
 
+    # Tenant logo from BrandSettings (white-label / brand-kit) — optional.
+    logo_url: str | None = None
     try:
-        pdf_bytes = build_plan_pdf(plan, lang=lang, tenant_name=tenant_name)
+        brand_res = await db.execute(
+            select(BrandSettings).where(BrandSettings.tenant_id == user.tenant_id)
+        )
+        brand_row = brand_res.scalar_one_or_none()
+        logo_url = brand_row.logo_url if brand_row else None
+        if brand_row and brand_row.brand_name:
+            tenant_name = brand_row.brand_name
+    except Exception:
+        logo_url = None
+
+    try:
+        pdf_bytes = build_plan_pdf(
+            plan, lang=lang, tenant_name=tenant_name, tenant_logo_url=logo_url
+        )
     except Exception as e:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=f"PDF generation failed: {e}")
 

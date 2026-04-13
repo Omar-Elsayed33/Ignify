@@ -9,6 +9,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.agents.plan_modes import load_mode_config
 from app.agents.registry import get_agent
 from app.agents.strategy.subagents.audience_profiler import AudienceProfiler
 from app.agents.strategy.subagents.channel_planner import ChannelPlanner
@@ -34,6 +35,18 @@ _SECTION_TO_KEYS = {
     "calendar": ["calendar"],
     "kpis": ["kpis"],
 }
+
+# Strategic section keys persisted from final_state to MarketingPlan columns.
+_STRATEGIC_KEYS = (
+    "positioning",
+    "customer_journey",
+    "offer",
+    "funnel",
+    "conversion",
+    "retention",
+    "growth_loops",
+    "execution_roadmap",
+)
 
 
 async def _build_business_profile(
@@ -74,6 +87,9 @@ async def _persist_plan(
     model: str | None = None,
     started_perf: float | None = None,
     traces: list | None = None,
+    budget_monthly_usd: float | None = None,
+    primary_goal: str | None = None,
+    plan_mode: str = "fast",
 ) -> MarketingPlan:
     """Persist a MarketingPlan and finalize the AgentRun. Shared by sync + stream endpoints."""
     if run is not None:
@@ -88,7 +104,7 @@ async def _persist_plan(
             run.latency_ms = int((time.perf_counter() - started_perf) * 1000)
 
     today = date.today()
-    plan = MarketingPlan(
+    kwargs: dict[str, Any] = dict(
         tenant_id=tenant_id,
         created_by=user_id,
         title=title,
@@ -101,9 +117,16 @@ async def _persist_plan(
         kpis=final_state.get("kpis", []),
         market_analysis=final_state.get("market_analysis", {}),
         ad_strategy=final_state.get("ad_strategy", {}),
+        budget_monthly_usd=budget_monthly_usd,
+        primary_goal=primary_goal,
+        plan_mode=plan_mode,
         status="draft",
         version=1,
     )
+    for key in _STRATEGIC_KEYS:
+        kwargs[key] = final_state.get(key, [] if key == "execution_roadmap" else {})
+
+    plan = MarketingPlan(**kwargs)
     db.add(plan)
     await db.commit()
     await db.refresh(plan)
@@ -120,13 +143,28 @@ async def generate_plan(
     language: str,
     business_profile: dict[str, Any] | None,
     model_override: str | None,
+    budget_monthly_usd: float | None = None,
+    budget_currency: str = "usd",
+    primary_goal: str | None = None,
+    urgency_days: int = 30,
+    plan_mode: str = "fast",
 ) -> MarketingPlan:
     profile = await _build_business_profile(db, tenant_id, business_profile)
+    mode_config = await load_mode_config(db, plan_mode)
 
     run = AgentRun(
         tenant_id=tenant_id,
         agent_name="strategy",
-        input={"title": title, "period_days": period_days, "language": language},
+        input={
+            "title": title,
+            "period_days": period_days,
+            "language": language,
+            "plan_mode": plan_mode,
+            "budget_monthly_usd": budget_monthly_usd,
+            "budget_currency": budget_currency,
+            "primary_goal": primary_goal,
+            "urgency_days": urgency_days,
+        },
         status="running",
     )
     db.add(run)
@@ -135,13 +173,17 @@ async def generate_plan(
     started = time.perf_counter()
     tracer = AgentTracer(tenant_id=tenant_id, run_id=run.id)
     try:
-        agent = get_agent("strategy", str(tenant_id), model_override=model_override)
+        agent = get_agent("strategy", str(tenant_id), model_override=model_override, mode_config=mode_config)
         result = await agent.run(
             {
                 "tenant_id": str(tenant_id),
                 "business_profile": profile,
                 "language": language,
                 "period_days": period_days,
+                "budget_monthly_usd": budget_monthly_usd if budget_monthly_usd is not None else 500.0,
+                "budget_currency": budget_currency,
+                "primary_goal": primary_goal or "",
+                "urgency_days": urgency_days,
             },
             thread_id=f"plan:{run.id}",
             tracer=tracer,
@@ -166,6 +208,9 @@ async def generate_plan(
         model=agent.model,
         started_perf=started,
         traces=tracer.traces,
+        budget_monthly_usd=budget_monthly_usd,
+        primary_goal=primary_goal,
+        plan_mode=plan_mode,
     )
 
 
@@ -176,12 +221,16 @@ async def regenerate_plan_section(
     plan: MarketingPlan,
     section: str,
     language: str = "ar",
+    note: str = "",
 ) -> MarketingPlan:
     """Re-run a single strategy sub-agent and patch only that section of the plan."""
     if section not in _SECTION_TO_SUBAGENT:
         raise ValueError(f"Unknown section: {section}")
 
     profile = await _build_business_profile(db, tenant_id, None)
+    # Inject user feedback into the profile so sub-agents see it as extra context.
+    if note:
+        profile = {**profile, "user_feedback": note.strip()}
 
     run = AgentRun(
         tenant_id=tenant_id,
@@ -206,6 +255,12 @@ async def regenerate_plan_section(
         "calendar": plan.calendar or [],
         "kpis": plan.kpis or [],
         "goals": plan.goals or [],
+        "budget_monthly_usd": float(plan.budget_monthly_usd) if plan.budget_monthly_usd is not None else 500.0,
+        "primary_goal": plan.primary_goal or "",
+        "urgency_days": 30,
+        "offer": getattr(plan, "offer", {}) or {},
+        "funnel": getattr(plan, "funnel", {}) or {},
+        "customer_journey": getattr(plan, "customer_journey", {}) or {},
     }
 
     try:
@@ -233,3 +288,94 @@ async def regenerate_plan_section(
     await db.refresh(plan)
     return plan
 
+
+async def regenerate_full_plan(
+    db: AsyncSession,
+    tenant_id: uuid.UUID,
+    user_id: uuid.UUID,
+    plan: MarketingPlan,
+    language: str = "ar",
+    note: str = "",
+) -> MarketingPlan:
+    """Re-run the full strategy pipeline, injecting the user's feedback note and
+    the previous plan as extra context. Overwrites all plan fields on the existing row."""
+    profile = await _build_business_profile(db, tenant_id, None)
+    if note:
+        profile = {**profile, "user_feedback": note.strip()}
+    profile = {
+        **profile,
+        "previous_plan_summary": {
+            "goals": plan.goals,
+            "market_analysis": plan.market_analysis,
+            "personas": plan.personas,
+            "positioning": getattr(plan, "positioning", None),
+            "channels": plan.channels,
+            "offer": getattr(plan, "offer", None),
+            "kpis": plan.kpis,
+        },
+    }
+
+    mode_config = await load_mode_config(db, plan.plan_mode or "fast")
+
+    run = AgentRun(
+        tenant_id=tenant_id,
+        agent_name="strategy.regenerate",
+        input={"plan_id": str(plan.id), "note": note, "language": language},
+        status="running",
+    )
+    db.add(run)
+    await db.flush()
+
+    started = time.perf_counter()
+    tracer = AgentTracer(tenant_id=tenant_id, run_id=run.id)
+
+    period_days = (
+        (plan.period_end - plan.period_start).days
+        if plan.period_start and plan.period_end
+        else 30
+    )
+
+    try:
+        agent = get_agent("strategy", str(tenant_id), model_override=None, mode_config=mode_config)
+        result = await agent.run(
+            {
+                "tenant_id": str(tenant_id),
+                "business_profile": profile,
+                "language": language,
+                "period_days": period_days,
+                "budget_monthly_usd": float(plan.budget_monthly_usd) if plan.budget_monthly_usd is not None else 500.0,
+                "budget_currency": getattr(plan, "budget_currency", "usd") or "usd",
+                "primary_goal": plan.primary_goal or "",
+                "urgency_days": 30,
+            },
+            thread_id=f"plan:{run.id}",
+            tracer=tracer,
+        )
+    except Exception as e:
+        run.status = "failed"
+        run.error = str(e)[:2000]
+        run.output = {"_traces": tracer.traces}
+        run.latency_ms = int((time.perf_counter() - started) * 1000)
+        await db.commit()
+        raise
+
+    run.status = "succeeded"
+    run.latency_ms = int((time.perf_counter() - started) * 1000)
+    run.output = {"_traces": tracer.traces}
+
+    # Patch every known section key from the result onto the plan row
+    for key in (
+        "goals", "personas", "channels", "calendar", "kpis",
+        "market_analysis", "competitors", "swot", "trends", "positioning",
+        "customer_journey", "offer", "funnel", "conversion", "retention",
+        "growth_loops", "execution_roadmap",
+    ):
+        if key in result:
+            setattr(plan, key, result[key])
+
+    plan.version = (plan.version or 1) + 1
+    # Regenerated plans go back to draft so the user re-reviews
+    plan.status = "draft"
+    await db.commit()
+    await db.refresh(plan)
+    return plan

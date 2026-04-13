@@ -16,6 +16,7 @@ from app.modules.creative_gen.schemas import (
     CreativeGenerateResponse,
 )
 from app.modules.creative_gen.service import generate_creative
+from app.modules.plans.context import fetch_plan_context
 
 router = APIRouter(prefix="/creative-gen", tags=["creative-gen"])
 
@@ -32,12 +33,14 @@ router = APIRouter(prefix="/creative-gen", tags=["creative-gen"])
 async def generate(data: CreativeGenerateRequest, user: CurrentUser, db: DbSession):
     if not user.tenant_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tenant")
+    plan_ctx = await fetch_plan_context(db, user.tenant_id, data.plan_id, data.language)
+    effective_idea = f"{plan_ctx}\n\nCreative brief: {data.idea}" if plan_ctx else data.idea
     try:
         result = await generate_creative(
             db,
             tenant_id=user.tenant_id,
             user_id=user.id,
-            idea=data.idea,
+            idea=effective_idea,
             style=data.style,
             dimensions=data.dimensions,
             language=data.language,

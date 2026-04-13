@@ -23,6 +23,18 @@ from app.core.pdf_charts import (
 logger = logging.getLogger(__name__)
 
 
+# Inline Ignify brand mark — used as cover-strip logo in plan PDFs.
+IGNIFY_LOGO_SVG = '''
+<svg viewBox="0 0 40 40" width="40" height="40" xmlns="http://www.w3.org/2000/svg">
+  <defs><linearGradient id="ignifyLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#FF6B35"/><stop offset="50%" stop-color="#FF3D71"/><stop offset="100%" stop-color="#7B2CBF"/>
+  </linearGradient></defs>
+  <rect width="40" height="40" rx="10" fill="url(#ignifyLogoGrad)"/>
+  <path d="M20 8 L14 22 L18 22 L16 32 L26 18 L22 18 L24 8 Z" fill="white"/>
+</svg>
+'''.strip()
+
+
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 def _esc(value: Any) -> str:
@@ -84,6 +96,28 @@ def html_to_pdf(html: str) -> bytes:
 _PLAN_CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Reem+Kufi:wght@500;700&family=Manrope:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap');
 
+/* Local fallbacks so Arabic still shapes properly when Google Fonts is
+   unreachable (e.g. offline container). Requires system Tajawal /
+   Noto Sans Arabic / Noto Naskh Arabic — installed in the backend image. */
+@font-face {
+  font-family: 'Tajawal';
+  src: local('Tajawal'), local('Tajawal-Regular');
+  font-weight: 400;
+}
+@font-face {
+  font-family: 'Tajawal';
+  src: local('Tajawal Bold'), local('Tajawal-Bold');
+  font-weight: 700;
+}
+@font-face {
+  font-family: 'Noto Sans Arabic';
+  src: local('Noto Sans Arabic'), local('NotoSansArabic-Regular');
+}
+@font-face {
+  font-family: 'Noto Naskh Arabic';
+  src: local('Noto Naskh Arabic'), local('NotoNaskhArabic-Regular');
+}
+
 @page {
   size: A4;
   margin: 22mm 18mm 22mm 18mm;
@@ -107,12 +141,16 @@ body {
 body.rtl { direction: rtl; font-family: 'Tajawal', 'Manrope', sans-serif; }
 
 h1, h2, h3, h4 {
-  font-family: 'Space Grotesk', 'Reem Kufi', 'Tajawal', sans-serif;
+  font-family: 'Space Grotesk', 'Manrope', sans-serif;
+  letter-spacing: -0.02em;
   color: #1b1b24;
   margin: 0 0 8pt 0;
 }
 body.rtl h1, body.rtl h2, body.rtl h3, body.rtl h4 {
-  font-family: 'Reem Kufi', 'Tajawal', sans-serif;
+  font-family: 'Reem Kufi', 'Tajawal', 'Noto Sans Arabic', sans-serif;
+  letter-spacing: 0;
+  color: #1b1b24;
+  font-weight: 700;
 }
 h1 { font-size: 26pt; letter-spacing: -0.5pt; }
 h2 { font-size: 17pt; color: #ab3500; border-bottom: 2px solid #f3dcd2;
@@ -133,6 +171,15 @@ p { margin: 4pt 0; }
   opacity: 0.9;
 }
 .cover h1 { color: white; font-size: 42pt; margin: 20pt 0 6pt 0; }
+body.rtl .cover h1 {
+  font-family: 'Reem Kufi', 'Tajawal', 'Noto Sans Arabic', sans-serif;
+  font-size: 32pt !important;
+  font-weight: 700;
+  color: #ffffff !important;
+  background: none !important;
+  text-shadow: 0 2px 12px rgba(123, 44, 191, 0.35);
+  letter-spacing: 0;
+}
 .cover .sub { opacity: 0.92; font-size: 13pt; }
 .cover .meta {
   margin-top: 40pt; font-size: 10.5pt; opacity: 0.95; line-height: 1.9;
@@ -145,6 +192,44 @@ p { margin: 4pt 0; }
 }
 .cover .tag-gen {
   margin-top: 28pt; font-size: 9.5pt; opacity: 0.75;
+}
+.cover .logo-strip {
+  display: flex; align-items: center; gap: 10pt;
+  margin-bottom: 24pt;
+}
+.cover .logo-strip .wordmark {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 18pt; font-weight: 700; letter-spacing: 1pt;
+  color: white;
+}
+.cover .tenant-block {
+  display: flex; align-items: center; gap: 14pt;
+  margin-top: 32pt; padding: 14pt 16pt;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 14pt;
+}
+.cover .tenant-logo {
+  width: 72pt; height: 72pt; border-radius: 12pt;
+  object-fit: cover; background: white;
+}
+.cover .tenant-initials {
+  width: 72pt; height: 72pt; border-radius: 12pt;
+  background: rgba(255,255,255,0.9);
+  color: #7B2CBF; font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700; font-size: 28pt;
+  display: flex; align-items: center; justify-content: center;
+}
+.cover .company-name {
+  font-family: 'Space Grotesk', 'Reem Kufi', 'Tajawal', sans-serif;
+  font-size: 22pt; font-weight: 700; color: white;
+  line-height: 1.1;
+}
+body.rtl .cover .company-name {
+  font-family: 'Reem Kufi', 'Tajawal', sans-serif;
+}
+.cover .company-sub {
+  font-size: 10pt; opacity: 0.85; margin-top: 2pt;
 }
 
 .section { page-break-inside: avoid; margin-bottom: 12mm; }
@@ -232,11 +317,26 @@ _PLAN_TEMPLATE = """<!DOCTYPE html>
 
   {# 1. COVER #}
   <div class="cover">
-    <div class="brand">IGNIFY</div>
+    <div class="logo-strip">
+      {{ ignify_logo_svg|safe }}
+      <div class="wordmark">Ignify</div>
+    </div>
     <h1>{{ plan.title|e }}</h1>
     <div class="sub">{{ labels.cover_sub }}</div>
+
+    <div class="tenant-block">
+      {% if tenant_logo_url %}
+        <img src="{{ tenant_logo_url|e }}" class="tenant-logo" alt="{{ tenant_name|e }}"/>
+      {% else %}
+        <div class="tenant-initials">{{ tenant_initials }}</div>
+      {% endif %}
+      <div>
+        <div class="company-name">{{ tenant_name|e or labels.tenant }}</div>
+        <div class="company-sub">{{ labels.cover_sub }}</div>
+      </div>
+    </div>
+
     <div class="meta">
-      <div><b>{{ labels.tenant }}:</b> {{ tenant_name|e }}</div>
       <div><b>{{ labels.date }}:</b> {{ created_s }}</div>
       <div><b>{{ labels.period }}:</b>
         {{ plan.period_start or '' }} → {{ plan.period_end or '' }}
@@ -258,7 +358,7 @@ _PLAN_TEMPLATE = """<!DOCTYPE html>
     {% if plan.goals %}
       <h3>{{ labels.goals }}</h3>
       <ul>
-      {% for g in plan.goals %}<li>{{ g|e if g is string else g|tojson }}</li>{% endfor %}
+      {% for g in plan.goals %}<li>{{ g|e if g is string else g|pretty }}</li>{% endfor %}
       </ul>
     {% endif %}
   </div>
@@ -276,7 +376,7 @@ _PLAN_TEMPLATE = """<!DOCTYPE html>
           <b>{{ (c.name if c is mapping else c)|e }}</b>
           {% if c is mapping %}
             {% for k, v in c.items() if k != 'name' %}
-              <div class="muted">{{ k|e }}: {{ v|e if v is string else v|tojson }}</div>
+              <div class="muted">{{ k|e }}: {{ v|e if v is string else v|pretty }}</div>
             {% endfor %}
           {% endif %}
         </div>
@@ -301,7 +401,7 @@ _PLAN_TEMPLATE = """<!DOCTYPE html>
     {% if market.trends %}
       <h3>{{ labels.trends }}</h3>
       <ul>
-      {% for tr in market.trends %}<li>{{ tr|e if tr is string else tr|tojson }}</li>{% endfor %}
+      {% for tr in market.trends %}<li>{{ tr|e if tr is string else tr|pretty }}</li>{% endfor %}
       </ul>
     {% endif %}
   </div>
@@ -487,7 +587,167 @@ _PLAN_TEMPLATE = """<!DOCTYPE html>
     {% else %}<p class="muted">—</p>{% endif %}
   </div>
 
-  {# 12. NEXT ACTIONS #}
+  {# 12. POSITIONING #}
+  {% if positioning %}
+  <div class="section">
+    <h2>{{ labels.positioning }}</h2>
+    {% if positioning.positioning_statement %}
+      <div style="padding:16pt;background:#faf7ff;border-inline-start:3pt solid #8a5cf6;font-style:italic;font-size:12pt;text-align:center;">
+        "{{ positioning.positioning_statement|e }}"
+      </div>
+    {% endif %}
+    {% if positioning.value_proposition %}
+      <p><strong>{{ labels.value_prop }}:</strong> {{ positioning.value_proposition|e }}</p>
+    {% endif %}
+    {% if positioning.differentiation_pillars %}
+      <ul>
+      {% for p in positioning.differentiation_pillars %}
+        <li><strong>{{ (p.pillar or '')|e }}</strong> — {{ (p.proof or '')|e }}</li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {# 13. CUSTOMER JOURNEY #}
+  {% if customer_journey and customer_journey.stages %}
+  <div class="section">
+    <h2>{{ labels.journey }}</h2>
+    <table>
+      <thead><tr>
+        <th>{{ labels.j_stage }}</th><th>{{ labels.j_emotions }}</th>
+        <th>{{ labels.j_touchpoints }}</th><th>{{ labels.j_triggers }}</th>
+        <th>{{ labels.j_objections }}</th>
+      </tr></thead>
+      <tbody>
+      {% for s in customer_journey.stages %}
+      <tr>
+        <td>{{ (s.stage or '—')|e }}</td>
+        <td>{{ (s.emotions or '—')|e }}</td>
+        <td>{{ (s.touchpoints or [])|join(', ')|e }}</td>
+        <td>{{ (s.decision_triggers or [])|join(', ')|e }}</td>
+        <td>{{ (s.objections or [])|join(', ')|e }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {# 14. OFFER #}
+  {% if offer and offer.core_offer %}
+  <div class="section">
+    <h2>{{ labels.offer }}</h2>
+    <div style="padding:14pt;background:#fff7ed;border:1pt solid #fcd34d;border-radius:8pt">
+      <p><strong>{{ (offer.core_offer.name or '')|e }}</strong></p>
+      {% if offer.core_offer.price_usd %}
+        <p>${{ offer.core_offer.price_usd }}
+        {% if offer.core_offer.anchor_price_usd %}<s style="opacity:.6">${{ offer.core_offer.anchor_price_usd }}</s>{% endif %}</p>
+      {% endif %}
+      {% if offer.core_offer.includes %}<ul>{% for x in offer.core_offer.includes %}<li>{{ x|e }}</li>{% endfor %}</ul>{% endif %}
+      {% if offer.irresistible_reason %}<p><em>{{ offer.irresistible_reason|e }}</em></p>{% endif %}
+      {% if offer.risk_reversal %}<p><strong>{{ labels.risk_reversal }}:</strong> {{ offer.risk_reversal|e }}</p>{% endif %}
+      {% if offer.bonuses %}
+        <p><strong>{{ labels.bonuses }}:</strong></p>
+        <ul>{% for b in offer.bonuses %}<li>{{ (b.bonus or '')|e }} (≈${{ b.perceived_value_usd or 0 }})</li>{% endfor %}</ul>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# 15. AARRR FUNNEL #}
+  {% if funnel and funnel.stages %}
+  <div class="section">
+    <h2>{{ labels.aarrr }}</h2>
+    <table>
+      <thead><tr><th>{{ labels.j_stage }}</th><th>Conv. %</th><th>{{ labels.kpi_name }}</th><th>{{ labels.ch_name }}</th></tr></thead>
+      <tbody>
+      {% for s in funnel.stages %}
+      <tr>
+        <td>{{ (s.stage or '—')|e }}</td>
+        <td>{{ (s.conversion_rate_pct or '—')|e }}</td>
+        <td>{{ (s.key_metric or '—')|e }}</td>
+        <td>{{ (s.channel or '—')|e }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% if funnel.math_check %}<p class="muted">{{ funnel.math_check|e }}</p>{% endif %}
+  </div>
+  {% endif %}
+
+  {# 16. CONVERSION SYSTEM #}
+  {% if conversion %}
+  <div class="section">
+    <h2>{{ labels.conversion }}</h2>
+    {% if conversion.landing_page_logic %}
+      <h3>Landing Page</h3>
+      <p><strong>Hook:</strong> {{ (conversion.landing_page_logic.hook_above_fold or '')|e }}</p>
+      <p><strong>CTA:</strong> {{ (conversion.landing_page_logic.cta_copy or '')|e }}</p>
+    {% endif %}
+    {% if conversion.whatsapp_funnel %}
+      <h3>WhatsApp Script</h3>
+      <p><strong>Welcome:</strong> {{ (conversion.whatsapp_funnel.welcome_message or '')|e }}</p>
+      {% if conversion.whatsapp_funnel.objection_handlers %}
+        <ul>
+        {% for o in conversion.whatsapp_funnel.objection_handlers %}
+          <li><strong>{{ (o.objection or '')|e }}</strong> → {{ (o.response or '')|e }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {# 17. RETENTION #}
+  {% if retention %}
+  <div class="section">
+    <h2>{{ labels.retention }}</h2>
+    {% if retention.first_30_days_program %}<p><strong>First 30 days:</strong> {{ retention.first_30_days_program|e }}</p>{% endif %}
+    {% if retention.loyalty_mechanism %}<p><strong>Loyalty:</strong> {{ retention.loyalty_mechanism|e }}</p>{% endif %}
+    {% if retention.upsell_ladder %}
+      <ul>{% for u in retention.upsell_ladder %}<li>{{ (u['from'] or '')|e }} → {{ (u['to'] or '')|e }} ({{ (u.when or '')|e }})</li>{% endfor %}</ul>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {# 18. GROWTH LOOP #}
+  {% if growth_loops and growth_loops.loop_name %}
+  <div class="section">
+    <h2>{{ labels.growth_loop }}</h2>
+    <p><strong>{{ growth_loops.loop_name|e }}</strong></p>
+    {% if growth_loops.loop_steps %}
+      <pre style="font-family:monospace;background:#f5f5f5;padding:10pt;border-radius:6pt">{% for s in growth_loops.loop_steps %}[{{ loop.index }}] {{ s|e }}{% if not loop.last %}
+   │
+   ▼
+{% endif %}{% endfor %}
+   │
+   └──▶ back to [1]</pre>
+    {% endif %}
+    {% if growth_loops.measurement %}<p class="muted">Measurement: {{ growth_loops.measurement|e }}</p>{% endif %}
+  </div>
+  {% endif %}
+
+  {# 19. 30-DAY ROADMAP #}
+  {% if execution_roadmap %}
+  <div class="section">
+    <h2>{{ labels.roadmap }}</h2>
+    <table>
+      <thead><tr><th>Day</th><th>Action</th><th>Outcome</th></tr></thead>
+      <tbody>
+      {% for d in execution_roadmap[:30] %}
+      <tr>
+        <td>{{ (d.day or loop.index)|e }}</td>
+        <td>{{ (d.priority_action or '—')|e }}</td>
+        <td>{{ (d.expected_outcome or '—')|e }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {# 20. NEXT ACTIONS #}
   <div class="section">
     <h2>{{ labels.next_actions }}</h2>
     <ul>
@@ -520,7 +780,7 @@ def _default_next_actions(lang: str) -> list[str]:
 def _plan_labels(lang: str) -> dict[str, str]:
     T = lambda ar, en: _t(ar, en, lang)
     return {
-        "cover_sub": T("خطة تسويقية شاملة مولدة بالذكاء الاصطناعي", "Comprehensive AI-generated marketing plan"),
+        "cover_sub": T("خطة تسويقية شاملة مولدة عن طريق Ignify", "Comprehensive marketing plan generated by Ignify"),
         "tenant": T("المنشأة", "Tenant"),
         "date": T("التاريخ", "Date"),
         "period": T("الفترة", "Period"),
@@ -573,12 +833,33 @@ def _plan_labels(lang: str) -> dict[str, str]:
         "kpi_unit": T("الوحدة", "Unit"),
         "kpi_channel": T("القناة", "Channel"),
         "next_actions": T("الخطوات التالية", "Next Actions"),
+        # Strategic sections
+        "positioning": T("التموضع والتمايز", "Positioning & Differentiation"),
+        "value_prop": T("عرض القيمة", "Value Proposition"),
+        "journey": T("رحلة العميل", "Customer Journey"),
+        "j_stage": T("المرحلة", "Stage"),
+        "j_emotions": T("المشاعر", "Emotions"),
+        "j_touchpoints": T("نقاط التلامس", "Touchpoints"),
+        "j_triggers": T("المحفزات", "Triggers"),
+        "j_objections": T("الاعتراضات", "Objections"),
+        "offer": T("العرض الذي لا يُقاوم", "Irresistible Offer"),
+        "risk_reversal": T("عكس المخاطرة", "Risk reversal"),
+        "bonuses": T("المكافآت", "Bonuses"),
+        "aarrr": T("قمع AARRR", "AARRR Funnel"),
+        "conversion": T("منظومة التحويل", "Conversion System"),
+        "retention": T("خطة الاحتفاظ", "Retention Plan"),
+        "growth_loop": T("حلقة النمو", "Growth Loop"),
+        "roadmap": T("خارطة الطريق 30 يومًا", "30-Day Roadmap"),
     }
 
 
 def _render_plan_html(ctx: dict, lang: str) -> str:
     plan = ctx.get("plan", {}) or {}
     tenant_name = ctx.get("tenant_name") or ""
+    tenant_logo_url = ctx.get("tenant_logo_url") or ""
+    # Initials fallback (first letter of each of the first 2 words, uppercase)
+    _words = [w for w in (tenant_name or "").split() if w]
+    tenant_initials = "".join(w[0] for w in _words[:2]).upper() or "I"
 
     # Normalize period_days
     ps = plan.get("period_start")
@@ -605,6 +886,14 @@ def _render_plan_html(ctx: dict, lang: str) -> str:
     calendar = plan.get("calendar") or []
     kpis = plan.get("kpis") or []
     ad_strategy = plan.get("ad_strategy") or {}
+    positioning = plan.get("positioning") or {}
+    customer_journey = plan.get("customer_journey") or {}
+    offer = plan.get("offer") or {}
+    funnel = plan.get("funnel") or {}
+    conversion = plan.get("conversion") or {}
+    retention = plan.get("retention") or {}
+    growth_loops = plan.get("growth_loops") or {}
+    execution_roadmap = plan.get("execution_roadmap") or []
 
     # Charts
     channel_bar_svg = ""
@@ -688,12 +977,38 @@ def _render_plan_html(ctx: dict, lang: str) -> str:
     labels = _plan_labels(lang)
 
     env = Environment(loader=BaseLoader(), autoescape=select_autoescape(["html"]))
+
+    # Pretty-print nested dicts/lists keeping Arabic characters readable.
+    def _pretty(val):
+        import json as _json
+        if isinstance(val, str):
+            return val
+        if isinstance(val, (int, float, bool)) or val is None:
+            return str(val) if val is not None else ""
+        if isinstance(val, dict):
+            parts = []
+            for k, v in val.items():
+                label = str(k).replace("_", " ")
+                if isinstance(v, (list, dict)):
+                    parts.append(f"{label}: {_pretty(v)}")
+                else:
+                    parts.append(f"{label}: {v}")
+            return " — ".join(parts)
+        if isinstance(val, list):
+            return "، ".join(_pretty(x) for x in val)
+        return _json.dumps(val, ensure_ascii=False)
+
+    env.filters["pretty"] = _pretty
+    env.filters["utf8json"] = lambda v: __import__("json").dumps(v, ensure_ascii=False)
     tmpl = env.from_string(_PLAN_TEMPLATE)
     return tmpl.render(
         lang=lang,
         css=_PLAN_CSS,
         plan=plan,
         tenant_name=tenant_name,
+        tenant_logo_url=tenant_logo_url,
+        tenant_initials=tenant_initials,
+        ignify_logo_svg=IGNIFY_LOGO_SVG,
         created_s=created_s,
         market=market,
         personas=personas,
@@ -701,6 +1016,14 @@ def _render_plan_html(ctx: dict, lang: str) -> str:
         calendar=calendar,
         kpis=kpis,
         ad_strategy=ad_strategy,
+        positioning=positioning,
+        customer_journey=customer_journey,
+        offer=offer,
+        funnel=funnel,
+        conversion=conversion,
+        retention=retention,
+        growth_loops=growth_loops,
+        execution_roadmap=execution_roadmap,
         platform_recs=platform_recs,
         channel_bar_svg=channel_bar_svg,
         funnel_svg=funnel_svg,
@@ -712,7 +1035,12 @@ def _render_plan_html(ctx: dict, lang: str) -> str:
     )
 
 
-def build_plan_pdf(plan_row: Any, lang: str = "en", tenant_name: str | None = None) -> bytes:
+def build_plan_pdf(
+    plan_row: Any,
+    lang: str = "en",
+    tenant_name: str | None = None,
+    tenant_logo_url: str | None = None,
+) -> bytes:
     """Produce a full marketing plan PDF from a MarketingPlan ORM row or dict."""
     if hasattr(plan_row, "__table__"):  # ORM row
         plan = {
@@ -729,10 +1057,26 @@ def build_plan_pdf(plan_row: Any, lang: str = "en", tenant_name: str | None = No
             "kpis": getattr(plan_row, "kpis", None),
             "market_analysis": getattr(plan_row, "market_analysis", None),
             "ad_strategy": getattr(plan_row, "ad_strategy", None),
+            "positioning": getattr(plan_row, "positioning", None),
+            "customer_journey": getattr(plan_row, "customer_journey", None),
+            "offer": getattr(plan_row, "offer", None),
+            "funnel": getattr(plan_row, "funnel", None),
+            "conversion": getattr(plan_row, "conversion", None),
+            "retention": getattr(plan_row, "retention", None),
+            "growth_loops": getattr(plan_row, "growth_loops", None),
+            "execution_roadmap": getattr(plan_row, "execution_roadmap", None),
         }
     else:
         plan = dict(plan_row)
-    html = generate_html("plan", {"plan": plan, "tenant_name": tenant_name or ""}, lang)
+    html = generate_html(
+        "plan",
+        {
+            "plan": plan,
+            "tenant_name": tenant_name or "",
+            "tenant_logo_url": tenant_logo_url or "",
+        },
+        lang,
+    )
     return html_to_pdf(html)
 
 

@@ -4,8 +4,19 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential curl libpango-1.0-0 libpangoft2-1.0-0 libcairo2 libgdk-pixbuf-2.0-0 libffi-dev shared-mime-info fonts-dejavu fonts-noto-core && \
+    build-essential curl unzip libpango-1.0-0 libpangoft2-1.0-0 libcairo2 libgdk-pixbuf-2.0-0 libffi-dev shared-mime-info \
+    fonts-dejavu fonts-noto-core fonts-noto-cjk fonts-noto-color-emoji fonts-cantarell && \
     rm -rf /var/lib/apt/lists/*
+
+# Install Tajawal + Reem Kufi for designed Arabic typography in PDFs.
+# Falls back to fonts-noto-core (Noto Sans/Naskh Arabic) if download fails —
+# both are referenced via local() in the PDF @font-face block.
+RUN mkdir -p /usr/share/fonts/arabic && \
+    (curl -fsSL -o /tmp/tajawal.zip "https://fonts.google.com/download?family=Tajawal" && \
+     unzip -o /tmp/tajawal.zip -d /usr/share/fonts/arabic/ && rm /tmp/tajawal.zip) || echo "Tajawal skipped" && \
+    (curl -fsSL -o /tmp/reem.zip "https://fonts.google.com/download?family=Reem+Kufi" && \
+     unzip -o /tmp/reem.zip -d /usr/share/fonts/arabic/ && rm /tmp/reem.zip) || echo "Reem Kufi skipped" && \
+    fc-cache -fv || true
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
@@ -36,6 +47,7 @@ RUN uv pip install --system --no-cache \
     "tenacity>=9.0.0" \
     "minio>=7.2.0" \
     "sentry-sdk[fastapi]>=2.0.0" \
+    "jinja2>=3.1.0" \
     "email-validator>=2.2.0" \
     "weasyprint>=62.0" \
     "pgvector>=0.3.0" \

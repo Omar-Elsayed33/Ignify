@@ -24,6 +24,7 @@ from app.modules.content_gen.service import (
     bulk_generate,
     generate_content,
 )
+from app.modules.plans.context import fetch_plan_context
 
 router = APIRouter(prefix="/content-gen", tags=["content-gen"])
 
@@ -75,17 +76,20 @@ _TARGET_TO_POST_TYPE = {
 async def generate(data: ContentGenerateRequest, user: CurrentUser, db: DbSession):
     if not user.tenant_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tenant")
+    plan_ctx = await fetch_plan_context(db, user.tenant_id, data.plan_id, data.language)
+    effective_brief = f"{plan_ctx}\n\n{data.brief}" if plan_ctx else data.brief
     try:
         result = await generate_content(
             db,
             tenant_id=user.tenant_id,
             user_id=user.id,
-            brief=data.brief,
+            brief=effective_brief,
             target=data.target,
             channel=data.channel,
             language=data.language,
             brand_voice=data.brand_voice,
             model_override=data.model_override,
+            plan_id=data.plan_id,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Content generation failed: {e}")
@@ -124,6 +128,8 @@ async def generate_stream(
     tenant_id = user.tenant_id
     user_id = user.id
     voice = await _resolve_brand_voice(db, tenant_id, data.brand_voice)
+    plan_ctx = await fetch_plan_context(db, tenant_id, data.plan_id, data.language)
+    effective_brief = f"{plan_ctx}\n\n{data.brief}" if plan_ctx else data.brief
 
     run = AgentRun(
         tenant_id=tenant_id,
@@ -156,13 +162,13 @@ async def generate_stream(
             async for event in agent.stream(
                 {
                     "tenant_id": str(tenant_id),
-                    "brief": data.brief,
+                    "brief": effective_brief,
                     "target": data.target,
                     "channel": data.channel,
                     "language": data.language,
                     "brand_voice": voice,
                     "hashtags": [],
-                    "meta": {},
+                    "meta": {"plan_id": str(data.plan_id) if data.plan_id else None},
                 },
                 thread_id=f"content:{run_id}",
             ):
@@ -221,6 +227,7 @@ async def generate_stream(
                     "draft": draft,
                     "agent_run_id": str(run_id),
                     "created_by": str(user_id),
+                    "plan_id": str(data.plan_id) if data.plan_id else None,
                 },
             )
             db.add(post)
