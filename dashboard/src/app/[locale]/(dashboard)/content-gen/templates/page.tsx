@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import DashboardHeader from "@/components/DashboardHeader";
+import EmptyState from "@/components/EmptyState";
 import { api } from "@/lib/api";
+import { useConfirm } from "@/components/ConfirmDialog";
 import {
   Plus,
   Star,
@@ -14,6 +16,7 @@ import {
   AlertCircle,
   Loader2,
   X,
+  FileText,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -50,6 +53,7 @@ const empty: FormState = {
 export default function TemplatesPage() {
   const t = useTranslations("contentTemplates");
   const router = useRouter();
+  const confirm = useConfirm();
 
   const [items, setItems] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,7 +129,14 @@ export default function TemplatesPage() {
   }
 
   async function remove(tpl: Template) {
-    if (!confirm(t("confirmDelete"))) return;
+    const ok = await confirm({
+      title: "تأكيد",
+      description: t("confirmDelete"),
+      kind: "danger",
+      confirmLabel: "حذف",
+      cancelLabel: "إلغاء",
+    });
+    if (!ok) return;
     try {
       await api.delete(`/api/v1/content-templates/${tpl.id}`);
       await load();
@@ -171,9 +182,13 @@ export default function TemplatesPage() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : items.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border bg-surface p-10 text-center text-sm text-text-muted">
-            {t("empty")}
-          </div>
+          <EmptyState
+            icon={FileText}
+            title={t("empty")}
+            description="احفظ بريفات جاهزة تعيد استخدامها عند توليد محتوى جديد لتوفر الوقت وتضمن نبرة موحدة."
+            actionLabel={t("new")}
+            onAction={openNew}
+          />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {items.map((tpl) => (

@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { Loader2, Plus, X, Globe } from "lucide-react";
 import AIAssistButton from "@/components/AIAssistButton";
+import OnboardingProgress from "@/components/OnboardingProgress";
+import { useToast } from "@/components/Toaster";
 
 const INDUSTRIES = ["ecommerce", "restaurant", "clinic", "real_estate", "services", "saas", "other"] as const;
 const COUNTRIES = ["EG", "SA", "AE", "KW", "QA", "BH", "OM", "other"] as const;
@@ -15,6 +17,7 @@ export default function BusinessProfilePage() {
   const t = useTranslations("onboarding");
   const tAI = useTranslations("aiAssist");
   const router = useRouter();
+  const toast = useToast();
 
   const [industry, setIndustry] = useState<string>("ecommerce");
   const [country, setCountry] = useState<string>("EG");
@@ -27,40 +30,49 @@ export default function BusinessProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
-  const [analyzeMsg, setAnalyzeMsg] = useState<string | null>(null);
 
   const analyzeWebsite = async () => {
-    if (!websiteUrl.trim()) return;
+    if (!websiteUrl.trim() || analyzing) return;
     setAnalyzing(true);
-    setAnalyzeMsg(null);
     try {
       const data = await api.post<{
-        business_name?: string;
         industry?: string;
         description?: string;
-        target_audience?: string;
         main_products?: string[];
         main_services?: string[];
         probable_competitors?: Array<{ name?: string; url?: string } | string>;
-      }>("/api/v1/ai-assistant/draft-business-profile", {
-        website_url: websiteUrl,
+      }>("/api/v1/ai-assistant/analyze-website", {
+        url: websiteUrl.trim(),
         lang: primaryLanguage === "ar" ? "ar" : "en",
-        country,
       });
-      if (data.description) setDescription(data.description);
-      if (data.target_audience) setTargetAudience(data.target_audience);
-      const prods = [
-        ...(data.main_products || []),
-        ...(data.main_services || []),
-      ].filter(Boolean);
-      if (prods.length) setProducts(prods);
-      const comps = (data.probable_competitors || [])
+
+      // Only prefill fields the user hasn't touched.
+      // industry: default is "ecommerce"; only overwrite if still default AND LLM returned a known key.
+      if (data.industry && industry === "ecommerce") {
+        const key = data.industry.toLowerCase();
+        const match = INDUSTRIES.find((i) => key.includes(i));
+        if (match) setIndustry(match);
+      }
+      if (data.description && !description.trim()) {
+        setDescription(data.description);
+      }
+      const incomingComps = (data.probable_competitors || [])
         .map((c) => (typeof c === "string" ? c : c.name || c.url || ""))
         .filter(Boolean);
-      if (comps.length) setCompetitors(comps);
-      setAnalyzeMsg(tAI("analyzeWebsite.success"));
-    } catch {
-      setAnalyzeMsg(tAI("analyzeWebsite.error"));
+      const hasCompetitorInput = competitors.some((c) => c.trim());
+      if (incomingComps.length && !hasCompetitorInput) {
+        setCompetitors(incomingComps);
+      }
+
+      toast.success("تم تحليل موقعك");
+    } catch (err) {
+      const msg =
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : tAI("analyzeWebsite.error");
+      toast.error("فشل تحليل الموقع", msg);
     } finally {
       setAnalyzing(false);
     }
@@ -102,6 +114,7 @@ export default function BusinessProfilePage() {
 
   return (
     <form onSubmit={submit} className="space-y-5">
+      <OnboardingProgress current="business" />
       <div>
         <h2 className="text-xl font-semibold text-text-primary">{t("business.title")}</h2>
         <p className="mt-1 text-sm text-text-secondary">{t("business.subtitle")}</p>
@@ -127,14 +140,11 @@ export default function BusinessProfilePage() {
           <AIAssistButton
             onClick={analyzeWebsite}
             loading={analyzing}
-            disabled={!websiteUrl.trim()}
+            disabled={!websiteUrl.trim() || analyzing}
             label={tAI("analyzeWebsite.button")}
             loadingLabel={tAI("analyzeWebsite.analyzing")}
           />
         </div>
-        {analyzeMsg && (
-          <p className="mt-2 text-xs text-text-secondary">{analyzeMsg}</p>
-        )}
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

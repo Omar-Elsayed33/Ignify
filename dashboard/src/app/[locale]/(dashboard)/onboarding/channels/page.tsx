@@ -18,6 +18,7 @@ import {
   Globe,
   TrendingUp,
 } from "lucide-react";
+import OnboardingProgress from "@/components/OnboardingProgress";
 
 const CHANNELS = [
   { id: "website", label: "الموقع الإلكتروني", Icon: Globe },
@@ -60,6 +61,7 @@ export default function ChannelsPage() {
 
   return (
     <form onSubmit={submit} className="space-y-5">
+      <OnboardingProgress current="channels" />
       <div>
         <h2 className="text-xl font-semibold text-text-primary">{t("channels.title")}</h2>
         <p className="mt-1 text-sm text-text-secondary">{t("channels.subtitle")}</p>

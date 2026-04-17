@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/lib/api";
 import { Loader2, Sparkles, CheckCircle2, ArrowRight } from "lucide-react";
+import OnboardingProgress from "@/components/OnboardingProgress";
 
 const FEATURES = [
   "خطط تسويقية مدعومة بالذكاء الاصطناعي",
@@ -35,6 +36,7 @@ export default function OnboardingPlanPage() {
 
   return (
     <div className="space-y-6">
+      <OnboardingProgress current="plan" />
       <div>
         <h2 className="text-xl font-semibold text-text-primary">{t("plan.title")}</h2>
         <p className="mt-1 text-sm text-text-secondary">{t("plan.subtitle")}</p>

@@ -18,6 +18,7 @@ from app.agents.strategy.subagents.kpi_setter import KPISetter
 from app.agents.strategy.subagents.market_analyzer import MarketAnalyzer
 from app.agents.tracing import AgentTracer
 from app.db.models import AgentRun, BrandSettings, MarketingPlan, Tenant
+from app.modules.plan_versioning.service import snapshot_plan
 
 
 _SECTION_TO_SUBAGENT = {
@@ -227,6 +228,9 @@ async def regenerate_plan_section(
     if section not in _SECTION_TO_SUBAGENT:
         raise ValueError(f"Unknown section: {section}")
 
+    # Snapshot BEFORE mutating so rollback is possible.
+    await snapshot_plan(db, plan, reason=f"section regenerate: {section}", user_id=user_id)
+
     profile = await _build_business_profile(db, tenant_id, None)
     # Inject user feedback into the profile so sub-agents see it as extra context.
     if note:
@@ -299,6 +303,9 @@ async def regenerate_full_plan(
 ) -> MarketingPlan:
     """Re-run the full strategy pipeline, injecting the user's feedback note and
     the previous plan as extra context. Overwrites all plan fields on the existing row."""
+    # Snapshot the current plan before we regenerate so the user can roll back.
+    await snapshot_plan(db, plan, reason="full regenerate", user_id=user_id)
+
     profile = await _build_business_profile(db, tenant_id, None)
     if note:
         profile = {**profile, "user_feedback": note.strip()}

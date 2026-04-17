@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { api } from "@/lib/api";
+import { useToast } from "@/components/Toaster";
+import { useConfirm } from "@/components/ConfirmDialog";
 import {
   Loader2,
   Globe,
@@ -21,6 +23,7 @@ import {
   MousePointerClick,
   Users,
 } from "lucide-react";
+import Skeleton, { SkeletonStatCard } from "@/components/Skeleton";
 import { clsx } from "clsx";
 
 // ─── Types ───────────────────────────────────────────────────────────────
@@ -307,6 +310,33 @@ export default function MySiteSEOPage() {
           )}
         </div>
       </div>
+
+      {/* ── Loading skeleton (audit running) ── */}
+      {loading && !result && (
+        <>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <SkeletonStatCard key={i} />
+            ))}
+          </div>
+          <div className="rounded-2xl bg-surface-container-lowest p-6 shadow-soft">
+            <Skeleton className="h-5 w-1/3" />
+            <div className="mt-5 grid gap-3 md:grid-cols-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="rounded-xl bg-surface-container-low p-4">
+                  <div className="mb-2 flex items-center gap-2">
+                    <Skeleton className="h-4 w-14 rounded-full" />
+                    <Skeleton className="h-4 w-20" />
+                  </div>
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="mt-2 h-3 w-full" />
+                  <Skeleton className="mt-1 h-3 w-5/6" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* ── Results ── */}
       {result && (
@@ -625,6 +655,27 @@ export default function MySiteSEOPage() {
             : "Connect your accounts to see real visitors, the keywords they search, and conversion rates — inside Ignify."}
         </p>
 
+        {integrations === null ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="rounded-2xl border-2 border-outline/10 bg-surface-container-low p-5">
+                <div className="mb-3 flex items-center gap-3">
+                  <Skeleton className="h-10 w-10" rounded="xl" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-3 w-56" />
+                  </div>
+                </div>
+                <div className="mb-4 space-y-2">
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-11/12" />
+                  <Skeleton className="h-3 w-10/12" />
+                </div>
+                <Skeleton className="h-10 w-full rounded-xl" />
+              </div>
+            ))}
+          </div>
+        ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {/* Search Console */}
           <div className="rounded-2xl border-2 border-primary/10 bg-primary/5 p-5">
@@ -702,8 +753,9 @@ export default function MySiteSEOPage() {
             />
           </div>
         </div>
+        )}
 
-        {!integrations?.oauth_configured && (
+        {integrations && !integrations.oauth_configured && (
           <div className="mt-4 flex items-start gap-2 rounded-xl bg-amber-50 px-4 py-3 text-xs text-amber-800">
             <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             <span>
@@ -828,6 +880,8 @@ function IntegrationButton({
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [picker, setPicker] = useState<{ sites?: Site[]; properties?: Property[] } | null>(null);
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const needsPick =
     connected &&
@@ -839,7 +893,7 @@ function IntegrationButton({
       const res = await api.get<{ url: string }>(`/api/v1/seo/integrations/${service}/connect`);
       if (res?.url) window.location.href = res.url;
     } catch {
-      alert(isAr ? "فشل بدء الربط" : "Failed to start OAuth");
+      toast.error(isAr ? "فشل بدء الربط" : "Failed to start OAuth");
     } finally {
       setBusy(null);
     }
@@ -858,7 +912,7 @@ function IntegrationButton({
         setPicker({ properties: r.properties || [] });
       }
     } catch {
-      alert(isAr ? "تعذّر جلب القائمة" : "Failed to load list");
+      toast.error(isAr ? "تعذّر جلب القائمة" : "Failed to load list");
     } finally {
       setBusy(null);
     }
@@ -885,14 +939,21 @@ function IntegrationButton({
       await api.post(`/api/v1/seo/integrations/${service}/sync`);
       onChange();
     } catch (e) {
-      alert((e as { data?: { detail?: string } })?.data?.detail || (isAr ? "فشل التحديث" : "Sync failed"));
+      toast.error((e as { data?: { detail?: string } })?.data?.detail || (isAr ? "فشل التحديث" : "Sync failed"));
     } finally {
       setBusy(null);
     }
   }
 
   async function disconnect() {
-    if (!confirm(isAr ? "قطع الاتصال؟" : "Disconnect?")) return;
+    const ok = await confirm({
+      title: isAr ? "تأكيد" : "Confirm",
+      description: isAr ? "قطع الاتصال؟" : "Disconnect?",
+      kind: "danger",
+      confirmLabel: isAr ? "فصل" : "Disconnect",
+      cancelLabel: isAr ? "إلغاء" : "Cancel",
+    });
+    if (!ok) return;
     setBusy("disconnect");
     try {
       await api.delete(`/api/v1/seo/integrations/${service}`);

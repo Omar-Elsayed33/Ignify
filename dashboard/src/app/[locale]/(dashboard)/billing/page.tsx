@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import DashboardHeader from "@/components/DashboardHeader";
-import { Loader2, AlertTriangle, ArrowUpRight, Settings2 } from "lucide-react";
+import { Loader2, AlertTriangle, ArrowUpRight, Settings2, X, Gift } from "lucide-react";
 import { api } from "@/lib/api";
+import { useToast } from "@/components/Toaster";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -73,12 +74,72 @@ function UsageBar({
 
 export default function BillingPage() {
   const t = useTranslations("billing");
+  const tt = useTranslations("toasts");
+  const toast = useToast();
   const locale = useLocale();
   const [sub, setSub] = useState<SubscriptionStatus | null>(null);
   const [usage, setUsage] = useState<UsageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [managing, setManaging] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState<string | null>(null);
+  const [cancelNote, setCancelNote] = useState("");
+  const [cancelSubmitting, setCancelSubmitting] = useState(false);
+
+  const cancelReasons: { value: string; labelAr: string; labelEn: string }[] = [
+    { value: "too_expensive", labelAr: "السعر مرتفع", labelEn: "Too expensive" },
+    { value: "low_usage", labelAr: "لا أستخدمها كثيراً", labelEn: "Not using it enough" },
+    { value: "alternative", labelAr: "وجدت بديلاً", labelEn: "Found an alternative" },
+    { value: "missing_features", labelAr: "الميزات غير كافية", labelEn: "Missing features" },
+    { value: "other", labelAr: "أخرى", labelEn: "Other" },
+  ];
+
+  function openCancelModal() {
+    setCancelReason(null);
+    setCancelNote("");
+    setCancelOpen(true);
+  }
+
+  function closeCancelModal() {
+    setCancelOpen(false);
+    setCancelReason(null);
+    setCancelNote("");
+  }
+
+  async function persistReason(): Promise<void> {
+    // Stub telemetry — silently swallow any error.
+    try {
+      await api.post("/api/v1/feedback/cancellation-reason", {
+        reason: cancelReason,
+        note: cancelNote,
+      });
+    } catch {
+      // non-blocking
+    }
+  }
+
+  async function acceptSaveOffer() {
+    setCancelSubmitting(true);
+    await persistReason();
+    setCancelSubmitting(false);
+    toast.success(locale === "ar" ? "شكراً لبقائك!" : "Thanks for staying!");
+    closeCancelModal();
+  }
+
+  async function continueToCancel() {
+    setCancelSubmitting(true);
+    await persistReason();
+    try {
+      const res = await api.post<{ url: string }>("/api/v1/billing/portal");
+      if (res.url) window.location.href = res.url;
+    } catch (e) {
+      toast.error(tt("genericError"), e instanceof Error ? e.message : t("errors.failed"));
+    } finally {
+      setCancelSubmitting(false);
+      closeCancelModal();
+    }
+  }
 
   useEffect(() => {
     (async () => {
@@ -104,7 +165,7 @@ export default function BillingPage() {
       const res = await api.post<{ url: string }>("/api/v1/billing/portal");
       if (res.url) window.location.href = res.url;
     } catch (e) {
-      alert(e instanceof Error ? e.message : t("errors.failed"));
+      toast.error(tt("genericError"), e instanceof Error ? e.message : t("errors.failed"));
     } finally {
       setManaging(false);
     }
@@ -190,18 +251,26 @@ export default function BillingPage() {
                 {t("currentPlan.upgrade")}
               </Link>
               {sub?.stripe_customer_id && (
-                <button
-                  onClick={openPortal}
-                  disabled={managing}
-                  className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-hover disabled:opacity-60"
-                >
-                  {managing ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Settings2 className="h-4 w-4" />
-                  )}
-                  {t("currentPlan.manage")}
-                </button>
+                <>
+                  <button
+                    onClick={openPortal}
+                    disabled={managing}
+                    className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-hover disabled:opacity-60"
+                  >
+                    {managing ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Settings2 className="h-4 w-4" />
+                    )}
+                    {t("currentPlan.manage")}
+                  </button>
+                  <button
+                    onClick={openCancelModal}
+                    className="inline-flex items-center gap-2 rounded-lg border border-error/40 px-4 py-2 text-sm font-medium text-error hover:bg-error/5"
+                  >
+                    {locale === "ar" ? "إلغاء الاشتراك" : "Cancel subscription"}
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -244,6 +313,141 @@ export default function BillingPage() {
           </div>
         </div>
       </div>
+
+      {cancelOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/50 p-4 backdrop-blur-sm"
+          onClick={closeCancelModal}
+        >
+          <div
+            className="w-full max-w-lg rounded-3xl bg-surface-container-lowest p-6 shadow-soft"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <h3 className="text-lg font-bold text-on-surface">
+                {locale === "ar"
+                  ? "لماذا تغادرنا؟"
+                  : "Why are you leaving?"}
+              </h3>
+              <button
+                onClick={closeCancelModal}
+                className="rounded-xl p-1 text-on-surface-variant hover:bg-surface-container-low"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Save offer view */}
+            {cancelReason === "too_expensive" ? (
+              <div className="space-y-4">
+                <div className="flex items-start gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-4">
+                  <Gift className="mt-0.5 h-6 w-6 shrink-0 text-primary" />
+                  <div>
+                    <p className="text-sm font-semibold text-on-surface">
+                      {locale === "ar"
+                        ? "عرض خاص لك: خصم 50% لمدة شهرين"
+                        : "Special offer: 50% off for 2 months"}
+                    </p>
+                    <p className="mt-1 text-xs text-on-surface-variant">
+                      {locale === "ar"
+                        ? "نريدك أن تبقى معنا. استمر بنصف السعر واستفد من جميع الميزات."
+                        : "We want you to stay. Keep everything you love at half the price."}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap justify-end gap-2">
+                  <button
+                    onClick={continueToCancel}
+                    disabled={cancelSubmitting}
+                    className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-on-surface-variant hover:bg-surface-container-low disabled:opacity-60"
+                  >
+                    {locale === "ar"
+                      ? "متابعة الإلغاء"
+                      : "Continue to cancel"}
+                  </button>
+                  <button
+                    onClick={acceptSaveOffer}
+                    disabled={cancelSubmitting}
+                    className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark disabled:opacity-60"
+                  >
+                    {cancelSubmitting && (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    )}
+                    {locale === "ar" ? "قبول العرض" : "Accept offer"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  {cancelReasons.map((r) => (
+                    <label
+                      key={r.value}
+                      className={`flex cursor-pointer items-center gap-3 rounded-2xl border p-3 transition ${
+                        cancelReason === r.value
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:bg-surface-container-low"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="cancel-reason"
+                        value={r.value}
+                        checked={cancelReason === r.value}
+                        onChange={() => setCancelReason(r.value)}
+                      />
+                      <span className="text-sm text-on-surface">
+                        {locale === "ar" ? r.labelAr : r.labelEn}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+
+                {cancelReason && cancelReason !== "too_expensive" && (
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-on-surface-variant">
+                      {locale === "ar" ? "أخبرنا المزيد" : "Tell us more"}
+                    </label>
+                    <textarea
+                      value={cancelNote}
+                      onChange={(e) => setCancelNote(e.target.value)}
+                      rows={3}
+                      className="w-full rounded-2xl border border-border bg-surface-container-lowest p-3 text-sm text-on-surface outline-none focus:border-primary"
+                      placeholder={
+                        locale === "ar"
+                          ? "ملاحظاتك تساعدنا على التحسين..."
+                          : "Your feedback helps us improve..."
+                      }
+                    />
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    onClick={closeCancelModal}
+                    className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-on-surface-variant hover:bg-surface-container-low"
+                  >
+                    {locale === "ar" ? "رجوع" : "Back"}
+                  </button>
+                  <button
+                    onClick={continueToCancel}
+                    disabled={!cancelReason || cancelSubmitting}
+                    className="inline-flex items-center gap-2 rounded-xl bg-error px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+                  >
+                    {cancelSubmitting && (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    )}
+                    {locale === "ar"
+                      ? "متابعة الإلغاء"
+                      : "Continue to cancel"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

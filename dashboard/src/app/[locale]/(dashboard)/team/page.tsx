@@ -9,6 +9,7 @@ import { Loader2, UserPlus } from "lucide-react";
 import { clsx } from "clsx";
 import * as Avatar from "@radix-ui/react-avatar";
 import { api } from "@/lib/api";
+import { useToast } from "@/components/Toaster";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -47,6 +48,8 @@ function initials(name: string): string {
 
 export default function TeamPage() {
   const t = useTranslations("teamPage");
+  const tt = useTranslations("toasts");
+  const toast = useToast();
 
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,7 +101,7 @@ export default function TeamPage() {
       // Refresh list
       await fetchMembers();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Invite failed");
+      toast.error(tt("genericError"), e instanceof Error ? e.message : "Invite failed");
     } finally {
       setInviting(false);
     }
@@ -116,7 +119,7 @@ export default function TeamPage() {
         prev.map((m) => (m.id === memberId ? { ...m, role: updated.role } : m))
       );
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Role update failed");
+      toast.error(tt("genericError"), e instanceof Error ? e.message : "Role update failed");
     } finally {
       setUpdatingId(null);
     }

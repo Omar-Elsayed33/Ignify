@@ -6,6 +6,7 @@ import { useRouter } from "@/i18n/navigation";
 import { api } from "@/lib/api";
 import { Loader2, Upload, X } from "lucide-react";
 import AIAssistButton from "@/components/AIAssistButton";
+import OnboardingProgress from "@/components/OnboardingProgress";
 
 const TONES = ["professional", "friendly", "playful", "luxury", "bold", "educational"] as const;
 
@@ -117,6 +118,7 @@ export default function BrandVoicePage() {
 
   return (
     <form onSubmit={submit} className="space-y-5">
+      <OnboardingProgress current="brand" />
       <div>
         <h2 className="text-xl font-semibold text-text-primary">{t("brand.title")}</h2>
         <p className="mt-1 text-sm text-text-secondary">{t("brand.subtitle")}</p>

@@ -27,6 +27,15 @@ if settings.SENTRY_DSN:
 # ─── Structured logging (JSON in prod, human-readable in DEBUG) ───
 setup_logging(settings.LOG_LEVEL, json_format=not settings.DEBUG)
 
+# Structlog augment: enables `from app.core.logging_config import get_logger`
+# with tenant_id/user_id/request_id contextvars for per-request correlation.
+try:
+    from app.core.logging_config import configure_logging as _configure_structlog
+    _configure_structlog()
+except Exception:  # pragma: no cover
+    # structlog optional until dependencies are rebuilt; fall back to stdlib logging.
+    pass
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -166,6 +175,13 @@ from app.modules.geo.router import router as geo_router
 from app.modules.white_label.router import router as white_label_router
 from app.modules.ai_assistant.router import router as ai_assistant_router
 from app.modules.media.router import router as media_router
+from app.modules.feedback.router import router as feedback_router
+from app.modules.plan_versioning.router import router as plan_versioning_router
+from app.modules.plan_share.router import router as plan_share_router
+from app.modules.plan_share.router import public_router as plan_share_public_router
+from app.modules.referrals.router import router as referrals_router
+from app.modules.api_keys.router import router as api_keys_router
+from app.modules.webhook_subscriptions.router import router as webhook_subs_router
 
 prefix = settings.API_V1_PREFIX
 
@@ -207,6 +223,13 @@ app.include_router(geo_router, prefix=prefix)
 app.include_router(white_label_router, prefix=prefix)
 app.include_router(ai_assistant_router, prefix=prefix)
 app.include_router(media_router, prefix=prefix)
+app.include_router(feedback_router, prefix=prefix)
+app.include_router(plan_versioning_router, prefix=prefix)
+app.include_router(plan_share_router, prefix=prefix)
+app.include_router(plan_share_public_router, prefix=prefix)
+app.include_router(referrals_router, prefix=prefix)
+app.include_router(api_keys_router, prefix=prefix)
+app.include_router(webhook_subs_router, prefix=prefix)
 
 # Ops endpoints mounted at root so external probes don't need /api/v1.
 app.include_router(ops_router)

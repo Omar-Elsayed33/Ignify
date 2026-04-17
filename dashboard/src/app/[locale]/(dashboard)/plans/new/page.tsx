@@ -221,6 +221,42 @@ export default function NewPlanPage() {
     primary_goal: "",
     urgency_days: 30,
   });
+
+  // One-shot prefill from business profile. Only fills fields that are currently empty.
+  useEffect(() => {
+    (async () => {
+      try {
+        const bp = await api.get<{
+          industry?: string | null;
+          description?: string | null;
+          target_audience?: string | null;
+          business_name?: string | null;
+          main_goal?: string | null;
+          goals?: string | string[] | null;
+          competitors?: string[] | null;
+        }>("/api/v1/tenant-settings/business-profile");
+        if (!bp) return;
+        setForm((f) => {
+          const next = { ...f };
+          if (!next.title && bp.business_name) {
+            next.title = bp.business_name;
+          }
+          if (!next.primary_goal) {
+            const goal =
+              bp.main_goal ||
+              (Array.isArray(bp.goals) ? bp.goals.join(", ") : bp.goals) ||
+              bp.target_audience ||
+              bp.description ||
+              "";
+            if (goal) next.primary_goal = String(goal);
+          }
+          return next;
+        });
+      } catch {
+        // silent: prefill is a convenience, not critical
+      }
+    })();
+  }, []);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [usingFallback, setUsingFallback] = useState(false);
@@ -623,12 +659,37 @@ export default function NewPlanPage() {
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     {(
                       [
-                        { mode: "fast" as PlanMode, icon: <Zap className="h-5 w-5" />, color: "text-amber-500" },
-                        { mode: "medium" as PlanMode, icon: <BarChart2 className="h-5 w-5" />, color: "text-blue-500" },
-                        { mode: "deep" as PlanMode, icon: <Brain className="h-5 w-5" />, color: "text-purple-500" },
+                        {
+                          mode: "fast" as PlanMode,
+                          icon: <Zap className="h-5 w-5" />,
+                          color: "text-amber-500",
+                          name_ar: "مسودة سريعة",
+                          name_en: "Quick Draft",
+                          sub_ar: "~3 دقائق · ~$0.01",
+                          sub_en: "~3 min · ~$0.01",
+                        },
+                        {
+                          mode: "medium" as PlanMode,
+                          icon: <BarChart2 className="h-5 w-5" />,
+                          color: "text-blue-500",
+                          name_ar: "متوازن",
+                          name_en: "Balanced",
+                          sub_ar: "~3 دقائق · ~$0.38",
+                          sub_en: "~3 min · ~$0.38",
+                        },
+                        {
+                          mode: "deep" as PlanMode,
+                          icon: <Brain className="h-5 w-5" />,
+                          color: "text-purple-500",
+                          name_ar: "متميز",
+                          name_en: "Premium",
+                          sub_ar: "~3 دقائق · ~$0.59",
+                          sub_en: "~3 min · ~$0.59",
+                        },
                       ] as const
-                    ).map(({ mode, icon, color }) => {
+                    ).map(({ mode, icon, color, name_ar, name_en, sub_ar, sub_en }) => {
                       const active = form.plan_mode === mode;
+                      const isAr = locale === "ar";
                       return (
                         <button
                           key={mode}
@@ -643,10 +704,10 @@ export default function NewPlanPage() {
                         >
                           <div className={clsx("flex items-center gap-2 font-headline font-bold text-on-surface", color)}>
                             {icon}
-                            <span className="text-sm">{t(`form.mode.${mode}.name`)}</span>
+                            <span className="text-sm">{isAr ? name_ar : name_en}</span>
                           </div>
                           <p className="text-xs text-on-surface-variant leading-relaxed">
-                            {t(`form.mode.${mode}.desc`)}
+                            {isAr ? sub_ar : sub_en}
                           </p>
                           {active && (
                             <div className="flex items-center gap-1 mt-1">

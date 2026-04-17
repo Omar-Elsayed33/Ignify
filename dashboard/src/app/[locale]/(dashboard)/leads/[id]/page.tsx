@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import DashboardHeader from "@/components/DashboardHeader";
 import { api } from "@/lib/api";
+import { useToast } from "@/components/Toaster";
+import { useConfirm } from "@/components/ConfirmDialog";
 import {
   AlertCircle,
   ArrowLeft,
@@ -48,6 +50,8 @@ export default function LeadDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const id = params.id;
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const [lead, setLead] = useState<Lead | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -150,12 +154,21 @@ export default function LeadDetailPage() {
 
   async function remove() {
     if (!lead) return;
-    if (!confirm(t("actions.delete"))) return;
+    const ok = await confirm({
+      title: "تأكيد",
+      description: t("actions.delete"),
+      kind: "danger",
+      confirmLabel: "حذف",
+      cancelLabel: "إلغاء",
+    });
+    if (!ok) return;
     try {
       await api.delete(`/api/v1/leads/${lead.id}`);
       router.push(`/${locale}/leads`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("errors.failed"));
+      const msg = e instanceof Error ? e.message : t("errors.failed");
+      setError(msg);
+      toast.error(msg);
     }
   }
 

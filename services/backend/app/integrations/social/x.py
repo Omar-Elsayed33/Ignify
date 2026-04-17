@@ -25,7 +25,7 @@ from app.core.config import settings
 from app.db.models import SocialAccount, SocialPlatform
 
 from . import oauth_state
-from .base import PublishResult, TokenBundle
+from .base import PublishResult, TokenBundle, get_access_token
 
 AUTH_URL = "https://twitter.com/i/oauth2/authorize"
 TOKEN_URL = "https://api.twitter.com/2/oauth2/token"
@@ -137,7 +137,7 @@ class XConnector:
         content: str,
         media_urls: list[str],
     ) -> PublishResult:
-        token = account.access_token_encrypted or ""
+        token = get_access_token(account) or ""
         headers = {"Authorization": f"Bearer {token}"}
 
         body: dict = {"text": content[:280]}

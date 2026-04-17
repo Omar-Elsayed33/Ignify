@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import DashboardHeader from "@/components/DashboardHeader";
 import StatCard from "@/components/StatCard";
+import { SkeletonCard } from "@/components/Skeleton";
 import { api } from "@/lib/api";
 import {
   Users,
@@ -18,11 +20,19 @@ import {
   Share2,
   Megaphone,
   AlertCircle,
+  AlertTriangle,
   Sparkles,
   ArrowRight,
   Calendar,
   Download,
+  Bell,
+  Plug,
+  UserCircle,
+  Mail,
+  X,
+  LucideIcon,
 } from "lucide-react";
+import { useAuthStore } from "@/store/auth.store";
 
 interface OverviewData {
   total_leads: number;
@@ -32,6 +42,15 @@ interface OverviewData {
   total_social_posts: number;
   total_ad_campaigns: number;
   credit_balance: number;
+  posts_published_week?: number;
+  avg_engagement_week?: number;
+  top_post_title_week?: string;
+}
+
+interface WeeklyDigest {
+  posts_published_week?: number;
+  avg_engagement_week?: number;
+  top_post_title_week?: string;
 }
 
 interface Report {
@@ -39,6 +58,34 @@ interface Report {
   name: string;
   report_type: string;
   created_at: string;
+}
+
+interface PlanListEntry {
+  id: string;
+  status?: string;
+}
+
+interface ScheduledAccount {
+  id: string;
+  platform: string;
+  page_name?: string;
+  expires_at?: string | null;
+}
+
+interface ScheduledPostEntry {
+  id: string;
+  status?: string;
+  scheduled_at?: string | null;
+  publish_mode?: string;
+}
+
+interface ActionItem {
+  key: string;
+  ar: string;
+  en: string;
+  Icon: LucideIcon;
+  href?: string;
+  onClick?: () => void | Promise<void>;
 }
 
 function SkeletonStatCard() {
@@ -56,11 +103,25 @@ function SkeletonStatCard() {
 
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
+  const locale = useLocale();
+  const isAr = locale === "ar";
 
   const [overview, setOverview] = useState<OverviewData | null>(null);
   const [reports, setReports] = useState<Report[]>([]);
+  const [plansCount, setPlansCount] = useState<number | null>(null);
+  const [digest, setDigest] = useState<WeeklyDigest | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [draftPlansCount, setDraftPlansCount] = useState<number>(0);
+  const [disconnectedAccounts, setDisconnectedAccounts] = useState<number>(0);
+  const [pendingManualPosts, setPendingManualPosts] = useState<number>(0);
+  const [resendingVerify, setResendingVerify] = useState<boolean>(false);
+  const [verifyResent, setVerifyResent] = useState<boolean>(false);
+  const [profileIncomplete, setProfileIncomplete] = useState<boolean>(false);
+  const [incompleteSteps, setIncompleteSteps] = useState<string[]>([]);
+  const [onboardingPillDismissed, setOnboardingPillDismissed] = useState<boolean>(true);
+  const user = useAuthStore((state) => state.user);
+  const tenant = useAuthStore((state) => state.tenant);
 
   useEffect(() => {
     async function fetchData() {
@@ -74,13 +135,215 @@ export default function DashboardPage() {
         setOverview(overviewData);
         setReports(reportsData);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load dashboard data");
+        setError(err instanceof Error ? err.message : t("loadFailed"));
       } finally {
         setLoading(false);
+      }
+
+      try {
+        const plansData = await api.get<{ plans: Array<unknown> } | Array<unknown>>(
+          "/api/v1/plans?limit=1"
+        );
+        const items = Array.isArray(plansData)
+          ? plansData
+          : Array.isArray(plansData?.plans)
+            ? plansData.plans
+            : [];
+        setPlansCount(items.length);
+      } catch {
+        // Non-fatal: leave plansCount null so the CTA won't render on failure.
+      }
+
+      try {
+        const digestData = await api.get<WeeklyDigest>("/api/v1/analytics/weekly-digest");
+        setDigest(digestData);
+      } catch {
+        // Non-fatal: UI will fall back to overview-derived values or placeholders.
+      }
+
+      // Action-needed signals — each fetch is best-effort and silent on failure.
+      try {
+        const draftsData = await api.get<PlanListEntry[] | { plans: PlanListEntry[] }>(
+          "/api/v1/plans?limit=20"
+        );
+        const items = Array.isArray(draftsData)
+          ? draftsData
+          : Array.isArray(draftsData?.plans)
+            ? draftsData.plans
+            : [];
+        setDraftPlansCount(items.filter((p) => p?.status === "draft").length);
+      } catch {
+        // ignore
+      }
+
+      try {
+        const accounts = await api.get<ScheduledAccount[]>(
+          "/api/v1/social-scheduler/accounts"
+        );
+        const nowMs = Date.now();
+        const disconnected = (accounts ?? []).filter((a) => {
+          if (!a?.expires_at) return false;
+          const ts = new Date(a.expires_at).getTime();
+          return Number.isFinite(ts) && ts < nowMs;
+        }).length;
+        setDisconnectedAccounts(disconnected);
+      } catch {
+        // ignore
+      }
+
+      try {
+        const profile = await api.get<Record<string, unknown>>(
+          "/api/v1/tenant-settings/business-profile"
+        );
+        const hasName = typeof profile?.name === "string" && (profile.name as string).trim().length > 0;
+        const hasIndustry =
+          typeof profile?.industry === "string" && (profile.industry as string).trim().length > 0;
+        const hasDescription =
+          typeof profile?.description === "string" &&
+          (profile.description as string).trim().length > 0;
+        setProfileIncomplete(!(hasName && hasIndustry && hasDescription));
+      } catch {
+        // ignore
+      }
+
+      try {
+        const scheduled = await api.get<ScheduledPostEntry[]>(
+          "/api/v1/social-scheduler/scheduled"
+        );
+        const nowMs = Date.now();
+        const pending = (scheduled ?? []).filter((p) => {
+          if (p?.publish_mode !== "manual") return false;
+          if (p?.status === "published") return false;
+          if (!p?.scheduled_at) return false;
+          const ts = new Date(p.scheduled_at).getTime();
+          return Number.isFinite(ts) && ts <= nowMs;
+        }).length;
+        setPendingManualPosts(pending);
+      } catch {
+        // ignore
+      }
+
+      // Onboarding skip-ahead detection: completed=true but some step still blank.
+      try {
+        const status = await api.get<{
+          completed?: boolean;
+          business_profile?: Record<string, unknown> | null;
+          brand_voice?: Record<string, unknown> | null;
+          channels?: string[];
+        }>("/api/v1/onboarding/status");
+        if (status?.completed) {
+          const missing: string[] = [];
+          if (!status.business_profile) missing.push("business");
+          if (!status.brand_voice) missing.push("brand");
+          if (!Array.isArray(status.channels) || status.channels.length === 0) {
+            missing.push("channels");
+          }
+          setIncompleteSteps(missing);
+          if (missing.length > 0 && typeof window !== "undefined") {
+            const dismissed =
+              window.localStorage.getItem("ignify_onboarding_pill_dismissed") === "true";
+            setOnboardingPillDismissed(dismissed);
+          }
+        }
+      } catch {
+        // ignore
       }
     }
     fetchData();
   }, []);
+
+  function dismissOnboardingPill() {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("ignify_onboarding_pill_dismissed", "true");
+    }
+    setOnboardingPillDismissed(true);
+  }
+
+  async function handleResendVerification() {
+    if (resendingVerify) return;
+    setResendingVerify(true);
+    try {
+      await api.post("/api/v1/auth/resend-verification", {});
+      setVerifyResent(true);
+    } catch {
+      // silently ignore — user can retry
+    } finally {
+      setResendingVerify(false);
+    }
+  }
+
+  // Resolve digest metrics: prefer dedicated endpoint, fall back to overview, else undefined.
+  const postsPublishedWeek =
+    digest?.posts_published_week ?? overview?.posts_published_week ?? null;
+  const avgEngagementWeek =
+    digest?.avg_engagement_week ?? overview?.avg_engagement_week ?? null;
+  const topPostTitleWeek =
+    digest?.top_post_title_week ?? overview?.top_post_title_week ?? null;
+
+  const hoursSaved =
+    typeof postsPublishedWeek === "number" && Number.isFinite(postsPublishedWeek)
+      ? postsPublishedWeek * 0.5
+      : null;
+  const hoursSavedDisplay =
+    hoursSaved === null
+      ? null
+      : Number.isInteger(hoursSaved)
+        ? hoursSaved.toString()
+        : hoursSaved.toFixed(1);
+
+  const collectingText = isAr ? "قيد التجميع" : "Collecting data";
+
+  const actionItems: ActionItem[] = [];
+
+  if (draftPlansCount > 0) {
+    actionItems.push({
+      key: "draft-plans",
+      Icon: FileText,
+      ar: "خطتك التسويقية تنتظر المراجعة",
+      en: "Your plan is waiting for review",
+      href: "/plans",
+    });
+  }
+
+  if (disconnectedAccounts > 0) {
+    actionItems.push({
+      key: "disconnected-accounts",
+      Icon: Plug,
+      ar: "حساب منصة غير متصل",
+      en: "A social account is disconnected",
+      href: "/scheduler/accounts",
+    });
+  }
+
+  if (profileIncomplete && tenant) {
+    actionItems.push({
+      key: "profile",
+      Icon: UserCircle,
+      ar: "أكمل ملفك التعريفي",
+      en: "Complete your profile",
+      href: "/settings/business-profile",
+    });
+  }
+
+  if (pendingManualPosts > 0) {
+    actionItems.push({
+      key: "manual-posts",
+      Icon: Calendar,
+      ar: "منشور جاهز للنشر اليدوي",
+      en: "A post is ready to be marked published",
+      href: "/scheduler",
+    });
+  }
+
+  if (user && user.email_verified === false) {
+    actionItems.push({
+      key: "email-verify",
+      Icon: Mail,
+      ar: verifyResent ? "أُرسل رابط التحقق" : "تحقّق من بريدك الإلكتروني",
+      en: verifyResent ? "Verification email sent" : "Verify your email",
+      onClick: verifyResent ? undefined : handleResendVerification,
+    });
+  }
 
   const quickActions = [
     { label: t("createContent"), icon: PenLine, tint: "bg-primary-fixed text-primary" },
@@ -99,6 +362,212 @@ export default function DashboardPage() {
             <div className="flex items-center gap-3 rounded-2xl bg-error-container px-5 py-3 text-sm text-on-error-container">
               <AlertCircle className="h-4 w-4 shrink-0" />
               {error}
+            </div>
+          )}
+
+          {!loading && plansCount === 0 && (
+            <div className="relative overflow-hidden rounded-3xl brand-gradient p-8 text-white shadow-soft">
+              <div className="max-w-xl">
+                <h2 className="text-2xl font-bold">
+                  {isAr ? "ابدأ أول خطة تسويقية" : "Start your first marketing plan"}
+                </h2>
+                <p className="mt-2 text-sm text-white/85">
+                  {isAr
+                    ? "سيحلل Ignify عملك ويبني خطة تسويق كاملة خلال دقائق."
+                    : "Ignify will analyze your business and build a complete marketing plan in minutes."}
+                </p>
+                <Link
+                  href="/plans/new"
+                  className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-white/15 px-5 py-2.5 text-sm font-semibold backdrop-blur hover:bg-white/25"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {isAr ? "أنشئ خطة الآن" : "Create a plan now"}
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* Onboarding skip-ahead pill */}
+          {incompleteSteps.length > 0 && !onboardingPillDismissed && (
+            <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold">
+                  {isAr ? "أكمل ملفك التعريفي" : "Complete your profile"}
+                </p>
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                  {incompleteSteps.map((step) => {
+                    const labels: Record<string, { ar: string; en: string; href: string }> = {
+                      business: {
+                        ar: "ملف العمل",
+                        en: "Business profile",
+                        href: "/onboarding/business",
+                      },
+                      brand: {
+                        ar: "الهوية البصرية",
+                        en: "Brand identity",
+                        href: "/onboarding/brand",
+                      },
+                      channels: {
+                        ar: "القنوات",
+                        en: "Channels",
+                        href: "/onboarding/channels",
+                      },
+                    };
+                    const meta = labels[step];
+                    if (!meta) return null;
+                    return (
+                      <Link
+                        key={step}
+                        href={meta.href}
+                        className="font-semibold underline-offset-2 hover:underline"
+                      >
+                        {isAr ? meta.ar : meta.en}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={dismissOnboardingPill}
+                aria-label={isAr ? "إخفاء" : "Dismiss"}
+                className="shrink-0 rounded-lg p-1 text-amber-700 transition-colors hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-900/40"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+
+          {/* Weekly digest + impact */}
+          <div className="grid gap-4 lg:grid-cols-3">
+            {loading ? (
+              <>
+                <SkeletonCard className="lg:col-span-2" />
+                <SkeletonCard />
+              </>
+            ) : (
+              <>
+                <div className="rounded-3xl border-t-4 border-primary bg-surface-container-lowest p-6 shadow-soft lg:col-span-2">
+                  <div className="mb-5 flex items-center gap-2">
+                    <div className="rounded-xl bg-primary-fixed p-2 text-primary">
+                      <Sparkles className="h-4 w-4" />
+                    </div>
+                    <h3 className="font-headline text-lg font-bold text-on-surface">
+                      {isAr ? "ملخص هذا الأسبوع" : "This week"}
+                    </h3>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div>
+                      <p className="text-xs font-medium text-on-surface-variant">
+                        {isAr ? "منشورات نُشرت" : "Posts published"}
+                      </p>
+                      <p className="mt-1 font-headline text-2xl font-bold text-on-surface">
+                        {postsPublishedWeek !== null
+                          ? postsPublishedWeek.toLocaleString()
+                          : collectingText}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-on-surface-variant">
+                        {isAr ? "متوسط التفاعل" : "Avg. engagement"}
+                      </p>
+                      <p className="mt-1 font-headline text-2xl font-bold text-on-surface">
+                        {avgEngagementWeek !== null
+                          ? `${avgEngagementWeek.toLocaleString(undefined, {
+                              maximumFractionDigits: 1,
+                            })}%`
+                          : collectingText}
+                      </p>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-on-surface-variant">
+                        {isAr ? "أفضل منشور" : "Top post"}
+                      </p>
+                      <p
+                        className="mt-1 truncate font-headline text-lg font-bold text-on-surface"
+                        title={topPostTitleWeek ?? undefined}
+                      >
+                        {topPostTitleWeek && topPostTitleWeek.trim().length > 0
+                          ? topPostTitleWeek
+                          : collectingText}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-3xl brand-gradient p-6 text-white shadow-soft">
+                  <div className="mb-4 flex items-center gap-2">
+                    <div className="rounded-xl bg-white/15 p-2 backdrop-blur">
+                      <Clock className="h-4 w-4" />
+                    </div>
+                    <h3 className="font-headline text-lg font-bold">
+                      {isAr ? "قيمتك هذا الأسبوع" : "Your impact this week"}
+                    </h3>
+                  </div>
+                  <p className="font-headline text-4xl font-bold">
+                    {hoursSavedDisplay !== null
+                      ? `${hoursSavedDisplay} ${isAr ? "ساعة" : "hrs"}`
+                      : collectingText}
+                  </p>
+                  <p className="mt-2 text-sm text-white/85">
+                    {isAr
+                      ? "لو كتبت هذه المنشورات يدوياً"
+                      : "if you'd written these manually"}
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Action needed */}
+          {actionItems.length > 0 && (
+            <div className="rounded-3xl bg-surface-container-lowest p-6 shadow-soft">
+              <div className="flex items-center gap-2">
+                <Bell className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-bold text-on-surface">
+                  {isAr ? "إجراءات مطلوبة" : "Action needed"}
+                </h3>
+                <span className="rounded-full bg-primary-fixed px-2 py-0.5 text-[10px] font-semibold text-primary">
+                  {actionItems.length}
+                </span>
+              </div>
+              <ul className="mt-4 space-y-2">
+                {actionItems.map((item) => (
+                  <li
+                    key={item.key}
+                    className="flex items-start gap-3 rounded-2xl bg-surface-container p-3 transition-colors hover:bg-surface-container-high"
+                  >
+                    <item.Icon className="mt-0.5 h-4 w-4 shrink-0 text-on-surface-variant" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-on-surface">{isAr ? item.ar : item.en}</p>
+                    </div>
+                    {item.href ? (
+                      <Link
+                        href={item.href}
+                        className="shrink-0 text-xs font-semibold text-primary hover:underline"
+                      >
+                        {isAr ? "عرض" : "View"}
+                      </Link>
+                    ) : item.onClick ? (
+                      <button
+                        type="button"
+                        onClick={() => void item.onClick?.()}
+                        disabled={resendingVerify}
+                        className="shrink-0 text-xs font-semibold text-primary hover:underline disabled:opacity-50"
+                      >
+                        {resendingVerify
+                          ? isAr
+                            ? "جارٍ الإرسال..."
+                            : "Sending..."
+                          : isAr
+                            ? "إعادة إرسال"
+                            : "Resend"}
+                      </button>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 

@@ -8,6 +8,7 @@ from typing import Protocol, runtime_checkable
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.crypto import decrypt_token, encrypt_token
 from app.db.models import SocialAccount, SocialPlatform
 
 
@@ -58,6 +59,15 @@ class SocialConnector(Protocol):
     ) -> PublishResult: ...
 
 
+def get_access_token(account: SocialAccount) -> str | None:
+    """Read the decrypted access token for a SocialAccount.
+
+    Handles both pre-migration plaintext rows and encrypted rows transparently
+    via `core.crypto.decrypt_token`.
+    """
+    return decrypt_token(account.access_token_encrypted)
+
+
 async def upsert_account(
     db: AsyncSession,
     *,
@@ -69,8 +79,10 @@ async def upsert_account(
     refresh_token: str | None = None,
     expires_at: datetime | None = None,  # noqa: ARG001  (column not yet present)
 ) -> SocialAccount:
-    """Upsert a SocialAccount row. Tokens are stored as-is for now; revisit for KMS."""
+    """Upsert a SocialAccount row. Access token is encrypted at rest via Fernet."""
     from sqlalchemy import and_, select
+
+    ciphertext = encrypt_token(access_token)
 
     result = await db.execute(
         select(SocialAccount).where(
@@ -84,7 +96,7 @@ async def upsert_account(
     acct = result.scalar_one_or_none()
     if acct:
         acct.name = name
-        acct.access_token_encrypted = access_token
+        acct.access_token_encrypted = ciphertext
         acct.is_active = True
     else:
         acct = SocialAccount(
@@ -92,7 +104,7 @@ async def upsert_account(
             platform=platform,
             account_id=account_id,
             name=name,
-            access_token_encrypted=access_token,
+            access_token_encrypted=ciphertext,
             is_active=True,
         )
         db.add(acct)

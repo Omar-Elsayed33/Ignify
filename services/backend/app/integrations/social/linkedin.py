@@ -22,7 +22,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from app.core.config import settings
 from app.db.models import SocialAccount, SocialPlatform
 
-from .base import PublishResult, TokenBundle
+from .base import PublishResult, TokenBundle, get_access_token
 
 AUTH_URL = "https://www.linkedin.com/oauth/v2/authorization"
 TOKEN_URL = "https://www.linkedin.com/oauth/v2/accessToken"
@@ -114,7 +114,7 @@ class LinkedInConnector:
         content: str,
         media_urls: list[str],
     ) -> PublishResult:
-        token = account.access_token_encrypted or ""
+        token = get_access_token(account) or ""
         author = f"urn:li:person:{account.account_id}"
         headers = {
             "Authorization": f"Bearer {token}",

@@ -628,7 +628,8 @@ class SocialPost(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
-    social_account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("social_accounts.id"), nullable=False)
+    social_account_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("social_accounts.id"), nullable=True)
+    platform: Mapped[Optional[SocialPlatform]] = mapped_column(Enum(SocialPlatform), nullable=True, index=True)
     content_post_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("content_posts.id", ondelete="SET NULL"), nullable=True, index=True
     )
@@ -990,6 +991,8 @@ class MarketingPlan(Base):
     plan_mode: Mapped[str] = mapped_column(String(32), default="fast", nullable=False)
     status: Mapped[str] = mapped_column(String(32), default="draft", nullable=False)
     version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    share_token: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, unique=True, index=True)
+    share_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     created_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
@@ -1073,4 +1076,99 @@ class KnowledgeChunk(Base):
     content: Mapped[str] = mapped_column(Text, nullable=False)
     embedding: Mapped[Optional[list[float]]] = mapped_column(_EMBEDDING_COLUMN_TYPE, nullable=True)
     metadata_: Mapped[Optional[dict[str, Any]]] = mapped_column("metadata", JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+# ──────────────────────────── Phase 2 — Plan versioning & share ────────────────────────────
+
+
+class MarketingPlanSnapshot(Base):
+    """Point-in-time snapshot of a MarketingPlan, taken before regeneration."""
+    __tablename__ = "marketing_plan_snapshots"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
+    plan_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("marketing_plans.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    # Full serialized plan fields at the time of snapshot (all JSON columns + scalars).
+    payload: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+    # Free-form reason: "section regenerate: market", "full regenerate", "rollback to v3", etc.
+    reason: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    created_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+# ──────────────────────────── Phase 4 — Referral program ────────────────────────────
+
+
+class Referral(Base):
+    """Tracks referral relationships. Each referrer gets a stable `code`;
+    `referred_user_id` is populated when a new user signs up with that code."""
+    __tablename__ = "referrals"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
+    referrer_user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    referrer_tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    code: Mapped[str] = mapped_column(String(32), nullable=False, unique=True, index=True)
+    referred_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    referred_tenant_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="SET NULL"), nullable=True
+    )
+    # "pending" → signed up but no paid conversion; "converted" → paid tier reached.
+    status: Mapped[str] = mapped_column(String(32), default="pending", nullable=False)
+    # Reward granted to the referrer (e.g. credits, months-free). Stored flexibly as JSON.
+    reward: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, default=dict, nullable=True)
+    converted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+# ──────────────────────────── Phase 7 — Public API & Webhooks ────────────────────────────
+
+
+class ApiKey(Base):
+    """API keys for tenant programmatic access. Only the hash is stored; prefix is kept for display."""
+    __tablename__ = "api_keys"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    created_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    # First 8 chars of the token (format: ignf_live_XXXXXXXX...) — shown in UI, never the rest.
+    prefix: Mapped[str] = mapped_column(String(24), nullable=False, index=True)
+    # bcrypt/sha256 of the full key. We compare against this on each request.
+    key_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    # "read" | "write" — coarse scope for now.
+    scope: Mapped[str] = mapped_column(String(32), default="read", nullable=False)
+    last_used_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class Webhook(Base):
+    """Outgoing webhook subscriptions per tenant."""
+    __tablename__ = "webhooks"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    url: Mapped[str] = mapped_column(String(2000), nullable=False)
+    # Subscribed event types, e.g. ["plan.generated","post.published","lead.created"].
+    events: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    # HMAC-SHA256 secret so the receiver can verify authenticity.
+    secret: Mapped[str] = mapped_column(String(64), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    last_delivery_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_status_code: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    created_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)

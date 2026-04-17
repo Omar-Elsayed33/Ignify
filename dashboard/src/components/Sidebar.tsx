@@ -231,7 +231,7 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="flex h-20 items-center gap-3 px-5">
         <div className="brand-gradient flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-soft">
-          <Flame className="h-5 w-5 text-white" />
+          <Flame className="h-5 w-5 text-white" aria-hidden="true" />
         </div>
         {!collapsed && (
           <div className="min-w-0">
@@ -269,6 +269,7 @@ export default function Sidebar() {
                   <Link
                     href={first.href}
                     title={group.label}
+                    aria-label={group.label}
                     className={clsx(
                       "flex items-center justify-center rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
                       hasActiveChild
@@ -276,7 +277,7 @@ export default function Sidebar() {
                         : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
                     )}
                   >
-                    <FirstIcon className="h-5 w-5 shrink-0" />
+                    <FirstIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
                   </Link>
                 </li>
               );
@@ -295,9 +296,10 @@ export default function Sidebar() {
                       : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
                   )}
                 >
-                  <GroupIcon className="h-5 w-5 shrink-0" />
+                  <GroupIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
                   <span className="flex-1 text-start">{group.label}</span>
                   <ChevronDown
+                    aria-hidden="true"
                     className={clsx(
                       "h-4 w-4 shrink-0 text-on-surface-variant/70 transition-transform duration-200",
                       isOpen && "rotate-180"
@@ -340,23 +342,26 @@ export default function Sidebar() {
         {/* Language switcher */}
         <button
           onClick={switchLocale}
+          aria-label={otherLocale === "ar" ? "تبديل اللغة إلى العربية" : "Switch language to English"}
           className="mb-1 flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
         >
-          <Languages className="h-5 w-5 shrink-0" />
+          <Languages className="h-5 w-5 shrink-0" aria-hidden="true" />
           {!collapsed && <span>{otherLocale === "ar" ? "العربية" : "English"}</span>}
         </button>
 
         {/* Collapse button */}
         <button
           onClick={() => setCollapsed(!collapsed)}
+          aria-label={collapsed ? (locale === "ar" ? "توسيع الشريط الجانبي" : "Expand sidebar") : (locale === "ar" ? "طي الشريط الجانبي" : "Collapse sidebar")}
+          aria-expanded={!collapsed}
           className="mb-3 flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
           title={t("collapse")}
         >
           {collapsed ? (
-            <ChevronRight className="h-5 w-5 shrink-0 rtl:rotate-180" />
+            <ChevronRight className="h-5 w-5 shrink-0 rtl:rotate-180" aria-hidden="true" />
           ) : (
             <>
-              <ChevronLeft className="h-5 w-5 shrink-0 rtl:rotate-180" />
+              <ChevronLeft className="h-5 w-5 shrink-0 rtl:rotate-180" aria-hidden="true" />
               <span>{t("collapse")}</span>
             </>
           )}
@@ -367,6 +372,8 @@ export default function Sidebar() {
           <button
             type="button"
             onClick={() => setShowUserMenu((v) => !v)}
+            aria-label={locale === "ar" ? "قائمة المستخدم" : "User menu"}
+            aria-expanded={showUserMenu}
             className="flex w-full items-center gap-3 rounded-2xl bg-surface-container-lowest p-3 shadow-soft transition-all hover:bg-surface-container"
           >
             <Avatar.Root className="brand-gradient flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full">
@@ -409,7 +416,7 @@ export default function Sidebar() {
                     onClick={() => setShowUserMenu(false)}
                     className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-on-surface transition-colors hover:bg-surface-container"
                   >
-                    <UserIcon className="h-4 w-4 text-on-surface-variant" />
+                    <UserIcon className="h-4 w-4 text-on-surface-variant" aria-hidden="true" />
                     {t("editProfile")}
                   </Link>
                   <button
@@ -419,9 +426,10 @@ export default function Sidebar() {
                       logout();
                       router.push("/login");
                     }}
+                    aria-label={locale === "ar" ? "تسجيل الخروج" : "Log out"}
                     className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-error transition-colors hover:bg-error-container/30"
                   >
-                    <LogOut className="h-4 w-4" />
+                    <LogOut className="h-4 w-4" aria-hidden="true" />
                     {t("logout")}
                   </button>
                 </div>
@@ -429,6 +437,15 @@ export default function Sidebar() {
             </>
           )}
         </div>
+
+        {!collapsed && (
+          <Link
+            href="/changelog"
+            className="mt-3 block text-center text-[10px] font-medium uppercase tracking-widest text-on-surface-variant/50 transition-colors hover:text-on-surface-variant"
+          >
+            Ignify · v0.4.2
+          </Link>
+        )}
       </div>
     </aside>
   );

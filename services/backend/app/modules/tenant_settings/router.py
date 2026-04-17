@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 
 from app.core.rate_limit_presets import MEDIUM
+from app.db.models import UserRole
 from app.dependencies import CurrentUser, DbSession
 from app.modules.tenant_settings import service
 from app.modules.tenant_settings.schemas import (
@@ -10,6 +11,7 @@ from app.modules.tenant_settings.schemas import (
     BusinessProfile,
     ChannelsPayload,
     ChannelsResponse,
+    WorkflowSettings,
 )
 
 router = APIRouter(prefix="/tenant-settings", tags=["tenant-settings"])
@@ -66,6 +68,27 @@ async def put_channels(data: ChannelsPayload, user: CurrentUser, db: DbSession):
     _require_tenant(user)
     channels = await service.update_channels(db, user.tenant_id, data.channels)
     return {"channels": channels}
+
+
+@router.get("/workflow", response_model=WorkflowSettings)
+async def get_workflow(user: CurrentUser, db: DbSession):
+    _require_tenant(user)
+    return await service.get_workflow(db, user.tenant_id)
+
+
+@router.put("/workflow", response_model=WorkflowSettings, dependencies=[MEDIUM])
+async def put_workflow(
+    data: WorkflowSettings, user: CurrentUser, db: DbSession
+):
+    _require_tenant(user)
+    if user.role not in (UserRole.owner, UserRole.admin, UserRole.superadmin):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only owner or admin can change workflow settings",
+        )
+    return await service.update_workflow(
+        db, user.tenant_id, data.approval_required
+    )
 
 
 @router.get("/all", response_model=AllSettingsResponse)

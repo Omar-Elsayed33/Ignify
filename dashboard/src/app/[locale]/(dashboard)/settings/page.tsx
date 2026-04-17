@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import DashboardHeader from "@/components/DashboardHeader";
-import { Loader2, Save, Building2, Radio, UserPlus, Shield, User, Lock, Check, AlertCircle, Calendar, Badge as BadgeIcon } from "lucide-react";
+import { Loader2, Save, Building2, Radio, UserPlus, Shield, User, Lock, Check, AlertCircle, Calendar, Badge as BadgeIcon, Key, Webhook, Gift } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
@@ -117,12 +117,15 @@ export default function SettingsPage() {
         <div className="mx-auto max-w-3xl space-y-8">
 
           {/* Quick nav cards */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {[
               { href: "/settings/business-profile", Icon: Building2, key: "businessProfile" },
               { href: "/settings/channels", Icon: Radio, key: "channels" },
               { href: "/settings/team", Icon: UserPlus, key: "team" },
               { href: "/settings/white-label", Icon: Shield, key: "whiteLabel" },
+              { href: "/settings/api-keys", Icon: Key, key: "apiKeys" },
+              { href: "/settings/webhooks", Icon: Webhook, key: "webhooks" },
+              { href: "/settings/referrals", Icon: Gift, key: "referrals" },
             ].map(({ href, Icon, key }) => (
               <Link
                 key={href}

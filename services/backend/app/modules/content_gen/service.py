@@ -11,7 +11,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.registry import get_agent
 from app.agents.tracing import AgentTracer
-from app.db.models import AgentRun, BrandSettings, ContentPost, ContentStatus, PostType
+from app.db.models import AgentRun, BrandSettings, ContentPost, ContentStatus, PostType, User, UserRole
+
+
+async def _needs_approval(db: AsyncSession, tenant_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+    """True when tenant has approval_required=True AND the author is not owner/admin."""
+    from app.db.models import Tenant
+    tenant_res = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
+    tenant = tenant_res.scalar_one_or_none()
+    if not tenant or not isinstance(tenant.config, dict):
+        return False
+    workflow = (tenant.config or {}).get("workflow") or {}
+    if not workflow.get("approval_required"):
+        return False
+    user_res = await db.execute(select(User).where(User.id == user_id))
+    u = user_res.scalar_one_or_none()
+    if not u:
+        return False
+    privileged = {UserRole.owner, UserRole.admin, UserRole.superadmin} if hasattr(UserRole, "superadmin") else {UserRole.owner, UserRole.admin}
+    return u.role not in privileged
 
 
 _TARGET_TO_POST_TYPE = {
@@ -111,13 +129,18 @@ async def generate_content(
 
     post_type = _TARGET_TO_POST_TYPE.get(target, PostType.social)
 
+    initial_status = (
+        ContentStatus.review
+        if await _needs_approval(db, tenant_id, user_id)
+        else ContentStatus.draft
+    )
     post = ContentPost(
         tenant_id=tenant_id,
         title=title[:500],
         body=final,
         post_type=post_type,
         platform=channel or None,
-        status=ContentStatus.draft,
+        status=initial_status,
         metadata_={
             **meta,
             "target": target,

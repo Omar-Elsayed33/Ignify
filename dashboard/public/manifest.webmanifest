@@ -1,0 +1,20 @@
+{
+  "name": "Ignify",
+  "short_name": "Ignify",
+  "description": "AI-powered marketing automation for SMBs",
+  "start_url": "/ar/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#d4af37",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}

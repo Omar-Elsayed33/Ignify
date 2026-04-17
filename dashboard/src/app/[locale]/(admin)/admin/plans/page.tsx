@@ -5,6 +5,8 @@ import { useTranslations } from "next-intl";
 import { Plus, Edit2, Trash2, Loader2 } from "lucide-react";
 import Modal from "@/components/Modal";
 import { api } from "@/lib/api";
+import { useToast } from "@/components/Toaster";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 type Currency = "USD" | "EGP" | "SAR" | "AED";
 const CURRENCIES: Currency[] = ["USD", "EGP", "SAR", "AED"];
@@ -92,6 +94,8 @@ function planToForm(plan: PlanRow): FormState {
 
 export default function AdminPlansPage() {
   const t = useTranslations("adminPlans");
+  const toast = useToast();
+  const confirm = useConfirm();
   const [plans, setPlans] = useState<PlanRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -152,20 +156,27 @@ export default function AdminPlansPage() {
       setModalOpen(false);
       await fetchPlans();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Save failed");
+      toast.error("Error", e instanceof Error ? e.message : "Save failed");
     } finally {
       setSaving(false);
     }
   }
 
   async function del(plan: PlanRow) {
-    if (!confirm(`Deactivate ${plan.name}?`)) return;
+    const ok = await confirm({
+      title: "Deactivate plan",
+      description: `Deactivate ${plan.name}?`,
+      kind: "danger",
+      confirmLabel: "Deactivate",
+      cancelLabel: "Cancel",
+    });
+    if (!ok) return;
     setDeletingId(plan.id);
     try {
       await api.delete(`/api/v1/admin/plans/${plan.id}`);
       await fetchPlans();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Delete failed");
+      toast.error("Error", e instanceof Error ? e.message : "Delete failed");
     } finally {
       setDeletingId(null);
     }

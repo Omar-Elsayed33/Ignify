@@ -234,6 +234,7 @@
   "dashboard": {
     "title": "Marketing Overview",
     "welcome": "Welcome back",
+    "loadFailed": "Failed to load dashboard data",
     "totalLeads": "Total Leads",
     "activeCampaigns": "Total Campaigns",
     "contentPublished": "Content Posts",
@@ -705,7 +706,10 @@
     "aiAgents": "AI Agents",
     "knowledgeBase": "Knowledge Base",
     "team": "Team",
-    "whiteLabel": "White Label"
+    "whiteLabel": "White Label",
+    "apiKeys": "API Keys",
+    "webhooks": "Webhooks",
+    "referrals": "Referral program"
   },
   "settingsBusiness": {
     "title": "Company Profile",
@@ -1690,6 +1694,13 @@
       "cannotDemoteOwner": "The owner cannot be demoted. Transfer ownership first.",
       "onlyOwnerCanChangeAdmin": "Only the owner can change another admin's role.",
       "passwordsDontMatch": "Passwords do not match"
+    },
+    "workflow": {
+      "title": "Workflow",
+      "approvalRequired": "Require approval before publishing",
+      "approvalRequiredDescription": "When enabled, editors cannot publish content directly — only the owner or admin can.",
+      "saved": "Workflow settings saved",
+      "saveFailed": "Failed to save workflow settings"
     }
   },
   "verify": {
@@ -1941,5 +1952,40 @@
     "recsCount": "recommendations",
     "noIssues": "No critical issues found.",
     "error": "Audit failed. Please try again."
+  },
+  "toasts": {
+    "saved": "Saved",
+    "deleted": "Deleted",
+    "updated": "Updated",
+    "created": "Created",
+    "copied": "Copied",
+    "connected": "Connected successfully",
+    "disconnected": "Disconnected",
+    "synced": "Synced",
+    "sent": "Sent",
+    "published": "Published",
+    "scheduled": "Scheduled",
+    "genericSuccess": "Done",
+    "genericError": "Something went wrong. Please try again.",
+    "networkError": "Failed to reach the server",
+    "unauthorized": "Please sign in again",
+    "forbidden": "You don't have permission for this action",
+    "notFound": "Item not found",
+    "validationError": "Some fields are invalid"
+  },
+  "confirm": {
+    "title": "Confirm",
+    "delete": "Are you sure you want to delete? This cannot be undone.",
+    "disconnect": "Are you sure you want to disconnect?",
+    "yes": "Yes",
+    "no": "No",
+    "cancel": "Cancel",
+    "confirm": "Confirm"
+  },
+  "errors": {
+    "title": "Something went wrong",
+    "description": "The app ran into an issue. You can retry or go back to the home page.",
+    "retry": "Retry",
+    "goHome": "Home"
   }
 }

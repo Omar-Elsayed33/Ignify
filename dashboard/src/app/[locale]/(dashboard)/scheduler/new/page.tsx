@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import DashboardHeader from "@/components/DashboardHeader";
+import PlatformPreview from "@/components/PlatformPreview";
 import { api } from "@/lib/api";
 import { Loader2, Sparkles, Zap, Hand, FileText } from "lucide-react";
 import { clsx } from "clsx";
@@ -60,6 +61,7 @@ function toInputDateTime(d: Date): string {
 
 export default function NewScheduledPostPage() {
   const t = useTranslations("scheduler");
+  const isAr = useLocale() === "ar";
   const router = useRouter();
   const searchParams = useSearchParams();
   const contentPostId = searchParams.get("content_post_id");
@@ -142,13 +144,20 @@ export default function NewScheduledPostPage() {
     }
   }
 
+  const mediaUrlsList = mediaUrlsText
+    .split(/\s|,|\n/)
+    .map((u) => u.trim())
+    .filter(Boolean);
+  const firstMediaUrl = mediaUrlsList[0] || null;
+
   return (
     <div>
       <DashboardHeader title={t("calendar.newPost")} />
       <div className="p-6">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <form
           onSubmit={handleSubmit}
-          className="max-w-2xl space-y-5 rounded-xl border border-border bg-surface p-6"
+          className="space-y-5 rounded-xl border border-border bg-surface p-6"
         >
           {error && (
             <div className="rounded-lg bg-error/10 px-4 py-2.5 text-sm text-error">
@@ -296,6 +305,29 @@ export default function NewScheduledPostPage() {
             </button>
           </div>
         </form>
+
+          <aside className="lg:sticky lg:top-6 lg:self-start">
+            <h3 className="mb-3 text-sm font-semibold text-text-primary">
+              {isAr ? "معاينة" : "Preview"}
+            </h3>
+            {platforms.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border bg-surface p-6 text-center text-xs text-text-muted">
+                {isAr ? "اختر منصة لعرض المعاينة" : "Pick a platform to see a preview"}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {platforms.map((p) => (
+                  <PlatformPreview
+                    key={p}
+                    platform={p}
+                    caption={caption}
+                    mediaUrl={firstMediaUrl}
+                  />
+                ))}
+              </div>
+            )}
+          </aside>
+        </div>
       </div>
     </div>
   );

@@ -4,7 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import DashboardHeader from "@/components/DashboardHeader";
 import Modal from "@/components/Modal";
+import EmptyState from "@/components/EmptyState";
 import { api } from "@/lib/api";
+import { useToast } from "@/components/Toaster";
 import {
   MessageSquare,
   Instagram,
@@ -16,6 +18,7 @@ import {
   Settings,
   Loader2,
   Plus,
+  Plug,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -79,6 +82,8 @@ const ALL_CHANNEL_TYPES: ChannelType[] = [
 export default function ChannelsPage() {
   const t = useTranslations("channelsPage");
   const tc = useTranslations("common");
+  const tt = useTranslations("toasts");
+  const toast = useToast();
 
   const [channels, setChannels] = useState<ChannelResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -149,7 +154,7 @@ export default function ChannelsPage() {
       );
       setConfigOpen(false);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to save config");
+      toast.error(tt("genericError"), err instanceof Error ? err.message : "Failed to save config");
     } finally {
       setConfigSaving(false);
     }
@@ -161,7 +166,7 @@ export default function ChannelsPage() {
       await api.delete(`/api/v1/channels/${channel.id}`);
       setChannels((prev) => prev.filter((c) => c.id !== channel.id));
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to disconnect channel");
+      toast.error(tt("genericError"), err instanceof Error ? err.message : "Failed to disconnect channel");
     } finally {
       setDisconnecting((prev) => ({ ...prev, [channel.id]: false }));
     }
@@ -185,7 +190,7 @@ export default function ChannelsPage() {
       setAddApiKey("");
       setAddWebhook("");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to add channel");
+      toast.error(tt("genericError"), err instanceof Error ? err.message : "Failed to add channel");
     } finally {
       setAddSaving(false);
     }
@@ -231,13 +236,13 @@ export default function ChannelsPage() {
 
         {/* Empty state */}
         {!loading && !error && channels.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <MessageSquare className="h-12 w-12 text-text-muted/30" />
-            <p className="mt-4 text-lg font-medium text-text-secondary">
-              {t("noChannels")}
-            </p>
-            <p className="mt-1 text-sm text-text-muted">{t("noChannelsDesc")}</p>
-          </div>
+          <EmptyState
+            icon={Plug}
+            title={t("noChannels")}
+            description={t("noChannelsDesc")}
+            actionLabel={t("addChannel")}
+            onAction={() => setAddOpen(true)}
+          />
         )}
 
         {/* Channel grid */}

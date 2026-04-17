@@ -5,9 +5,12 @@ import { useTranslations } from "next-intl";
 import DashboardHeader from "@/components/DashboardHeader";
 import DataTable, { Column } from "@/components/DataTable";
 import Modal from "@/components/Modal";
+import EmptyState from "@/components/EmptyState";
 import { api } from "@/lib/api";
+import { useToast } from "@/components/Toaster";
+import { useConfirm } from "@/components/ConfirmDialog";
 import * as Tabs from "@radix-ui/react-tabs";
-import { Plus, Trash2, AlertCircle, Loader2, Sparkles } from "lucide-react";
+import { Plus, Trash2, AlertCircle, Loader2, Sparkles, FileText } from "lucide-react";
 import { clsx } from "clsx";
 
 interface ContentPost {
@@ -44,6 +47,8 @@ const POST_TYPE_TAB_MAP: Record<string, string> = {
 
 export default function ContentPage() {
   const t = useTranslations("contentPage");
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const [posts, setPosts] = useState<ContentPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,12 +116,21 @@ export default function ContentPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm(t("confirmDelete"))) return;
+    const ok = await confirm({
+      title: "تأكيد",
+      description: t("confirmDelete"),
+      kind: "danger",
+      confirmLabel: "حذف",
+      cancelLabel: "إلغاء",
+    });
+    if (!ok) return;
     try {
       await api.delete(`/api/v1/content/posts/${id}`);
       setPosts((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete post");
+      const msg = err instanceof Error ? err.message : "Failed to delete post";
+      setError(msg);
+      toast.error(msg);
     }
   }
 
@@ -272,6 +286,14 @@ export default function ContentPage() {
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
+        ) : filteredPosts.length === 0 ? (
+          <EmptyState
+            icon={FileText}
+            title={t("emptyTitle")}
+            description={t("emptyDescription")}
+            actionLabel={t("createContent")}
+            onAction={() => setCreateOpen(true)}
+          />
         ) : (
           <DataTable
             columns={columns}

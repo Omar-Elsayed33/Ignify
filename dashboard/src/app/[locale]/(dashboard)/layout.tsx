@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import { useRouter, usePathname } from "@/i18n/navigation";
 import Sidebar from "@/components/Sidebar";
+import MobileTabBar from "@/components/MobileTabBar";
 import BrandedLayout from "@/components/BrandedLayout";
 import QuotaBanner from "@/components/QuotaBanner";
 import EmailVerificationBanner from "@/components/EmailVerificationBanner";
+import NPSWidget from "@/components/NPSWidget";
 import { Menu, X } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -55,6 +57,32 @@ export default function DashboardLayout({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, isAuthenticated]);
 
+  // Fallback: if a referral code is still sitting in localStorage (register-time
+  // redemption failed or user arrived via direct link), try once now that we have a JWT.
+  useEffect(() => {
+    if (!hydrated || !isAuthenticated) return;
+    let code: string | null = null;
+    try {
+      code = localStorage.getItem("ignify_ref_code");
+    } catch {
+      return;
+    }
+    if (!code) return;
+    (async () => {
+      try {
+        await api.post("/api/v1/referrals/redeem", { code });
+      } catch {
+        // swallow — endpoint is a no-op on invalid/self-refer anyway
+      } finally {
+        try {
+          localStorage.removeItem("ignify_ref_code");
+        } catch {
+          // ignore
+        }
+      }
+    })();
+  }, [hydrated, isAuthenticated]);
+
   if (!hydrated) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
@@ -94,8 +122,13 @@ export default function DashboardLayout({
 
         <QuotaBanner />
         <EmailVerificationBanner />
-        <BrandedLayout>{children}</BrandedLayout>
+        <div className="pb-20 lg:pb-0">
+          <BrandedLayout>{children}</BrandedLayout>
+        </div>
       </main>
+
+      <NPSWidget />
+      <MobileTabBar />
     </div>
   );
 }

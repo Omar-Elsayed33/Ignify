@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import DashboardHeader from "@/components/DashboardHeader";
 import PageHeader from "@/components/PageHeader";
@@ -10,8 +10,10 @@ import Button from "@/components/Button";
 import Badge from "@/components/Badge";
 import InsightChip from "@/components/InsightChip";
 import EmptyState from "@/components/EmptyState";
+import { useToast } from "@/components/Toaster";
 import { api } from "@/lib/api";
-import { AlertCircle, Loader2, Plus, Sparkles, FileText, ArrowRight, FileUp } from "lucide-react";
+import { SkeletonCard } from "@/components/Skeleton";
+import { AlertCircle, Plus, Sparkles, FileText, ArrowRight, FileUp, Eye } from "lucide-react";
 
 interface MarketingPlan {
   id: string;
@@ -25,11 +27,37 @@ interface MarketingPlan {
 
 export default function PlansPage() {
   const t = useTranslations("plans");
+  const locale = useLocale();
+  const isAr = locale === "ar";
   const router = useRouter();
+  const toast = useToast();
 
   const [plans, setPlans] = useState<MarketingPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [seeding, setSeeding] = useState(false);
+
+  async function handleSeedSample() {
+    if (seeding) return;
+    setSeeding(true);
+    try {
+      const plan = await api.post<MarketingPlan>("/api/v1/plans/seed-sample", {});
+      toast.info(
+        isAr ? "تم إنشاء خطة عينة للاستعراض" : "Sample plan ready to explore"
+      );
+      router.push(`/plans/${plan.id}`);
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : isAr
+            ? "تعذّر إنشاء خطة العينة"
+            : "Couldn't create sample plan"
+      );
+    } finally {
+      setSeeding(false);
+    }
+  }
 
   useEffect(() => {
     (async () => {
@@ -98,17 +126,42 @@ export default function PlansPage() {
           )}
 
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <SkeletonCard key={i} />
+              ))}
             </div>
           ) : plans.length === 0 ? (
-            <EmptyState
-              icon={Sparkles}
-              title={t("listEmpty")}
-              description={t("subtitle")}
-              actionLabel={t("generateNew")}
-              onAction={() => router.push("/plans/new")}
-            />
+            <div className="space-y-4">
+              <EmptyState
+                icon={Sparkles}
+                title={t("listEmpty")}
+                description={t("subtitle")}
+                actionLabel={t("generateNew")}
+                onAction={() => router.push("/plans/new")}
+              />
+              <div className="flex flex-col items-center gap-3 text-center">
+                <Button
+                  variant="ghost"
+                  onClick={handleSeedSample}
+                  disabled={seeding}
+                  leadingIcon={<Eye className="h-4 w-4" />}
+                >
+                  {seeding
+                    ? isAr
+                      ? "جارٍ الإنشاء..."
+                      : "Creating..."
+                    : isAr
+                      ? "شاهد خطة تجريبية"
+                      : "View sample plan"}
+                </Button>
+                <p className="max-w-md text-xs text-on-surface-variant">
+                  {isAr
+                    ? "ممكن تشاهد خطة جاهزة لتستكشف المنصة قبل إنشاء خطتك الأولى."
+                    : "You can explore a sample plan before creating your own."}
+                </p>
+              </div>
+            </div>
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {plans.map((plan) => (

@@ -10,6 +10,7 @@ import Card from "@/components/Card";
 import Button from "@/components/Button";
 import InsightChip from "@/components/InsightChip";
 import Modal from "@/components/Modal";
+import EmptyState from "@/components/EmptyState";
 import { Input, Textarea } from "@/components/FormField";
 import { api } from "@/lib/api";
 import {
@@ -20,6 +21,7 @@ import {
   Sparkles,
   Phone,
   Mail,
+  Users,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -246,6 +248,14 @@ export default function LeadsKanbanPage() {
             <div className="flex items-center justify-center py-20">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
+          ) : columns.every((c) => c.leads.length === 0) ? (
+            <EmptyState
+              icon={Users}
+              title="لا يوجد عملاء محتملون بعد"
+              description="أضف أول عميل محتمل أو اربط قنوات الاستقبال لتبدأ بتتبع خط البيع الخاص بك."
+              actionLabel={t("form.new")}
+              onAction={() => setAddOpen(true)}
+            />
           ) : (
             <div className="overflow-x-auto">
               <div className="flex gap-4 pb-4" style={{ minWidth: "max-content" }}>

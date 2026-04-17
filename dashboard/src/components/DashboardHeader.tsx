@@ -31,7 +31,7 @@ export default function DashboardHeader({ title }: DashboardHeaderProps) {
 
       <div className="flex items-center gap-4">
         <div className="relative hidden md:block">
-          <Search className="pointer-events-none absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant/60" />
+          <Search className="pointer-events-none absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant/60" aria-hidden="true" />
           <input
             type="text"
             placeholder={t("search")}
@@ -42,14 +42,18 @@ export default function DashboardHeader({ title }: DashboardHeaderProps) {
         <button
           className="relative rounded-full p-2.5 text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-on-surface"
           title={t("notifications")}
+          aria-label={t("notifications")}
         >
-          <Bell className="h-5 w-5" />
-          <span className="absolute end-2 top-2 h-2 w-2 rounded-full bg-secondary ring-2 ring-surface" />
+          <Bell className="h-5 w-5" aria-hidden="true" />
+          <span className="absolute end-2 top-2 h-2 w-2 rounded-full bg-secondary ring-2 ring-surface" aria-hidden="true" />
         </button>
 
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
-            <button className="flex items-center gap-2.5 rounded-full p-1 pe-3 transition-colors hover:bg-surface-container-low">
+            <button
+              aria-label={t("profile")}
+              className="flex items-center gap-2.5 rounded-full p-1 pe-3 transition-colors hover:bg-surface-container-low"
+            >
               <Avatar.Root className="brand-gradient flex h-9 w-9 items-center justify-center overflow-hidden rounded-full">
                 <Avatar.Fallback className="text-xs font-semibold text-white">
                   {user?.full_name?.charAt(0)?.toUpperCase() || "U"}
@@ -71,14 +75,14 @@ export default function DashboardHeader({ title }: DashboardHeaderProps) {
                 className="flex cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-on-surface-variant outline-none hover:bg-surface-container-low hover:text-on-surface"
                 onSelect={() => router.push("/settings")}
               >
-                <User className="h-4 w-4" />
+                <User className="h-4 w-4" aria-hidden="true" />
                 {t("profile")}
               </DropdownMenu.Item>
               <DropdownMenu.Item
                 className="flex cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-on-surface-variant outline-none hover:bg-surface-container-low hover:text-on-surface"
                 onSelect={() => router.push("/settings")}
               >
-                <Settings className="h-4 w-4" />
+                <Settings className="h-4 w-4" aria-hidden="true" />
                 {t("settings")}
               </DropdownMenu.Item>
               <DropdownMenu.Separator className="my-1 h-px bg-surface-container" />
@@ -86,7 +90,7 @@ export default function DashboardHeader({ title }: DashboardHeaderProps) {
                 className="flex cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-error outline-none hover:bg-error-container/50"
                 onSelect={handleLogout}
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-4 w-4" aria-hidden="true" />
                 {t("logout")}
               </DropdownMenu.Item>
             </DropdownMenu.Content>

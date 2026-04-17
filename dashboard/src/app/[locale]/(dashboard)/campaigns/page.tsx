@@ -4,7 +4,10 @@ import { useEffect, useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import DashboardHeader from "@/components/DashboardHeader";
 import Modal from "@/components/Modal";
+import EmptyState from "@/components/EmptyState";
 import { api } from "@/lib/api";
+import { useToast } from "@/components/Toaster";
+import { useConfirm } from "@/components/ConfirmDialog";
 import {
   Plus,
   Mail,
@@ -526,6 +529,8 @@ function CampaignCard({ campaign, expanded, onToggle, onLaunch, onDelete, onStep
 
 export default function CampaignsPage() {
   const t = useTranslations("campaignsPage");
+  const toast = useToast();
+  const confirm = useConfirm();
 
   // List state
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -639,13 +644,22 @@ export default function CampaignsPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm(t("confirmDelete"))) return;
+    const ok = await confirm({
+      title: "تأكيد",
+      description: t("confirmDelete"),
+      kind: "danger",
+      confirmLabel: "حذف",
+      cancelLabel: "إلغاء",
+    });
+    if (!ok) return;
     try {
       await api.delete(`/api/v1/campaigns/${id}`);
       setCampaigns((prev) => prev.filter((c) => c.id !== id));
       if (expandedId === id) setExpandedId(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete campaign");
+      const msg = err instanceof Error ? err.message : "Failed to delete campaign";
+      setError(msg);
+      toast.error(msg);
     }
   }
 
@@ -728,20 +742,13 @@ export default function CampaignsPage() {
             {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-24 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-              <Sparkles className="h-8 w-8 text-primary" />
-            </div>
-            <p className="mt-4 text-base font-semibold text-text-primary">{t("emptyTitle")}</p>
-            <p className="mt-2 max-w-xs text-sm text-text-muted">{t("emptyDescription")}</p>
-            <button
-              onClick={handleOpenCreate}
-              className="mt-6 flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-dark"
-            >
-              <Sparkles className="h-4 w-4" />
-              {t("generateWithAI")}
-            </button>
-          </div>
+          <EmptyState
+            icon={Rocket}
+            title={t("emptyTitle")}
+            description={t("emptyDescription")}
+            actionLabel={t("createCampaign")}
+            onAction={handleOpenCreate}
+          />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {filtered.map((campaign) => (

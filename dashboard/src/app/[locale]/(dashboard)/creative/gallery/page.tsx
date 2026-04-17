@@ -5,6 +5,8 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import DashboardHeader from "@/components/DashboardHeader";
 import { api } from "@/lib/api";
+import { useToast } from "@/components/Toaster";
+import { useConfirm } from "@/components/ConfirmDialog";
 import {
   Sparkles,
   Search,
@@ -39,6 +41,8 @@ type FilterKey = "all" | "image" | "video";
 
 export default function CreativeGalleryPage() {
   const t = useTranslations("creativeGallery");
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const [assets, setAssets] = useState<CreativeAsset[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,13 +89,20 @@ export default function CreativeGalleryPage() {
   }, [assets, search]);
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this creative?")) return;
+    const ok = await confirm({
+      title: "تأكيد",
+      description: "Delete this creative?",
+      kind: "danger",
+      confirmLabel: "حذف",
+      cancelLabel: "إلغاء",
+    });
+    if (!ok) return;
     setDeletingId(id);
     try {
       await api.delete(`/api/v1/creative-gen/assets/${id}`);
       setAssets((prev) => prev.filter((a) => a.id !== id));
-    } catch {
-      // noop
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete creative");
     } finally {
       setDeletingId(null);
     }

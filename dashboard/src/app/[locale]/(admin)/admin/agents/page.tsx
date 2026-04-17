@@ -6,6 +6,7 @@ import { Link } from "@/i18n/navigation";
 import { Workflow, ArrowRight, Zap, BarChart2, Brain, Save, RotateCcw, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { clsx } from "clsx";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 interface AgentListItem {
   name: string;
@@ -43,6 +44,7 @@ const MODEL_OPTIONS = [
 
 export default function AdminAgentsPage() {
   const t = useTranslations("adminAgents");
+  const confirm = useConfirm();
 
   // ── Agents list ──
   const [agents, setAgents] = useState<AgentListItem[]>([]);
@@ -101,7 +103,14 @@ export default function AdminAgentsPage() {
   }
 
   async function resetModes() {
-    if (!confirm("Reset all mode configs to defaults?")) return;
+    const ok = await confirm({
+      title: "Reset modes",
+      description: "Reset all mode configs to defaults?",
+      kind: "danger",
+      confirmLabel: "Reset",
+      cancelLabel: "Cancel",
+    });
+    if (!ok) return;
     setResetting(true);
     setModeError(null);
     try {

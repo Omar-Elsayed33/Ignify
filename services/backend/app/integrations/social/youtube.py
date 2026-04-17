@@ -20,7 +20,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from app.core.config import settings
 from app.db.models import SocialAccount, SocialPlatform
 
-from .base import PublishResult, TokenBundle
+from .base import PublishResult, TokenBundle, get_access_token
 
 AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
@@ -114,7 +114,7 @@ class YouTubeConnector:
     ) -> PublishResult:
         if not media_urls:
             raise ValueError("YouTube publish requires a video URL")
-        token = account.access_token_encrypted or ""
+        token = get_access_token(account) or ""
         video_url = media_urls[0]
 
         # Split `content` into title/description: first line = title (<=100 chars).

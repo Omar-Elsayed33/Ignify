@@ -4,7 +4,7 @@ Ignify is an AI-powered marketing SaaS platform (forked from URTWIN). Built with
 
 This file is the canonical project brief. Read it at the start of every session.
 
-Last updated: 2026-04-17
+Last updated: 2026-04-17 (post-wave-3 expansion)
 
 ---
 
@@ -35,9 +35,11 @@ d:/Ignify/
 │   │   │   └── meta | linkedin | x | youtube | tiktok | snapchat .py
 │   │   │
 │   │   ├── modules/               # feature modules (router + service + schemas)
-│   │   │   ├── auth/              # register/login/me + PATCH /auth/me
+│   │   │   ├── auth/              # register/login/me + PATCH /auth/me + data-export + audit-log
 │   │   │   ├── tenants/ users/ team/ admin/
-│   │   │   ├── plans/             # MarketingPlan CRUD + generate + pdf_import + context
+│   │   │   ├── plans/             # MarketingPlan CRUD + generate + pdf_import + context + seed-sample
+│   │   │   ├── plan_versioning/   # snapshots / rollback (NEW wave 3)
+│   │   │   ├── plan_share/        # rotating read-only tokens + public GET route (NEW wave 3)
 │   │   │   ├── content/ content_gen/ content_templates/ experiments/
 │   │   │   ├── creative/ creative_gen/ video_gen/ media/
 │   │   │   ├── social/ social_scheduler/ channels/
@@ -46,33 +48,43 @@ d:/Ignify/
 │   │   │   ├── analytics/ analytics_dashboard/
 │   │   │   ├── competitors/ research/
 │   │   │   ├── billing/           # Stripe, Paymob, PayTabs, Geidea + credits
-│   │   │   ├── tenant_settings/ onboarding/ white_label/
+│   │   │   ├── tenant_settings/   # business, brand, channels + NEW workflow (approval_required)
+│   │   │   ├── onboarding/ white_label/
 │   │   │   ├── ai_assistant/ assistant/ inbox/
 │   │   │   ├── notifications/ integrations/ webhooks/ knowledge/ geo/ ops/
+│   │   │   ├── feedback/          # /feedback/nps + /feedback/cancellation-reason (NEW wave 2)
+│   │   │   ├── referrals/         # per-user code + redeem + convert (NEW wave 3)
+│   │   │   ├── api_keys/          # tenant programmatic access keys (NEW wave 3)
+│   │   │   ├── webhook_subscriptions/  # outgoing webhooks + HMAC signing (NEW wave 3)
 │   │   │
-│   │   ├── db/models.py           # 60+ SQLAlchemy models
+│   │   ├── db/models.py           # 64+ SQLAlchemy models (added MarketingPlanSnapshot, Referral, ApiKey, Webhook)
 │   │   ├── core/                  # security, llm, pdf, seo_audit, rate_limit, storage, …
+│   │   │   ├── crypto.py            # Fernet encrypt/decrypt for social tokens (wave 1)
+│   │   │   ├── logging_config.py    # structlog JSON + contextvars (wave 3)
 │   │   │   ├── seo_audit_deep.py    # Multi-page crawl + LLM recommendations
 │   │   │   └── (+ pdf, pdf_charts, meta_ads, embeddings, rbac, gating, …)
 │   │   └── main.py                # FastAPI app + router registration
 │   │
-│   ├── alembic/versions/          # 13 migrations, latest: m3h4i5j6k7l8 (social publish_mode)
+│   ├── alembic/versions/          # 14 migrations, latest: n4i5j6k7l8m9 (snapshots, referrals, api_keys, webhooks, nullable social_account_id)
 │   └── scripts/smoke_test.py      # basic integration test (no unit-test suite yet)
 │
 ├── dashboard/                     # Next.js 15 (App Router) + next-intl v3.25
 │   ├── src/app/[locale]/
-│   │   ├── (auth)/                # login, register, verify
+│   │   ├── (auth)/                # login, register (+ ?ref= capture), verify
+│   │   ├── plans/public/[token]/  # NEW — unauthenticated read-only plan view (wave 3)
 │   │   └── (dashboard)/
-│   │       ├── dashboard/         # home
-│   │       ├── onboarding/        # business / brand / channels / plan
-│   │       ├── plans/             # list, [id], new, import (PDF)
+│   │       ├── dashboard/         # home (first-plan hero, weekly digest, action-needed, skip-ahead pill)
+│   │       ├── onboarding/        # business / brand / channels / plan (+ progress bar)
+│   │       ├── plans/             # list, [id], new, import (PDF), [id]/versions (NEW)
 │   │       ├── content-gen/ content/ creative/generate/ video/generate/
-│   │       ├── scheduler/         # list (week grid), new, accounts (OAuth)
+│   │       ├── scheduler/         # week+month grid, new, accounts (OAuth)
 │   │       ├── seo/my-site/       # Deep audit + GSC/GA4 integration UI
 │   │       ├── competitors/ campaigns/ ads/ leads/
 │   │       ├── analytics/ inbox/ conversations/ channels/
 │   │       ├── team/ billing/ integrations/ notifications/
-│   │       ├── settings/          # personal profile, business profile, channels, team, white-label
+│   │       ├── changelog/ legal/privacy/ legal/terms/  # NEW
+│   │       ├── settings/          # personal + business-profile + channels + team + white-label
+│   │       │   + security + referrals + api-keys + webhooks  # NEW wave 2-3
 │   │       ├── profile/ assistant/ help/
 │   │
 │   ├── src/components/            # Sidebar, DashboardHeader, Card, Button, DataTable, …

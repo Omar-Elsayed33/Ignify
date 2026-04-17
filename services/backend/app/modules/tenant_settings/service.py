@@ -214,6 +214,24 @@ async def update_brand(
     return await get_brand(db, tenant_id)
 
 
+async def get_workflow(db: AsyncSession, tenant_id: uuid.UUID) -> dict[str, Any]:
+    tenant = await _get_tenant(db, tenant_id)
+    wf = (tenant.config or {}).get("workflow") or {}
+    return {"approval_required": bool(wf.get("approval_required", False))}
+
+
+async def update_workflow(
+    db: AsyncSession, tenant_id: uuid.UUID, approval_required: bool
+) -> dict[str, Any]:
+    tenant = await _get_tenant(db, tenant_id)
+    cfg = deepcopy(tenant.config or {})
+    cfg.setdefault("workflow", {})["approval_required"] = bool(approval_required)
+    tenant.config = cfg
+    flag_modified(tenant, "config")
+    await db.flush()
+    return {"approval_required": bool(approval_required)}
+
+
 async def get_channels(db: AsyncSession, tenant_id: uuid.UUID) -> list[str]:
     tenant = await _get_tenant(db, tenant_id)
     ob = (tenant.config or {}).get("onboarding") or {}

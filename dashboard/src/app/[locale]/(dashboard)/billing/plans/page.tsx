@@ -6,6 +6,7 @@ import DashboardHeader from "@/components/DashboardHeader";
 import { Check, Loader2, Sparkles, X } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAutoCurrency } from "@/lib/useAutoCurrency";
+import { useToast } from "@/components/Toaster";
 
 interface PlanItem {
   id: string;
@@ -53,6 +54,8 @@ function providersForCurrency(currency: Currency): Provider[] {
 
 export default function PlansPage() {
   const t = useTranslations("billing");
+  const tt = useTranslations("toasts");
+  const toast = useToast();
   const locale = useLocale();
   const [plans, setPlans] = useState<PlanItem[]>([]);
   const [currentCode, setCurrentCode] = useState<string | null>(null);
@@ -65,6 +68,9 @@ export default function PlansPage() {
   const [error, setError] = useState<string | null>(null);
   const [pickerPlan, setPickerPlan] = useState<PlanItem | null>(null);
   const [pickedProvider, setPickedProvider] = useState<Provider | null>(null);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">(
+    "monthly"
+  );
 
   useEffect(() => {
     (async () => {
@@ -105,7 +111,7 @@ export default function PlansPage() {
       });
       if (res.url) window.location.href = res.url;
     } catch (e) {
-      alert(e instanceof Error ? e.message : t("errors.failed"));
+      toast.error(tt("genericError"), e instanceof Error ? e.message : t("errors.failed"));
     } finally {
       setSubscribing(null);
       setPickerPlan(null);
@@ -169,10 +175,39 @@ export default function PlansPage() {
           </div>
         </div>
 
+        {/* Billing cycle toggle */}
+        <div className="mb-8 flex justify-center">
+          <div className="inline-flex rounded-full border border-border bg-surface p-1 shadow-soft">
+            <button
+              onClick={() => setBillingCycle("monthly")}
+              className={`rounded-full px-5 py-2 text-sm font-medium transition ${
+                billingCycle === "monthly"
+                  ? "bg-primary text-white shadow"
+                  : "text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              {locale === "ar" ? "شهري" : "Monthly"}
+            </button>
+            <button
+              onClick={() => setBillingCycle("yearly")}
+              className={`rounded-full px-5 py-2 text-sm font-medium transition ${
+                billingCycle === "yearly"
+                  ? "bg-primary text-white shadow"
+                  : "text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              {locale === "ar" ? "سنوي (وفر ~17%)" : "Yearly (Save ~17%)"}
+            </button>
+          </div>
+        </div>
+
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {plans.map((plan) => {
             const name = locale === "ar" ? plan.name_ar : plan.name_en;
-            const price = getDisplayPrice(plan, currency);
+            const monthlyPrice = getDisplayPrice(plan, currency);
+            const yearlyTotal = Math.round(monthlyPrice * 12 * 0.83);
+            const price =
+              billingCycle === "yearly" ? yearlyTotal : monthlyPrice;
             const isCurrent = currentCode === plan.code;
             return (
               <div
@@ -197,8 +232,26 @@ export default function PlansPage() {
                   </span>
                   <span className="text-sm text-text-muted">
                     {" "}
-                    / {t("plans.perMonth")}
+                    /{" "}
+                    {billingCycle === "yearly"
+                      ? locale === "ar"
+                        ? "سنوياً"
+                        : "yr"
+                      : t("plans.perMonth")}
                   </span>
+                  {billingCycle === "yearly" && (
+                    <div className="mt-1 text-xs text-text-muted">
+                      <span className="line-through">
+                        {CURRENCY_SYMBOL[currency]}
+                        {(monthlyPrice * 12).toLocaleString()}
+                      </span>{" "}
+                      <span className="font-medium text-success">
+                        {locale === "ar"
+                          ? `وفر ${CURRENCY_SYMBOL[currency]}${(monthlyPrice * 12 - yearlyTotal).toLocaleString()}`
+                          : `Save ${CURRENCY_SYMBOL[currency]}${(monthlyPrice * 12 - yearlyTotal).toLocaleString()}`}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <ul className="mb-6 flex-1 space-y-2">
                   {plan.features.map((f) => (
@@ -229,6 +282,14 @@ export default function PlansPage() {
             );
           })}
         </div>
+
+        {billingCycle === "yearly" && (
+          <p className="mt-6 text-center text-xs text-text-muted">
+            {locale === "ar"
+              ? "* سيتم إطلاق الاشتراك السنوي قريباً — الدفع الآن يبدأ بخطة شهرية."
+              : "* Annual billing launches soon — subscribing now starts a monthly plan."}
+          </p>
+        )}
       </div>
 
       {pickerPlan && (

@@ -141,8 +141,8 @@ async def schedule_post(
 
     - ``auto`` mode requires a connected SocialAccount for each platform; the
       Celery worker will publish at ``scheduled_at``.
-    - ``manual`` mode lets users schedule reminders even for unconnected
-      platforms — we anchor the row to any active account (FK NOT NULL).
+    - ``manual`` mode can schedule reminders even without a connected account
+      (``social_account_id`` is nullable as of migration n4i5j6k7l8m9).
     """
     accs_result = await db.execute(
         select(SocialAccount).where(
@@ -155,19 +155,24 @@ async def schedule_post(
         plat = a.platform.value if hasattr(a.platform, "value") else str(a.platform)
         by_platform.setdefault(plat, a)
 
-    fallback_account = accounts[0] if accounts else None
-
     created: list[SocialPost] = []
     for plat in platforms:
         acct = by_platform.get(plat)
-        if not acct:
-            if publish_mode == "manual" and fallback_account is not None:
-                acct = fallback_account
-            else:
-                continue
+        if not acct and publish_mode == "auto":
+            # Auto-publish needs a real account; skip platforms that aren't connected.
+            continue
+
+        # Normalize platform string to SocialPlatform enum value when possible.
+        from app.db.models import SocialPlatform
+        try:
+            platform_enum = SocialPlatform(plat)
+        except ValueError:
+            platform_enum = None
+
         post = SocialPost(
             tenant_id=tenant_id,
-            social_account_id=acct.id,
+            social_account_id=acct.id if acct else None,
+            platform=platform_enum,
             content_post_id=content_post_id,
             content=caption,
             media_urls=media_urls or [],

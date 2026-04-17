@@ -69,6 +69,10 @@ class ChannelsResponse(BaseModel):
     channels: list[str] = Field(default_factory=list)
 
 
+class WorkflowSettings(BaseModel):
+    approval_required: bool = False
+
+
 class AllSettingsResponse(BaseModel):
     business_profile: BusinessProfile
     brand: BrandResponse

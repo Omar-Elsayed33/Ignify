@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import DashboardHeader from "@/components/DashboardHeader";
 import PageHeader from "@/components/PageHeader";
@@ -71,6 +71,81 @@ const CHANNELS: Channel[] = [
   "email",
 ];
 
+const BRIEF_TEMPLATES = [
+  {
+    key: "ig_carousel",
+    ar: "منشور كاروسيل لإنستغرام",
+    en: "Instagram carousel",
+    ar_text:
+      "اكتب منشور كاروسيل (5 شرائح) لإنستغرام حول [الموضوع]. ابدأ بعنوان جذاب، ثم 3 شرائح تحتوي على نصائح عملية، وأنهِ بدعوة لاتخاذ إجراء.",
+    en_text:
+      "Write a 5-slide Instagram carousel about [topic]. Start with a hook, then 3 slides with practical tips, close with a clear CTA.",
+  },
+  {
+    key: "blog_seo",
+    ar: "مقال مدوّنة متوافق مع SEO",
+    en: "SEO-optimized blog post",
+    ar_text:
+      "اكتب مقالاً تفصيلياً بعنوان [العنوان] حول [الموضوع]. استهدف الكلمة المفتاحية [الكلمة]. الطول: 1000-1500 كلمة. أضف H2 وH3 ونقاط مرقمة وخاتمة.",
+    en_text:
+      "Write a detailed blog post titled [title] about [topic]. Target keyword: [keyword]. Length: 1000-1500 words. Include H2/H3 headings, bullet points, and a conclusion.",
+  },
+  {
+    key: "product_launch",
+    ar: "إعلان إطلاق منتج",
+    en: "Product launch announcement",
+    ar_text:
+      "اكتب منشور إعلان إطلاق لمنتج [اسم المنتج]. اذكر الفوائد الرئيسية (3)، المشكلة التي يحلّها، وعرضاً خاصاً للمبكّرين.",
+    en_text:
+      "Write a product launch announcement for [product name]. Highlight 3 key benefits, the problem it solves, and an early-bird offer.",
+  },
+  {
+    key: "linkedin_thought",
+    ar: "مقال رأي لِنكدإن",
+    en: "LinkedIn thought-leadership post",
+    ar_text:
+      "اكتب منشور رأي على لِنكدإن حول [الموضوع]. ابدأ بقصة قصيرة من تجربتي الشخصية، ثم استخرج 3 دروس، وأنهِ بسؤال يحفّز النقاش.",
+    en_text:
+      "Write a LinkedIn thought-leadership post about [topic]. Open with a short personal story, extract 3 lessons, and end with a question to spark discussion.",
+  },
+  {
+    key: "email_promo",
+    ar: "إيميل ترويجي",
+    en: "Promotional email",
+    ar_text:
+      "اكتب إيميل ترويجي لـ [العرض]. سطر موضوع قصير وجذاب، مقدمة تلامس المشكلة، ثم تفاصيل العرض، وزر CTA واضح.",
+    en_text:
+      "Write a promotional email for [offer]. Short catchy subject line, problem-focused intro, offer details, clear CTA button.",
+  },
+  {
+    key: "twitter_thread",
+    ar: "خيط تويتر/X",
+    en: "X / Twitter thread",
+    ar_text:
+      "اكتب خيط من 7 تغريدات حول [الموضوع]. التغريدة الأولى hook قوي، 5 تغريدات قيمة، والأخيرة CTA أو خلاصة.",
+    en_text:
+      "Write a 7-tweet thread about [topic]. Tweet 1 is a strong hook, tweets 2-6 deliver value, tweet 7 is a CTA or summary.",
+  },
+  {
+    key: "faq",
+    ar: "قسم الأسئلة الشائعة",
+    en: "FAQ section",
+    ar_text:
+      "اكتب 10 أسئلة شائعة حول [الموضوع/الخدمة] مع إجابات مختصرة وواضحة (2-3 جمل لكل إجابة).",
+    en_text:
+      "Write 10 FAQs about [topic/service] with concise 2-3 sentence answers.",
+  },
+  {
+    key: "testimonial_request",
+    ar: "طلب شهادة عميل",
+    en: "Customer testimonial request",
+    ar_text:
+      "اكتب رسالة مهذبة لعميل راضٍ تطلب منه شهادة قصيرة. اذكر لماذا شهادته مهمة، وأسئلة محددة (3) لتسهيل كتابتها.",
+    en_text:
+      "Write a polite message to a happy customer asking for a short testimonial. Explain why it matters and give 3 specific questions to make it easy to answer.",
+  },
+];
+
 function StyledSelect({
   label,
   value,
@@ -101,6 +176,8 @@ function StyledSelect({
 export default function ContentGenPage() {
   const t = useTranslations("contentGen");
   const tpl = useTranslations("contentTemplates");
+  const locale = useLocale();
+  const isAr = locale === "ar";
   const router = useRouter();
   const searchParams = useSearchParams();
   const planId = searchParams.get("plan_id");
@@ -409,14 +486,49 @@ export default function ContentGenPage() {
               {/* Composer */}
               <Card padding="lg">
                 <form onSubmit={handleSubmit} className="space-y-5">
-                  <Textarea
-                    label={t("form.brief")}
-                    required
-                    rows={6}
-                    placeholder={t("form.briefPlaceholder")}
-                    value={form.brief}
-                    onChange={(e) => setForm((f) => ({ ...f, brief: e.target.value }))}
-                  />
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-end gap-2">
+                      <select
+                        value=""
+                        onChange={(e) => {
+                          const tplItem = BRIEF_TEMPLATES.find(
+                            (x) => x.key === e.target.value
+                          );
+                          if (!tplItem) return;
+                          const text = isAr ? tplItem.ar_text : tplItem.en_text;
+                          setForm((f) => ({ ...f, brief: text }));
+                          e.target.value = "";
+                        }}
+                        className="rounded-xl bg-surface-container-low px-3 py-2 text-xs font-semibold text-on-surface outline-none transition-all focus:ring-2 focus:ring-primary/30"
+                      >
+                        <option value="" disabled>
+                          {isAr ? "قوالب جاهزة" : "Templates"}
+                        </option>
+                        {BRIEF_TEMPLATES.map((item) => (
+                          <option key={item.key} value={item.key}>
+                            {isAr ? item.ar : item.en}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setForm((f) => ({ ...f, brief: "" }))
+                        }
+                        className="rounded-xl bg-surface-container-low px-3 py-2 text-xs font-semibold text-on-surface-variant transition-colors hover:bg-surface-container"
+                      >
+                        {isAr ? "مسح" : "Clear"}
+                      </button>
+                    </div>
+                    <Textarea
+                      label={t("form.brief")}
+                      required
+                      rows={6}
+                      placeholder={t("form.briefPlaceholder")}
+                      value={form.brief}
+                      onChange={(e) => setForm((f) => ({ ...f, brief: e.target.value }))}
+                    />
+                  </div>
 
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <StyledSelect

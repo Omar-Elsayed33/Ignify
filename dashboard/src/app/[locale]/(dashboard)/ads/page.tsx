@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import DashboardHeader from "@/components/DashboardHeader";
 import DataTable, { Column } from "@/components/DataTable";
+import EmptyState from "@/components/EmptyState";
 import { api } from "@/lib/api";
-import { Plus, MonitorSmartphone, Loader2, X } from "lucide-react";
+import { Plus, MonitorSmartphone, Loader2, X, Megaphone } from "lucide-react";
 import { clsx } from "clsx";
 import {
   BarChart,
@@ -342,6 +343,14 @@ export default function AdsPage() {
           <div className="flex items-center justify-center py-16">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
+        ) : campaigns.length === 0 ? (
+          <EmptyState
+            icon={Megaphone}
+            title="لا توجد حملات إعلانية بعد"
+            description="أنشئ أول حملة إعلانية لربط حساباتك وتتبع أداء الإعلانات في مكان واحد."
+            actionLabel={t("createCampaign")}
+            onAction={() => setShowCreateModal(true)}
+          />
         ) : (
           <DataTable
             columns={columns}

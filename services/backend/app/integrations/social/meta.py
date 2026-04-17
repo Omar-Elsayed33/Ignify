@@ -16,7 +16,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from app.core.config import settings
 from app.db.models import SocialAccount, SocialPlatform
 
-from .base import PublishResult, TokenBundle
+from .base import PublishResult, TokenBundle, get_access_token
 
 GRAPH = "https://graph.facebook.com/v19.0"
 META_SCOPES: ClassVar[list[str]] = [
@@ -135,7 +135,7 @@ class FacebookConnector(_MetaBase):
         content: str,
         media_urls: list[str],
     ) -> PublishResult:
-        token = account.access_token_encrypted or ""
+        token = get_access_token(account) or ""
         async with httpx.AsyncClient(timeout=30.0) as client:
             if media_urls:
                 resp = await client.post(
@@ -166,7 +166,7 @@ class InstagramConnector(_MetaBase):
     ) -> PublishResult:
         if not media_urls:
             raise ValueError("Instagram posts require at least one media URL")
-        token = account.access_token_encrypted or ""
+        token = get_access_token(account) or ""
         async with httpx.AsyncClient(timeout=30.0) as client:
             container = await client.post(
                 f"{GRAPH}/{account.account_id}/media",

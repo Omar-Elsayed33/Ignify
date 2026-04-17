@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import DashboardHeader from "@/components/DashboardHeader";
+import EmptyState from "@/components/EmptyState";
 import { Bell, CheckCheck, FileText, Target, Users, BarChart3, Info } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -113,10 +114,11 @@ export default function NotificationsPage() {
           {/* Notification list */}
           <div className="space-y-3">
             {notifications.length === 0 ? (
-              <div className="rounded-2xl bg-surface-container-lowest p-12 text-center shadow-soft">
-                <Bell className="mx-auto mb-3 h-10 w-10 text-on-surface-variant/30" />
-                <p className="text-sm text-on-surface-variant">لا توجد إشعارات</p>
-              </div>
+              <EmptyState
+                icon={Bell}
+                title="لا توجد إشعارات"
+                description="سنعلمك هنا عند اكتمال خطة، وصول عميل محتمل جديد، أو جاهزية تقرير أداء."
+              />
             ) : (
               notifications.map((n) => {
                 const meta = TYPE_META[n.type];

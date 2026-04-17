@@ -8,6 +8,7 @@ import EmptyState from "@/components/EmptyState";
 import { api, ApiError } from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
 import { hasPermission, isOwner } from "@/lib/rbac";
+import { useToast } from "@/components/Toaster";
 import {
   UserPlus,
   Send,
@@ -22,6 +23,7 @@ import {
 } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { clsx } from "clsx";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 type Role = "owner" | "admin" | "editor" | "viewer";
 
@@ -57,15 +59,24 @@ const ROLE_BADGE_STYLES: Record<string, string> = {
 
 export default function TeamPage() {
   const t = useTranslations("team");
+  const tCommon = useTranslations("common");
+  const confirm = useConfirm();
   const locale = useLocale();
+  const toast = useToast();
   const { user } = useAuthStore();
   const myRole = (user?.role as Role | undefined) ?? "viewer";
+  const canManageWorkflow = myRole === "owner" || myRole === "admin";
 
   const [members, setMembers] = useState<Member[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [flash, setFlash] = useState("");
+
+  // Workflow settings
+  const [approvalRequired, setApprovalRequired] = useState(false);
+  const [workflowLoaded, setWorkflowLoaded] = useState(false);
+  const [workflowSaving, setWorkflowSaving] = useState(false);
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
@@ -98,6 +109,47 @@ export default function TeamPage() {
     load();
   }, [load]);
 
+  // ── Workflow settings ─────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!canManageWorkflow) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await api.get<{ approval_required: boolean }>(
+          "/api/v1/tenant-settings/workflow"
+        );
+        if (!cancelled) {
+          setApprovalRequired(!!res.approval_required);
+          setWorkflowLoaded(true);
+        }
+      } catch {
+        if (!cancelled) setWorkflowLoaded(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [canManageWorkflow]);
+
+  const handleToggleApproval = async (next: boolean) => {
+    const prev = approvalRequired;
+    setApprovalRequired(next);
+    setWorkflowSaving(true);
+    try {
+      await api.put("/api/v1/tenant-settings/workflow", {
+        approval_required: next,
+      });
+      toast.success(t("workflow.saved"));
+    } catch (e) {
+      setApprovalRequired(prev);
+      toast.error(
+        e instanceof ApiError ? e.message : t("workflow.saveFailed")
+      );
+    } finally {
+      setWorkflowSaving(false);
+    }
+  };
+
   const showFlash = (msg: string) => {
     setFlash(msg);
     window.setTimeout(() => setFlash(""), 3000);
@@ -123,7 +175,14 @@ export default function TeamPage() {
   };
 
   const handleRemove = async (m: Member) => {
-    if (!confirm(t("actions.remove") + ": " + m.email + "?")) return;
+    const ok = await confirm({
+      title: t("actions.remove"),
+      description: t("actions.remove") + ": " + m.email + "?",
+      kind: "danger",
+      confirmLabel: t("actions.remove"),
+      cancelLabel: tCommon("cancel"),
+    });
+    if (!ok) return;
     try {
       await api.delete(`/api/v1/team/members/${m.id}`);
       await load();
@@ -195,6 +254,45 @@ export default function TeamPage() {
           <div className="mb-4 rounded-lg bg-success/10 px-4 py-3 text-sm text-success">
             {flash}
           </div>
+        )}
+
+        {/* ── Workflow ─────────────────────────────────────────────── */}
+        {canManageWorkflow && (
+          <section className="mb-8 rounded-xl border border-border bg-surface">
+            <div className="border-b border-border px-6 py-4">
+              <h2 className="text-lg font-semibold text-text-primary">
+                {t("workflow.title")}
+              </h2>
+            </div>
+            <div className="flex items-start justify-between gap-6 px-6 py-5">
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium text-text-primary">
+                  {t("workflow.approvalRequired")}
+                </div>
+                <p className="mt-1 text-xs text-text-muted">
+                  {t("workflow.approvalRequiredDescription")}
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={approvalRequired}
+                disabled={!workflowLoaded || workflowSaving}
+                onClick={() => handleToggleApproval(!approvalRequired)}
+                className={clsx(
+                  "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-60",
+                  approvalRequired ? "bg-primary" : "bg-surface-hover border border-border"
+                )}
+              >
+                <span
+                  className={clsx(
+                    "inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform",
+                    approvalRequired ? "translate-x-6 rtl:-translate-x-6" : "translate-x-1 rtl:-translate-x-1"
+                  )}
+                />
+              </button>
+            </div>
+          </section>
         )}
 
         {/* ── Members ──────────────────────────────────────────────── */}

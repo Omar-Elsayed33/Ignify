@@ -11,6 +11,7 @@ import Badge from "@/components/Badge";
 import InsightChip from "@/components/InsightChip";
 import Avatar from "@/components/Avatar";
 import { api, BASE_URL, getAccessToken } from "@/lib/api";
+import Skeleton, { SkeletonStatCard, SkeletonText } from "@/components/Skeleton";
 import * as Tabs from "@radix-ui/react-tabs";
 import {
   AlertCircle,
@@ -27,8 +28,15 @@ import {
   Download,
   Image as ImageIcon,
   Video as VideoIcon,
+  Share2,
+  Copy,
+  History,
+  X,
+  Trash2,
 } from "lucide-react";
+import * as Dialog from "@radix-ui/react-dialog";
 import { clsx } from "clsx";
+import { useToast } from "@/components/Toaster";
 
 interface Persona {
   name?: string;
@@ -328,6 +336,73 @@ function JsonBlock({ data, lang = "en" }: { data: unknown; lang?: "ar" | "en" })
   );
 }
 
+function PlanTOC({
+  plan,
+  current,
+  onJump,
+}: {
+  plan: MarketingPlan | null;
+  current: string | null;
+  onJump: (key: string) => void;
+}) {
+  const isAr = useLocale() === "ar";
+  const sections: Array<{ key: string; ar: string; en: string }> = [
+    { key: "market_analysis", ar: "السوق", en: "Market" },
+    { key: "personas", ar: "الجمهور", en: "Personas" },
+    { key: "positioning", ar: "التموضع", en: "Positioning" },
+    { key: "customer_journey", ar: "رحلة العميل", en: "Journey" },
+    { key: "offer", ar: "العرض", en: "Offer" },
+    { key: "funnel", ar: "القمع", en: "Funnel" },
+    { key: "channels", ar: "القنوات", en: "Channels" },
+    { key: "conversion", ar: "التحويل", en: "Conversion" },
+    { key: "retention", ar: "الاحتفاظ", en: "Retention" },
+    { key: "growth_loops", ar: "النمو", en: "Growth" },
+    { key: "calendar", ar: "التقويم", en: "Calendar" },
+    { key: "kpis", ar: "المؤشرات", en: "KPIs" },
+    { key: "ad_strategy", ar: "الإعلانات", en: "Ads" },
+    { key: "execution_roadmap", ar: "التنفيذ", en: "Execution" },
+  ];
+  const filled = (k: string) => {
+    const v = plan?.[k];
+    if (v == null) return false;
+    if (Array.isArray(v)) return v.length > 0;
+    if (typeof v === "object") return Object.keys(v as Record<string, unknown>).length > 0;
+    return Boolean(v);
+  };
+  return (
+    <aside className="sticky top-4 hidden h-fit w-56 shrink-0 rounded-2xl bg-surface-container-lowest p-3 shadow-soft ring-1 ring-outline/10 lg:block">
+      <p className="mb-2 px-2 text-[10px] uppercase tracking-widest text-on-surface-variant/70">
+        {isAr ? "الأقسام" : "Sections"}
+      </p>
+      <ul className="space-y-0.5">
+        {sections.map((s) => {
+          const f = filled(s.key);
+          const active = current === s.key;
+          return (
+            <li key={s.key}>
+              <button
+                onClick={() => onJump(s.key)}
+                className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-start text-xs transition-colors ${
+                  active
+                    ? "bg-primary-fixed/60 text-primary font-semibold"
+                    : "text-on-surface-variant hover:bg-surface-container"
+                }`}
+              >
+                <span
+                  className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                    f ? "bg-emerald-500" : "bg-amber-400"
+                  }`}
+                />
+                <span className="truncate">{isAr ? s.ar : s.en}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </aside>
+  );
+}
+
 function SectionCard({
   icon: Icon,
   title,
@@ -409,6 +484,75 @@ export default function PlanDetailPage({
   const [approving, setApproving] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [regenSection, setRegenSection] = useState<string | null>(null);
+
+  const toast = useToast();
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareData, setShareData] = useState<{
+    share_token: string;
+    share_url: string;
+    share_expires_at?: string | null;
+  } | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  async function openShare() {
+    setShareOpen(true);
+    if (shareData) return;
+    if (!plan) return;
+    try {
+      setShareLoading(true);
+      const res = await api.post<{
+        share_token: string;
+        share_url: string;
+        share_expires_at?: string | null;
+      }>(`/api/v1/plans/${plan.id}/share`, {});
+      setShareData(res);
+    } catch (e) {
+      toast.error(
+        e instanceof Error
+          ? e.message
+          : lang === "ar"
+          ? "تعذّر إنشاء الرابط"
+          : "Failed to create link"
+      );
+      setShareOpen(false);
+    } finally {
+      setShareLoading(false);
+    }
+  }
+
+  async function copyShareUrl() {
+    if (!shareData?.share_url) return;
+    try {
+      await navigator.clipboard.writeText(shareData.share_url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast.success(lang === "ar" ? "تم النسخ" : "Copied");
+    } catch {
+      toast.error(lang === "ar" ? "تعذّر النسخ" : "Copy failed");
+    }
+  }
+
+  async function revokeShare() {
+    if (!plan) return;
+    try {
+      setShareLoading(true);
+      await api.delete(`/api/v1/plans/${plan.id}/share`);
+      setShareData(null);
+      setShareOpen(false);
+      toast.success(lang === "ar" ? "تم إلغاء الرابط" : "Link revoked");
+    } catch (e) {
+      toast.error(
+        e instanceof Error
+          ? e.message
+          : lang === "ar"
+          ? "تعذّر إلغاء الرابط"
+          : "Revoke failed"
+      );
+    } finally {
+      setShareLoading(false);
+    }
+  }
 
   async function regenerate(section: "goals" | "personas" | "channels" | "calendar" | "kpis") {
     if (!plan) return;
@@ -543,6 +687,51 @@ export default function PlanDetailPage({
   const personas = Array.isArray(plan?.personas) ? (plan?.personas as Persona[]) : [];
   const calendar = Array.isArray(plan?.calendar) ? (plan?.calendar as CalendarEntry[]) : [];
 
+  // Map strategic-section keys (from PlanTOC) to Tabs values used by Radix Tabs.
+  const SECTION_KEY_TO_TAB: Record<string, string> = {
+    market_analysis: "market",
+    personas: "audience",
+    positioning: "positioning",
+    customer_journey: "journey",
+    offer: "offer",
+    funnel: "funnel",
+    channels: "channels",
+    conversion: "conversion",
+    retention: "retention",
+    growth_loops: "growthLoops",
+    calendar: "calendar",
+    kpis: "kpis",
+    ad_strategy: "market",
+    execution_roadmap: "roadmap",
+  };
+  const TAB_TO_SECTION_KEY: Record<string, string> = {
+    market: "market_analysis",
+    audience: "personas",
+    positioning: "positioning",
+    journey: "customer_journey",
+    offer: "offer",
+    funnel: "funnel",
+    channels: "channels",
+    conversion: "conversion",
+    retention: "retention",
+    growthLoops: "growth_loops",
+    calendar: "calendar",
+    kpis: "kpis",
+    roadmap: "execution_roadmap",
+  };
+  const activeSectionKey = TAB_TO_SECTION_KEY[activeTab] ?? null;
+
+  const handleTocJump = (key: string) => {
+    const tabValue = SECTION_KEY_TO_TAB[key];
+    if (tabValue) setActiveTab(tabValue);
+    // Scroll to anchor on next tick, once tab panel has mounted its content.
+    setTimeout(() => {
+      document
+        .getElementById(`section-${key}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  };
+
   return (
     <div>
       <DashboardHeader title={plan?.title ?? t("title")} />
@@ -565,8 +754,31 @@ export default function PlanDetailPage({
           )}
 
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <Skeleton className="h-1 w-24 rounded-full" />
+                <Skeleton className="h-10 w-2/3" />
+                <div className="flex flex-wrap items-center gap-3">
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                  <Skeleton className="h-6 w-28 rounded-full" />
+                  <Skeleton className="h-4 w-32" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <SkeletonStatCard key={i} />
+                ))}
+              </div>
+              <div className="space-y-4">
+                <div className="rounded-2xl bg-surface-container-lowest p-6 shadow-soft">
+                  <Skeleton className="h-5 w-1/3" />
+                  <SkeletonText className="mt-4" lines={5} />
+                </div>
+                <div className="rounded-2xl bg-surface-container-lowest p-6 shadow-soft">
+                  <Skeleton className="h-5 w-1/4" />
+                  <SkeletonText className="mt-4" lines={5} />
+                </div>
+              </div>
             </div>
           ) : !plan ? null : (
             <>
@@ -627,6 +839,20 @@ export default function PlanDetailPage({
                         }
                       >
                         {lang === "ar" ? "إعادة توليد الخطة" : "Regenerate plan"}
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={() => router.push(`/plans/${plan.id}/versions`)}
+                        leadingIcon={<History className="h-4 w-4" />}
+                      >
+                        {lang === "ar" ? "تاريخ الإصدارات" : "Version history"}
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={openShare}
+                        leadingIcon={<Share2 className="h-4 w-4" />}
+                      >
+                        {lang === "ar" ? "مشاركة" : "Share"}
                       </Button>
                       {plan.status !== "approved" && (
                         <Button
@@ -695,6 +921,103 @@ export default function PlanDetailPage({
                 )}
               </div>
 
+              <Dialog.Root open={shareOpen} onOpenChange={setShareOpen}>
+                <Dialog.Portal>
+                  <Dialog.Overlay className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm data-[state=open]:animate-in data-[state=open]:fade-in-0" />
+                  <Dialog.Content className="fixed start-1/2 top-1/2 z-[100] w-[92vw] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-surface-container-lowest p-6 shadow-[0_8px_30px_rgba(0,0,0,0.2)] ring-1 ring-outline/10 rtl:translate-x-1/2 data-[state=open]:animate-in data-[state=open]:zoom-in-95">
+                    <div
+                      className="mb-4 flex items-center justify-between"
+                      dir={lang === "ar" ? "rtl" : "ltr"}
+                    >
+                      <div>
+                        <Dialog.Title className="font-headline text-base font-bold text-on-surface">
+                          {lang === "ar" ? "مشاركة الخطة" : "Share plan"}
+                        </Dialog.Title>
+                        <Dialog.Description className="mt-1 text-xs text-on-surface-variant">
+                          {lang === "ar"
+                            ? "رابط للقراءة فقط. يمكنك إلغاؤه في أي وقت."
+                            : "Read-only link. You can revoke it anytime."}
+                        </Dialog.Description>
+                      </div>
+                      <Dialog.Close asChild>
+                        <button
+                          aria-label={lang === "ar" ? "إغلاق" : "Close"}
+                          className="rounded-full p-1.5 text-on-surface-variant hover:bg-surface-container"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </Dialog.Close>
+                    </div>
+
+                    {shareLoading && !shareData ? (
+                      <div className="flex items-center gap-2 rounded-xl bg-surface-container-low p-4 text-sm text-on-surface-variant">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        {lang === "ar" ? "جاري إنشاء الرابط..." : "Creating link..."}
+                      </div>
+                    ) : shareData ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 rounded-xl bg-surface-container-low p-2">
+                          <input
+                            readOnly
+                            value={shareData.share_url}
+                            dir="ltr"
+                            className="flex-1 bg-transparent px-2 py-1 text-xs text-on-surface outline-none"
+                            onFocus={(e) => e.currentTarget.select()}
+                          />
+                          <button
+                            onClick={copyShareUrl}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-surface-container-highest px-3 py-1.5 text-xs font-semibold text-on-surface transition-colors hover:bg-surface-variant"
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                            {copied
+                              ? lang === "ar"
+                                ? "تم النسخ"
+                                : "Copied"
+                              : lang === "ar"
+                              ? "نسخ"
+                              : "Copy"}
+                          </button>
+                        </div>
+
+                        {shareData.share_expires_at && (
+                          <p className="text-xs text-on-surface-variant" dir={lang === "ar" ? "rtl" : "ltr"}>
+                            {lang === "ar" ? "ينتهي في" : "Expires"}:{" "}
+                            <span className="font-semibold text-on-surface">
+                              {new Date(shareData.share_expires_at).toLocaleString(
+                                lang === "ar" ? "ar" : "en"
+                              )}
+                            </span>
+                          </p>
+                        )}
+
+                        <div
+                          className="flex flex-wrap justify-end gap-2"
+                          dir={lang === "ar" ? "rtl" : "ltr"}
+                        >
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={revokeShare}
+                            disabled={shareLoading}
+                            leadingIcon={
+                              shareLoading ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-3.5 w-3.5" />
+                              )
+                            }
+                          >
+                            {lang === "ar" ? "إلغاء الرابط" : "Revoke link"}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : null}
+                  </Dialog.Content>
+                </Dialog.Portal>
+              </Dialog.Root>
+
+              <div className="flex gap-6">
+                <div className="min-w-0 flex-1">
               <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
                 {/* Pills tab nav */}
                 <Tabs.List className="mb-8 flex flex-wrap gap-2">
@@ -737,7 +1060,7 @@ export default function PlanDetailPage({
                   </SectionCard>
                 </Tabs.Content>
 
-                <Tabs.Content value="market" className="space-y-4">
+                <Tabs.Content value="market" className="space-y-4" id="section-market_analysis">
                   {/* SWOT — colorful grid at the top */}
                   {plan.swot !== undefined && (() => {
                     const swot = plan.swot as Record<string, unknown> | null | undefined;
@@ -799,7 +1122,7 @@ export default function PlanDetailPage({
                   )}
                 </Tabs.Content>
 
-                <Tabs.Content value="audience" className="space-y-4">
+                <Tabs.Content value="audience" className="space-y-4" id="section-personas">
                   <div className="flex justify-end">
                     <RegenBtn section="personas" />
                   </div>
@@ -831,7 +1154,7 @@ export default function PlanDetailPage({
                   )}
                 </Tabs.Content>
 
-                <Tabs.Content value="channels" className="space-y-4">
+                <Tabs.Content value="channels" className="space-y-4" id="section-channels">
                   <div className="flex justify-end">
                     <RegenBtn section="channels" />
                   </div>
@@ -840,7 +1163,7 @@ export default function PlanDetailPage({
                   </SectionCard>
                 </Tabs.Content>
 
-                <Tabs.Content value="calendar" className="space-y-4">
+                <Tabs.Content value="calendar" className="space-y-4" id="section-calendar">
                   <div className="flex justify-end">
                     <RegenBtn section="calendar" />
                   </div>
@@ -899,25 +1222,25 @@ export default function PlanDetailPage({
                   )}
                 </Tabs.Content>
 
-                <Tabs.Content value="positioning" className="space-y-4">
+                <Tabs.Content value="positioning" className="space-y-4" id="section-positioning">
                   <SectionCard icon={Target} title={t("sections.positioning")} lang={lang}>
                     <JsonBlock data={plan.positioning} lang={lang} />
                   </SectionCard>
                 </Tabs.Content>
 
-                <Tabs.Content value="journey" className="space-y-4">
+                <Tabs.Content value="journey" className="space-y-4" id="section-customer_journey">
                   <SectionCard icon={Users} title={t("sections.journey")} lang={lang}>
                     <JsonBlock data={plan.customer_journey} lang={lang} />
                   </SectionCard>
                 </Tabs.Content>
 
-                <Tabs.Content value="offer" className="space-y-4">
+                <Tabs.Content value="offer" className="space-y-4" id="section-offer">
                   <SectionCard icon={FileText} title={t("sections.offer")} lang={lang}>
                     <JsonBlock data={plan.offer} lang={lang} />
                   </SectionCard>
                 </Tabs.Content>
 
-                <Tabs.Content value="funnel" className="space-y-5">
+                <Tabs.Content value="funnel" className="space-y-5" id="section-funnel">
                   <Card padding="lg" className="transition-shadow hover:shadow-md">
                     <div
                       className="mb-5 flex items-center gap-3 border-b border-outline/10 pb-4"
@@ -991,31 +1314,31 @@ export default function PlanDetailPage({
                   </Card>
                 </Tabs.Content>
 
-                <Tabs.Content value="conversion" className="space-y-4">
+                <Tabs.Content value="conversion" className="space-y-4" id="section-conversion">
                   <SectionCard icon={Radio} title={t("sections.conversion")} lang={lang}>
                     <JsonBlock data={plan.conversion} lang={lang} />
                   </SectionCard>
                 </Tabs.Content>
 
-                <Tabs.Content value="retention" className="space-y-4">
+                <Tabs.Content value="retention" className="space-y-4" id="section-retention">
                   <SectionCard icon={Users} title={t("sections.retention")} lang={lang}>
                     <JsonBlock data={plan.retention} lang={lang} />
                   </SectionCard>
                 </Tabs.Content>
 
-                <Tabs.Content value="growthLoops" className="space-y-4">
+                <Tabs.Content value="growthLoops" className="space-y-4" id="section-growth_loops">
                   <SectionCard icon={TrendingUp} title={t("sections.growthLoops")} lang={lang}>
                     <JsonBlock data={plan.growth_loops} lang={lang} />
                   </SectionCard>
                 </Tabs.Content>
 
-                <Tabs.Content value="roadmap" className="space-y-4">
+                <Tabs.Content value="roadmap" className="space-y-4" id="section-execution_roadmap">
                   <SectionCard icon={CalendarIcon} title={t("sections.roadmap")} lang={lang}>
                     <JsonBlock data={plan.execution_roadmap} lang={lang} />
                   </SectionCard>
                 </Tabs.Content>
 
-                <Tabs.Content value="kpis" className="space-y-4">
+                <Tabs.Content value="kpis" className="space-y-4" id="section-kpis">
                   <div className="flex justify-end">
                     <RegenBtn section="kpis" />
                   </div>
@@ -1024,6 +1347,9 @@ export default function PlanDetailPage({
                   </SectionCard>
                 </Tabs.Content>
               </Tabs.Root>
+                </div>
+                <PlanTOC plan={plan} current={activeSectionKey} onJump={handleTocJump} />
+              </div>
             </>
           )}
         </div>

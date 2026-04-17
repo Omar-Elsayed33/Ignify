@@ -23,7 +23,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from app.core.config import settings
 from app.db.models import SocialAccount, SocialPlatform
 
-from .base import PublishResult, TokenBundle
+from .base import PublishResult, TokenBundle, get_access_token
 
 AUTH_URL = "https://www.tiktok.com/v2/auth/authorize/"
 TOKEN_URL = "https://open.tiktokapis.com/v2/oauth/token/"
@@ -113,7 +113,7 @@ class TikTokConnector:
     ) -> PublishResult:
         if not media_urls:
             raise ValueError("TikTok publish requires a video URL")
-        token = account.access_token_encrypted or ""
+        token = get_access_token(account) or ""
         video_url = media_urls[0]
 
         body = {

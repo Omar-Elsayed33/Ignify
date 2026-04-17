@@ -119,6 +119,130 @@ async def list_plans(user: CurrentUser, db: DbSession, skip: int = 0, limit: int
     return result.scalars().all()
 
 
+@router.post("/seed-sample", response_model=PlanResponse)
+async def seed_sample_plan(user: CurrentUser, db: DbSession):
+    """Idempotently create a sample read-only plan for new tenants.
+
+    Returns the existing sample if one was already seeded. Useful for empty-state UX —
+    frontend can call this when the plans list is empty to show the user what a finished
+    plan looks like without waiting for a 3-minute generation.
+    """
+    from datetime import date, timedelta
+
+    # Look for existing sample (tagged via title prefix).
+    existing = await db.execute(
+        select(MarketingPlan).where(
+            MarketingPlan.tenant_id == user.tenant_id,
+            MarketingPlan.title.like("[SAMPLE]%"),
+        ).limit(1)
+    )
+    found = existing.scalar_one_or_none()
+    if found:
+        return found
+
+    today = date.today()
+    sample = MarketingPlan(
+        tenant_id=user.tenant_id,
+        title="[SAMPLE] خطة تسويق تجريبية · 30 يوم",
+        period_start=today,
+        period_end=today + timedelta(days=30),
+        plan_mode="fast",
+        status="approved",
+        version=1,
+        primary_goal="زيادة الوعي بالعلامة التجارية + 50 عميلاً محتملاً في 30 يوم",
+        budget_monthly_usd=500.0,
+        goals=[
+            {"goal": "زيادة متابعي انستغرام بنسبة 20%", "kpi": "followers_growth", "target": "+20%"},
+            {"goal": "جذب 50 عميلاً محتملاً عبر صفحة هبوط", "kpi": "leads", "target": 50},
+            {"goal": "تحقيق 10 مبيعات من الحملة", "kpi": "sales", "target": 10},
+        ],
+        personas=[
+            {
+                "name": "سارة، مديرة تسويق شابة",
+                "age": "28-35",
+                "pain_points": ["ضيق الوقت", "ميزانية محدودة"],
+                "channels": ["instagram", "linkedin"],
+            },
+            {
+                "name": "أحمد، صاحب عمل صغير",
+                "age": "35-50",
+                "pain_points": ["قلة الظهور", "المنافسة الشديدة"],
+                "channels": ["facebook", "whatsapp"],
+            },
+        ],
+        channels=[
+            {"platform": "instagram", "frequency": "5 منشورات/أسبوع", "content_type": "reels + carousel"},
+            {"platform": "facebook", "frequency": "3 منشورات/أسبوع", "content_type": "روابط + فيديوهات"},
+            {"platform": "email", "frequency": "1 نشرة/أسبوع", "content_type": "نشرة بريدية"},
+        ],
+        kpis=[
+            {"name": "نسبة التفاعل", "target": "4%", "current": "2.1%"},
+            {"name": "تكلفة الاكتساب", "target": "$10", "current": "$18"},
+            {"name": "معدل التحويل", "target": "3.5%", "current": "1.8%"},
+        ],
+        market_analysis={
+            "summary": "السوق في مرحلة نمو سريع مع طلب مرتفع وتنافس متوسط.",
+            "swot": {
+                "strengths": ["منتج عالي الجودة", "فريق متمكن", "علاقات قوية مع العملاء"],
+                "weaknesses": ["ميزانية تسويق محدودة", "حضور رقمي ضعيف"],
+                "opportunities": ["سوق رقمي متنامٍ", "قلة المنافسين المتخصصين"],
+                "threats": ["دخول منافسين كبار", "تغيّر خوارزميات المنصات"],
+            },
+            "trends": ["تصاعد أهمية الفيديوهات القصيرة", "زيادة الثقة في المحتوى الصادق"],
+        },
+        positioning={
+            "statement": "الخيار الأذكى للأعمال الصغيرة التي تريد تسويقاً فعّالاً بدون تكلفة مرتفعة.",
+            "differentiators": ["سرعة التنفيذ", "أسعار منافسة", "دعم عربي 24/7"],
+        },
+        offer={
+            "hero": "احصل على أول شهر تسويق مجاناً عند الاشتراك السنوي.",
+            "features": ["إدارة كاملة للقنوات", "تقارير أسبوعية", "مدير حساب مخصص"],
+            "pricing_note": "خصم 20% للعملاء الجدد خلال الإطلاق.",
+        },
+        calendar=[
+            {"week": 1, "theme": "تعريف بالعلامة", "posts": 8},
+            {"week": 2, "theme": "قصص نجاح العملاء", "posts": 7},
+            {"week": 3, "theme": "محتوى تعليمي", "posts": 8},
+            {"week": 4, "theme": "عرض الإطلاق", "posts": 9},
+        ],
+        execution_roadmap=[
+            {"week": 1, "tasks": ["إعداد الحسابات", "تصميم هوية المحتوى", "إنشاء 15 قالب"]},
+            {"week": 2, "tasks": ["إطلاق أول حملة", "متابعة التفاعل اليومي"]},
+            {"week": 3, "tasks": ["تحليل أداء الأسبوعين", "تحسين الاستهداف"]},
+            {"week": 4, "tasks": ["إطلاق عرض خاص", "مراجعة شاملة للنتائج"]},
+        ],
+        funnel={
+            "stages": ["الوعي", "الاهتمام", "التفكير", "القرار", "التبني"],
+            "conversion_rates": {"awareness_to_interest": "12%", "interest_to_lead": "25%", "lead_to_customer": "15%"},
+        },
+        conversion={
+            "landing_page_elements": ["عنوان قوي", "شهادات عملاء", "CTA واضح", "فيديو توضيحي 60 ثانية"],
+            "trust_signals": ["تقييمات 5 نجوم", "ضمان استرداد الأموال", "شهادات أمان الدفع"],
+        },
+        retention={
+            "tactics": ["نشرة بريدية أسبوعية", "برنامج ولاء", "محتوى حصري للمشتركين"],
+            "target_retention": "60% بعد 3 أشهر",
+        },
+        growth_loops={
+            "referral": "عرض شهر مجاني لكل إحالة ناجحة",
+            "content_seo": "3 مقالات أسبوعياً تستهدف كلمات مفتاحية طويلة",
+        },
+        customer_journey={
+            "touchpoints": ["إعلان إنستغرام", "زيارة الموقع", "اشتراك في النشرة", "محادثة مبيعات", "شراء"],
+            "bottlenecks": ["ضعف التحويل من زيارة الموقع إلى اشتراك (3%)"],
+        },
+        ad_strategy={
+            "budget_split": {"facebook_ads": 50, "google_ads": 30, "instagram_ads": 20},
+            "top_audiences": ["مهتمون بمنتجات مماثلة خلال آخر 90 يوم", "Lookalike 1% من العملاء الحاليين"],
+        },
+        created_by=user.id,
+    )
+    db.add(sample)
+    await db.commit()
+    await db.refresh(sample)
+    return sample
+
+
 @router.post(
     "/generate",
     response_model=PlanResponse,
