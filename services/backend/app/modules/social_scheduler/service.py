@@ -1,169 +1,92 @@
-"""Social scheduler service: Meta OAuth, scheduled posts, suggestions."""
+"""Social scheduler service — orchestration layer over `app.integrations.social`.
+
+Keeps DB-shaped concerns here (SocialAccount/SocialPost CRUD, listing, cancel,
+suggest best times). Platform-specific OAuth + publish logic lives in the
+per-platform connectors under `app.integrations.social`.
+"""
 
 from __future__ import annotations
 
-import secrets
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Any
-from urllib.parse import urlencode
 
-import httpx
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
-from app.db.models import SocialAccount, SocialPlatform, SocialPost, SocialPostStatus
-
-META_SCOPES = [
-    "pages_show_list",
-    "pages_manage_posts",
-    "pages_read_engagement",
-    "instagram_basic",
-    "instagram_content_publish",
-    "ads_management",
-    "ads_read",
-    "business_management",
-]
+from app.db.models import ContentPost, SocialAccount, SocialPlatform, SocialPost, SocialPostStatus
+from app.integrations.social import get_connector
+from app.integrations.social import oauth_state
+from app.integrations.social.base import upsert_account
 
 
-# In-memory state store for OAuth (tenant binding); swap for Redis in prod
-_oauth_states: dict[str, dict[str, Any]] = {}
+# ─── OAuth orchestration ────────────────────────────────────────────────────
 
-
-def build_meta_oauth_url(tenant_id: uuid.UUID) -> tuple[str, str]:
-    state = secrets.token_urlsafe(32)
-    _oauth_states[state] = {
-        "tenant_id": str(tenant_id),
-        "created_at": datetime.now(timezone.utc).isoformat(),
-    }
-    params = {
-        "client_id": settings.META_APP_ID,
-        "redirect_uri": settings.META_REDIRECT_URI,
-        "state": state,
-        "scope": ",".join(META_SCOPES),
-        "response_type": "code",
-    }
-    url = f"https://www.facebook.com/v19.0/dialog/oauth?{urlencode(params)}"
-    return url, state
+def build_oauth_url(tenant_id: uuid.UUID, platform: str) -> tuple[str, str]:
+    """Return (auth_url, state) for the given platform, or raise ValueError."""
+    connector = get_connector(platform)
+    if connector is None:
+        raise ValueError(f"Unknown platform: {platform}")
+    if not connector.is_configured():
+        raise ValueError(f"{platform} OAuth is not configured on this server")
+    state = oauth_state.issue(tenant_id, platform)
+    return connector.build_auth_url(state), state
 
 
 def pop_oauth_state(state: str) -> dict[str, Any] | None:
-    return _oauth_states.pop(state, None)
+    return oauth_state.pop(state)
 
 
-async def handle_meta_callback(
-    db: AsyncSession, tenant_id: uuid.UUID, code: str
+# Back-compat alias — `build_meta_oauth_url` used to be called directly.
+def build_meta_oauth_url(tenant_id: uuid.UUID) -> tuple[str, str]:
+    return build_oauth_url(tenant_id, "facebook")
+
+
+async def handle_oauth_callback(
+    db: AsyncSession,
+    tenant_id: uuid.UUID,
+    platform: str,
+    code: str,
+    state: str | None = None,
 ) -> list[SocialAccount]:
-    """Exchange OAuth code for long-lived token, fetch pages, store accounts."""
-    async with httpx.AsyncClient(timeout=20.0) as client:
-        # 1) Exchange code for short-lived user token
-        token_resp = await client.get(
-            "https://graph.facebook.com/v19.0/oauth/access_token",
-            params={
-                "client_id": settings.META_APP_ID,
-                "client_secret": settings.META_APP_SECRET,
-                "redirect_uri": settings.META_REDIRECT_URI,
-                "code": code,
-            },
-        )
-        token_resp.raise_for_status()
-        short_token = token_resp.json().get("access_token")
+    """Exchange an auth code via the platform's connector and upsert accounts.
 
-        # 2) Upgrade to long-lived user token
-        long_resp = await client.get(
-            "https://graph.facebook.com/v19.0/oauth/access_token",
-            params={
-                "grant_type": "fb_exchange_token",
-                "client_id": settings.META_APP_ID,
-                "client_secret": settings.META_APP_SECRET,
-                "fb_exchange_token": short_token,
-            },
-        )
-        long_resp.raise_for_status()
-        long_data = long_resp.json()
-        long_token = long_data.get("access_token")
-        expires_in = long_data.get("expires_in")  # seconds
+    ``state`` is forwarded to connectors that need it (e.g. X's PKCE verifier
+    lookup). Connectors that don't accept it fall back cleanly.
+    """
+    connector = get_connector(platform)
+    if connector is None:
+        raise ValueError(f"Unknown platform: {platform}")
 
-        # 3) Fetch pages the user manages
-        pages_resp = await client.get(
-            "https://graph.facebook.com/v19.0/me/accounts",
-            params={"access_token": long_token, "fields": "id,name,access_token,instagram_business_account"},
-        )
-        pages_resp.raise_for_status()
-        pages = pages_resp.json().get("data", [])
-
+    try:
+        bundle = await connector.exchange_code(code, state=state)  # type: ignore[call-arg]
+    except TypeError:
+        bundle = await connector.exchange_code(code)
     stored: list[SocialAccount] = []
-    now = datetime.now(timezone.utc)
-    for page in pages:
-        page_id = page["id"]
-        page_name = page.get("name") or page_id
-        page_token = page.get("access_token") or long_token
-
-        # Facebook page
-        fb_acct = await _upsert_account(
+    for spec in bundle.accounts:
+        acct = await upsert_account(
             db,
             tenant_id=tenant_id,
-            platform=SocialPlatform.facebook,
-            account_id=page_id,
-            name=page_name,
-            access_token=page_token,
+            platform=spec["platform"],
+            account_id=spec["account_id"],
+            name=spec["name"],
+            access_token=spec["access_token"],
+            refresh_token=bundle.refresh_token,
+            expires_at=bundle.expires_at,
         )
-        stored.append(fb_acct)
-
-        # Instagram business account linked to page
-        ig = page.get("instagram_business_account") or {}
-        ig_id = ig.get("id")
-        if ig_id:
-            ig_acct = await _upsert_account(
-                db,
-                tenant_id=tenant_id,
-                platform=SocialPlatform.instagram,
-                account_id=ig_id,
-                name=f"{page_name} (IG)",
-                access_token=page_token,
-            )
-            stored.append(ig_acct)
-
+        stored.append(acct)
     await db.flush()
     return stored
 
 
-async def _upsert_account(
-    db: AsyncSession,
-    *,
-    tenant_id: uuid.UUID,
-    platform: SocialPlatform,
-    account_id: str,
-    name: str,
-    access_token: str,
-) -> SocialAccount:
-    result = await db.execute(
-        select(SocialAccount).where(
-            and_(
-                SocialAccount.tenant_id == tenant_id,
-                SocialAccount.platform == platform,
-                SocialAccount.account_id == account_id,
-            )
-        )
-    )
-    acct = result.scalar_one_or_none()
-    if acct:
-        acct.name = name
-        acct.access_token_encrypted = access_token
-        acct.is_active = True
-    else:
-        acct = SocialAccount(
-            tenant_id=tenant_id,
-            platform=platform,
-            account_id=account_id,
-            name=name,
-            access_token_encrypted=access_token,
-            is_active=True,
-        )
-        db.add(acct)
-    return acct
+# Back-compat alias for Meta-specific callback
+async def handle_meta_callback(
+    db: AsyncSession, tenant_id: uuid.UUID, code: str
+) -> list[SocialAccount]:
+    return await handle_oauth_callback(db, tenant_id, "facebook", code)
 
+
+# ─── Account CRUD ───────────────────────────────────────────────────────────
 
 def _to_account_response(acct: SocialAccount) -> dict[str, Any]:
     return {
@@ -201,6 +124,8 @@ async def disconnect_account(
     return True
 
 
+# ─── Scheduled posts ────────────────────────────────────────────────────────
+
 async def schedule_post(
     db: AsyncSession,
     tenant_id: uuid.UUID,
@@ -210,9 +135,15 @@ async def schedule_post(
     caption: str,
     media_urls: list[str],
     content_post_id: uuid.UUID | None = None,
+    publish_mode: str = "auto",
 ) -> list[SocialPost]:
-    """Create one SocialPost row per platform (with a matching SocialAccount)."""
-    # Resolve tenant accounts once
+    """Create one SocialPost row per platform.
+
+    - ``auto`` mode requires a connected SocialAccount for each platform; the
+      Celery worker will publish at ``scheduled_at``.
+    - ``manual`` mode lets users schedule reminders even for unconnected
+      platforms — we anchor the row to any active account (FK NOT NULL).
+    """
     accs_result = await db.execute(
         select(SocialAccount).where(
             SocialAccount.tenant_id == tenant_id, SocialAccount.is_active == True  # noqa: E712
@@ -224,24 +155,52 @@ async def schedule_post(
         plat = a.platform.value if hasattr(a.platform, "value") else str(a.platform)
         by_platform.setdefault(plat, a)
 
+    fallback_account = accounts[0] if accounts else None
+
     created: list[SocialPost] = []
     for plat in platforms:
         acct = by_platform.get(plat)
         if not acct:
-            # Skip silently; caller may have requested a platform not connected
-            continue
+            if publish_mode == "manual" and fallback_account is not None:
+                acct = fallback_account
+            else:
+                continue
         post = SocialPost(
             tenant_id=tenant_id,
             social_account_id=acct.id,
+            content_post_id=content_post_id,
             content=caption,
             media_urls=media_urls or [],
             status=SocialPostStatus.scheduled,
             scheduled_at=scheduled_at,
+            publish_mode=publish_mode,
         )
         db.add(post)
         created.append(post)
     await db.flush()
     return created
+
+
+async def mark_published(
+    db: AsyncSession,
+    tenant_id: uuid.UUID,
+    post_id: uuid.UUID,
+    external_url: str | None = None,
+) -> SocialPost | None:
+    result = await db.execute(
+        select(SocialPost).where(
+            SocialPost.id == post_id, SocialPost.tenant_id == tenant_id
+        )
+    )
+    post = result.scalar_one_or_none()
+    if not post:
+        return None
+    post.status = SocialPostStatus.published
+    post.published_at = datetime.now(timezone.utc)
+    if external_url:
+        post.external_post_id = external_url[:255]
+    await db.flush()
+    return post
 
 
 def _post_to_response(post: SocialPost, account: SocialAccount | None) -> dict[str, Any]:
@@ -258,6 +217,9 @@ def _post_to_response(post: SocialPost, account: SocialAccount | None) -> dict[s
         "media_urls": post.media_urls or [],
         "external_id": post.external_post_id,
         "error": None,
+        "content_post_id": post.content_post_id,
+        "content_post_title": None,
+        "publish_mode": post.publish_mode or "auto",
     }
 
 
@@ -275,7 +237,6 @@ async def list_scheduled(
     query = query.order_by(SocialPost.scheduled_at.asc().nulls_last())
     posts = (await db.execute(query)).scalars().all()
 
-    # Fetch accounts for platform resolution
     acct_ids = {p.social_account_id for p in posts}
     accts: dict[uuid.UUID, SocialAccount] = {}
     if acct_ids:
@@ -284,7 +245,23 @@ async def list_scheduled(
         ).scalars().all()
         accts = {a.id: a for a in acc_rows}
 
-    return [_post_to_response(p, accts.get(p.social_account_id)) for p in posts]
+    content_ids = {p.content_post_id for p in posts if p.content_post_id}
+    titles: dict[uuid.UUID, str] = {}
+    if content_ids:
+        cp_rows = (
+            await db.execute(
+                select(ContentPost.id, ContentPost.title).where(ContentPost.id.in_(content_ids))
+            )
+        ).all()
+        titles = {row[0]: row[1] for row in cp_rows}
+
+    out: list[dict[str, Any]] = []
+    for p in posts:
+        item = _post_to_response(p, accts.get(p.social_account_id))
+        if p.content_post_id and p.content_post_id in titles:
+            item["content_post_title"] = titles[p.content_post_id]
+        out.append(item)
+    return out
 
 
 async def cancel_scheduled(

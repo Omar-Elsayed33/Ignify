@@ -61,6 +61,37 @@ class Settings(BaseSettings):
     META_APP_SECRET: str = ""
     META_REDIRECT_URI: str = "http://localhost:8000/api/v1/social-scheduler/oauth/meta/callback"
 
+    # LinkedIn OAuth (Sign In with LinkedIn v2 + w_member_social for publishing)
+    LINKEDIN_CLIENT_ID: str = ""
+    LINKEDIN_CLIENT_SECRET: str = ""
+    LINKEDIN_REDIRECT_URI: str = "http://localhost:8000/api/v1/social-scheduler/oauth/linkedin/callback"
+
+    # X (Twitter) — OAuth 2.0 w/ PKCE
+    X_CLIENT_ID: str = ""
+    X_CLIENT_SECRET: str = ""
+    X_REDIRECT_URI: str = "http://localhost:8000/api/v1/social-scheduler/oauth/x/callback"
+
+    # YouTube — Google OAuth (separate app from SEO integration to isolate scopes)
+    YOUTUBE_CLIENT_ID: str = ""
+    YOUTUBE_CLIENT_SECRET: str = ""
+    YOUTUBE_REDIRECT_URI: str = "http://localhost:8000/api/v1/social-scheduler/oauth/youtube/callback"
+
+    # TikTok — Content Posting API
+    TIKTOK_CLIENT_KEY: str = ""
+    TIKTOK_CLIENT_SECRET: str = ""
+    TIKTOK_REDIRECT_URI: str = "http://localhost:8000/api/v1/social-scheduler/oauth/tiktok/callback"
+
+    # Snapchat — Login Kit (OAuth only; no public posting API for Stories)
+    SNAPCHAT_CLIENT_ID: str = ""
+    SNAPCHAT_CLIENT_SECRET: str = ""
+    SNAPCHAT_REDIRECT_URI: str = "http://localhost:8000/api/v1/social-scheduler/oauth/snapchat/callback"
+
+    # Google OAuth (Search Console + Analytics 4)
+    GOOGLE_OAUTH_CLIENT_ID: str = ""
+    GOOGLE_OAUTH_CLIENT_SECRET: str = ""
+    GOOGLE_OAUTH_REDIRECT_URI: str = "http://localhost:8000/api/v1/seo/integrations/oauth/google/callback"
+    GOOGLE_OAUTH_POST_REDIRECT: str = "http://localhost:3000/ar/seo/my-site"
+
     # Billing - Stripe
     STRIPE_SECRET_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""

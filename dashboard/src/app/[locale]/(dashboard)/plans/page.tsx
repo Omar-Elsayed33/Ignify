@@ -11,7 +11,7 @@ import Badge from "@/components/Badge";
 import InsightChip from "@/components/InsightChip";
 import EmptyState from "@/components/EmptyState";
 import { api } from "@/lib/api";
-import { AlertCircle, Loader2, Plus, Sparkles, FileText, ArrowRight } from "lucide-react";
+import { AlertCircle, Loader2, Plus, Sparkles, FileText, ArrowRight, FileUp } from "lucide-react";
 
 interface MarketingPlan {
   id: string;
@@ -72,12 +72,21 @@ export default function PlansPage() {
             title={t("title")}
             description={t("subtitle")}
             actions={
-              <Button
-                onClick={() => router.push("/plans/new")}
-                leadingIcon={<Plus className="h-4 w-4" />}
-              >
-                {t("generateNew")}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="secondary"
+                  onClick={() => router.push("/plans/import")}
+                  leadingIcon={<FileUp className="h-4 w-4" />}
+                >
+                  استيراد PDF
+                </Button>
+                <Button
+                  onClick={() => router.push("/plans/new")}
+                  leadingIcon={<Plus className="h-4 w-4" />}
+                >
+                  {t("generateNew")}
+                </Button>
+              </div>
             }
           />
 

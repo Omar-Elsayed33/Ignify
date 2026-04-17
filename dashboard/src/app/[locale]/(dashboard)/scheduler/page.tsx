@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import DashboardHeader from "@/components/DashboardHeader";
 import { api } from "@/lib/api";
-import { Calendar, Plus, Loader2, Users } from "lucide-react";
+import { Calendar, Plus, Loader2, Users, FileText, Check, Zap, Hand } from "lucide-react";
 import { clsx } from "clsx";
 
 interface ScheduledPost {
@@ -17,6 +17,9 @@ interface ScheduledPost {
   media_urls: string[];
   external_id: string | null;
   error: string | null;
+  content_post_id?: string | null;
+  content_post_title?: string | null;
+  publish_mode?: "auto" | "manual";
 }
 
 const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
@@ -61,6 +64,24 @@ export default function SchedulerPage() {
       .catch(() => setPosts([]))
       .finally(() => setLoading(false));
   }, [weekStart, weekEnd]);
+
+  async function markPublished(id: string) {
+    const url = window.prompt(
+      "أدخل رابط المنشور بعد نشره يدوياً (اختياري):",
+      ""
+    );
+    if (url === null) return;
+    try {
+      await api.post(`/api/v1/social-scheduler/scheduled/${id}/mark-published`, {
+        external_url: url || null,
+      });
+      setPosts((arr) =>
+        arr.map((p) => (p.id === id ? { ...p, status: "published", external_id: url } : p))
+      );
+    } catch {
+      alert("فشل التحديث");
+    }
+  }
 
   const days = useMemo(() => {
     return DAY_KEYS.map((key, idx) => {
@@ -156,15 +177,15 @@ export default function SchedulerPage() {
                         const color =
                           PLATFORM_COLORS[p.platform] ??
                           "bg-text-muted/10 text-text-muted";
+                        const isManual = p.publish_mode === "manual";
+                        const isScheduled = p.status === "scheduled";
                         return (
                           <div
                             key={p.id}
                             className="rounded-lg border border-border bg-background p-2 text-xs"
                           >
                             <div className="mb-1 flex items-center justify-between gap-2">
-                              <span className="font-medium text-text-primary">
-                                {time}
-                              </span>
+                              <span className="font-medium text-text-primary">{time}</span>
                               <span
                                 className={clsx(
                                   "rounded-full px-1.5 py-0.5 text-[10px] font-semibold capitalize",
@@ -174,14 +195,40 @@ export default function SchedulerPage() {
                                 {p.platform}
                               </span>
                             </div>
-                            <p className="line-clamp-2 text-text-secondary">
-                              {p.caption}
-                            </p>
-                            <div className="mt-1 flex items-center gap-1">
-                              <Calendar className="h-3 w-3 text-text-muted" />
-                              <span className="text-[10px] capitalize text-text-muted">
-                                {p.status}
-                              </span>
+                            {p.content_post_title && (
+                              <div className="mb-1 flex items-center gap-1 text-[10px] text-primary">
+                                <FileText className="h-3 w-3 shrink-0" />
+                                <span className="truncate">{p.content_post_title}</span>
+                              </div>
+                            )}
+                            <p className="line-clamp-2 text-text-secondary">{p.caption}</p>
+                            <div className="mt-1 flex items-center justify-between gap-1">
+                              <div className="flex items-center gap-1">
+                                <span
+                                  className={clsx(
+                                    "flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold",
+                                    isManual
+                                      ? "bg-amber-100 text-amber-700"
+                                      : "bg-emerald-100 text-emerald-700"
+                                  )}
+                                  title={isManual ? "يدوي" : "تلقائي"}
+                                >
+                                  {isManual ? <Hand className="h-2.5 w-2.5" /> : <Zap className="h-2.5 w-2.5" />}
+                                  {isManual ? "يدوي" : "تلقائي"}
+                                </span>
+                                <span className="text-[10px] capitalize text-text-muted">{p.status}</span>
+                              </div>
+                              {isManual && isScheduled && (
+                                <button
+                                  type="button"
+                                  onClick={() => markPublished(p.id)}
+                                  className="flex items-center gap-0.5 rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold text-white hover:brightness-110"
+                                  title="تأكيد النشر"
+                                >
+                                  <Check className="h-2.5 w-2.5" />
+                                  نشرت
+                                </button>
+                              )}
                             </div>
                           </div>
                         );

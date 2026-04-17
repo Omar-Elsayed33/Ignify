@@ -20,6 +20,7 @@ import {
   Edit3,
   RefreshCw,
   FileText,
+  Calendar,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -186,8 +187,7 @@ export default function ContentGenPage() {
     return () => clearInterval(interval);
   }, [generating]);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function doGenerate() {
     if (!form.brief.trim()) return;
     try {
       setGenerating(true);
@@ -205,6 +205,11 @@ export default function ContentGenPage() {
     }
   }
 
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    await doGenerate();
+  }
+
   async function handleCopy() {
     if (!result) return;
     try {
@@ -219,6 +224,11 @@ export default function ContentGenPage() {
   function handleReset() {
     setResult(null);
     setError(null);
+  }
+
+  async function handleRegenerate() {
+    // Re-run with the exact same form — no form reset, no user input needed.
+    await doGenerate();
   }
 
   return (
@@ -327,6 +337,17 @@ export default function ContentGenPage() {
                   </Button>
                   <Button
                     type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() =>
+                      router.push(`/scheduler/new?content_post_id=${result.content_item_id}`)
+                    }
+                    leadingIcon={<Calendar className="h-3.5 w-3.5" />}
+                  >
+                    جدولة النشر
+                  </Button>
+                  <Button
+                    type="button"
                     variant="primary"
                     size="sm"
                     onClick={() => router.push(`/content/${result.content_item_id}`)}
@@ -358,12 +379,26 @@ export default function ContentGenPage() {
                 </div>
               )}
 
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-2">
                 <Button
                   type="button"
                   variant="secondary"
                   onClick={handleReset}
-                  leadingIcon={<RefreshCw className="h-4 w-4" />}
+                >
+                  {t("result.newPost") ?? "جديد"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={handleRegenerate}
+                  disabled={generating}
+                  leadingIcon={
+                    generating ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4" />
+                    )
+                  }
                 >
                   {t("result.regenerate")}
                 </Button>

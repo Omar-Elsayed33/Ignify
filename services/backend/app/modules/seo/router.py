@@ -1,6 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy import select
 
 from app.db.models import SEOAudit, SEOKeyword, SEORanking
@@ -491,3 +492,141 @@ async def suggest_content(data: SEOSuggestRequest, user: CurrentUser):
         }
     )
     return out.get("content_suggestions") or {}
+
+
+# ─── Deep audit (multi-page + LLM recommendations) ──────────────────────────
+
+@router.post("/audit/deep")
+async def deep_audit_endpoint(data: SEOAuditUrlRequest, user: CurrentUser, db: DbSession):
+    """Full site audit: homepage + internal pages + robots/sitemap + LLM recommendations."""
+    from app.core.seo_audit_deep import deep_audit
+
+    result = await deep_audit(data.url, language=data.language or "ar")
+
+    # Persist as an audit row (type = 'deep')
+    audit = SEOAudit(
+        tenant_id=user.tenant_id,
+        audit_type="deep",
+        score=result.get("score"),
+        issues=result.get("site_issues") or [],
+        recommendations=result.get("recommendations") or [],
+    )
+    db.add(audit)
+    await db.flush()
+    return {**result, "audit_id": str(audit.id)}
+
+
+# ─── Integrations (Google Search Console + Google Analytics) ────────────────
+
+from app.modules.seo import integrations as gi_mod  # noqa: E402
+from fastapi.responses import RedirectResponse  # noqa: E402
+from app.db.database import async_session  # noqa: E402
+
+
+@router.get("/integrations")
+async def integrations_status(user: CurrentUser, db: DbSession):
+    """Return connection status for Search Console + Analytics."""
+    return await gi_mod.status_snapshot(db, user.tenant_id)
+
+
+@router.get("/integrations/{service}/connect")
+async def integrations_connect(service: str, user: CurrentUser):
+    """Return the Google OAuth URL to redirect the user to."""
+    if service not in gi_mod.VALID_SERVICES:
+        raise HTTPException(status_code=400, detail="Unknown service")
+    if not gi_mod.oauth_configured():
+        raise HTTPException(
+            status_code=400,
+            detail="Google OAuth not configured (missing GOOGLE_OAUTH_CLIENT_ID/SECRET env vars).",
+        )
+    try:
+        url = gi_mod.build_auth_url(user.tenant_id, service)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    return {"url": url}
+
+
+@router.get("/integrations/oauth/google/callback")
+async def integrations_oauth_callback(code: str, state: str):
+    """Google redirects here — no auth header; we resolve tenant via state token."""
+    from app.core.config import settings as app_settings
+
+    async with async_session() as db:
+        try:
+            _tenant_id, _service = await gi_mod.exchange_code(db, code, state)
+            await db.commit()
+        except Exception as e:  # noqa: BLE001
+            await db.rollback()
+            raise HTTPException(status_code=400, detail=f"OAuth callback failed: {e}") from e
+    target = app_settings.GOOGLE_OAUTH_POST_REDIRECT
+    sep = "&" if "?" in target else "?"
+    return RedirectResponse(url=f"{target}{sep}connected={_service}")
+
+
+@router.delete("/integrations/{service}", status_code=status.HTTP_204_NO_CONTENT)
+async def integrations_disconnect(service: str, user: CurrentUser, db: DbSession):
+    if service not in gi_mod.VALID_SERVICES:
+        raise HTTPException(status_code=400, detail="Unknown service")
+    await gi_mod.disconnect(db, user.tenant_id, service)
+
+
+@router.get("/integrations/search-console/sites")
+async def integrations_sc_sites(user: CurrentUser, db: DbSession):
+    try:
+        sites = await gi_mod.sc_list_sites(db, user.tenant_id)
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=str(e))
+    return {"sites": sites}
+
+
+class _SetSiteBody(BaseModel):
+    site_url: str
+
+
+@router.post("/integrations/search-console/site")
+async def integrations_sc_set_site(data: _SetSiteBody, user: CurrentUser, db: DbSession):
+    await gi_mod.sc_set_site(db, user.tenant_id, data.site_url)
+    return {"ok": True, "site_url": data.site_url}
+
+
+@router.post("/integrations/search-console/sync")
+async def integrations_sc_sync(user: CurrentUser, db: DbSession, days: int = 28):
+    try:
+        data = await gi_mod.sc_sync(db, user.tenant_id, days=days)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"GSC sync failed: {e}")
+    return data
+
+
+@router.get("/integrations/analytics/properties")
+async def integrations_ga_properties(user: CurrentUser, db: DbSession):
+    try:
+        props = await gi_mod.ga_list_properties(db, user.tenant_id)
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=str(e))
+    return {"properties": props}
+
+
+class _SetPropertyBody(BaseModel):
+    property_id: str
+
+
+@router.post("/integrations/analytics/property")
+async def integrations_ga_set_property(
+    data: _SetPropertyBody, user: CurrentUser, db: DbSession
+):
+    await gi_mod.ga_set_property(db, user.tenant_id, data.property_id)
+    return {"ok": True, "property_id": data.property_id}
+
+
+@router.post("/integrations/analytics/sync")
+async def integrations_ga_sync(user: CurrentUser, db: DbSession, days: int = 28):
+    try:
+        data = await gi_mod.ga_sync(db, user.tenant_id, days=days)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"GA sync failed: {e}")
+    return data

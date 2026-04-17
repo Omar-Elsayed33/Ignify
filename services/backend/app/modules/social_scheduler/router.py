@@ -7,6 +7,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, Query, status
 from fastapi.responses import RedirectResponse
+from pydantic import BaseModel
 
 from app.db.database import async_session
 from app.dependencies import CurrentUser, DbSession
@@ -22,28 +23,62 @@ from app.modules.social_scheduler.schemas import (
 router = APIRouter(prefix="/social-scheduler", tags=["social-scheduler"])
 
 
-@router.get("/oauth/meta/start", response_model=OAuthStartResponse)
-async def oauth_meta_start(user: CurrentUser):
-    url, state = service.build_meta_oauth_url(user.tenant_id)
+_OAUTH_PLATFORM_ALIASES = {
+    "meta": "facebook",  # /oauth/meta/* kept for back-compat
+    "facebook": "facebook",
+    "instagram": "facebook",  # IG is acquired via the same Meta OAuth
+    "linkedin": "linkedin",
+    "x": "twitter",
+    "twitter": "twitter",
+    "youtube": "youtube",
+    "tiktok": "tiktok",
+    "snapchat": "snapchat",
+}
+
+
+@router.get("/connectors")
+async def list_connectors():
+    """Expose which platform connectors are present + whether their OAuth is
+    configured on this server. Used by the frontend to show/hide Connect buttons."""
+    from app.integrations.social import iter_connectors
+
+    out = []
+    for platform, connector in iter_connectors():
+        out.append({
+            "platform": platform.value,
+            "configured": connector.is_configured(),
+            "requires_media": getattr(connector, "requires_media", False),
+            "supports_refresh": getattr(connector, "supports_refresh", False),
+        })
+    return {"connectors": out}
+
+
+@router.get("/oauth/{platform}/start", response_model=OAuthStartResponse)
+async def oauth_start(platform: str, user: CurrentUser):
+    target = _OAUTH_PLATFORM_ALIASES.get(platform, platform)
+    try:
+        url, state = service.build_oauth_url(user.tenant_id, target)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     return OAuthStartResponse(url=url, state=state)
 
 
-@router.get("/oauth/meta/callback")
-async def oauth_meta_callback(code: str, state: str):
-    """Meta redirects here; use state to resolve tenant (no auth header)."""
+@router.get("/oauth/{platform}/callback")
+async def oauth_callback(platform: str, code: str, state: str):
+    """Third-party redirects here; `state` resolves the tenant (no auth header)."""
+    target = _OAUTH_PLATFORM_ALIASES.get(platform, platform)
     bound = service.pop_oauth_state(state)
     if not bound:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired state")
     tenant_id = uuid.UUID(bound["tenant_id"])
     async with async_session() as db:
         try:
-            await service.handle_meta_callback(db, tenant_id, code)
+            await service.handle_oauth_callback(db, tenant_id, target, code, state=state)
             await db.commit()
         except Exception as exc:  # noqa: BLE001
             await db.rollback()
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"OAuth callback failed: {exc}") from exc
-    # Redirect back to dashboard accounts page
-    return RedirectResponse(url="http://localhost:3000/en/scheduler/accounts?connected=1")
+    return RedirectResponse(url=f"http://localhost:3000/ar/settings/channels?connected={target}")
 
 
 @router.get("/accounts", response_model=list[SocialAccountResponse])
@@ -68,15 +103,40 @@ async def schedule_post(data: SchedulePostRequest, user: CurrentUser, db: DbSess
         caption=data.caption,
         media_urls=data.media_urls,
         content_post_id=data.content_post_id,
+        publish_mode=data.publish_mode,
     )
     if not posts:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No connected accounts match the requested platforms",
+        detail = (
+            "Manual scheduling still requires at least one connected platform on your tenant — "
+            "connect any social account once and you can then schedule manual posts for any platform."
+            if data.publish_mode == "manual"
+            else "No connected accounts match the requested platforms"
         )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
     created_ids = {p.id for p in posts}
     all_scheduled = await service.list_scheduled(db, user.tenant_id)
     return [p for p in all_scheduled if p["id"] in created_ids]
+
+
+class _MarkPublishedBody(BaseModel):
+    external_url: str | None = None
+
+
+@router.post("/scheduled/{post_id}/mark-published", response_model=ScheduledPostResponse)
+async def mark_published(
+    post_id: uuid.UUID,
+    data: _MarkPublishedBody,
+    user: CurrentUser,
+    db: DbSession,
+):
+    post = await service.mark_published(db, user.tenant_id, post_id, data.external_url)
+    if not post:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scheduled post not found")
+    all_scheduled = await service.list_scheduled(db, user.tenant_id)
+    for p in all_scheduled:
+        if p["id"] == post_id:
+            return p
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scheduled post not found")
 
 
 @router.get("/scheduled", response_model=list[ScheduledPostResponse])

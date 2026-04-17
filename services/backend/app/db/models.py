@@ -629,15 +629,20 @@ class SocialPost(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
     social_account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("social_accounts.id"), nullable=False)
+    content_post_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("content_posts.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     content: Mapped[str] = mapped_column(Text, nullable=False)
     media_urls: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, default=list)
     status: Mapped[SocialPostStatus] = mapped_column(Enum(SocialPostStatus), default=SocialPostStatus.draft)
+    publish_mode: Mapped[str] = mapped_column(String(16), default="auto", nullable=False)
     scheduled_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     published_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     external_post_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     social_account: Mapped["SocialAccount"] = relationship()
+    content_post: Mapped[Optional["ContentPost"]] = relationship()
     metrics: Mapped[list["SocialMetric"]] = relationship(back_populates="social_post")
 
 

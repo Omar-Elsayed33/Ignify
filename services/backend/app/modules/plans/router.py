@@ -5,7 +5,7 @@ import time
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import Response, StreamingResponse
 from sqlalchemy import select
 
@@ -30,6 +30,12 @@ from app.modules.plans.service import (
     regenerate_plan_section,
 )
 from app.modules.plans.validators import validate_business_profile
+from app.modules.plans.pdf_import import (
+    Improvement,
+    analyze_plan_pdf,
+    build_plan_from_pdf,
+    extract_pdf_text,
+)
 from pydantic import BaseModel
 
 
@@ -466,4 +472,100 @@ async def approve_plan(plan_id: uuid.UUID, user: CurrentUser, db: DbSession):
     plan.status = "approved"
     await db.commit()
     await db.refresh(plan)
+    return plan
+
+
+# ─── PDF import ─────────────────────────────────────────────────────────────
+
+@router.post("/pdf/analyze", dependencies=[STRICT])
+async def pdf_analyze(
+    user: CurrentUser,
+    file: UploadFile = File(...),
+    language: str = Form("ar"),
+):
+    if not user.tenant_id:
+        raise HTTPException(status_code=403, detail="No tenant")
+    if not file.filename or not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="file_must_be_pdf")
+
+    raw = await file.read()
+    if len(raw) > 10 * 1024 * 1024:  # 10 MB cap
+        raise HTTPException(status_code=413, detail="file_too_large")
+
+    text = extract_pdf_text(raw)
+    if not text.strip():
+        raise HTTPException(
+            status_code=422,
+            detail="could_not_extract_text — PDF may be scanned/image-only",
+        )
+
+    analysis = await analyze_plan_pdf(text, language=language)
+    return {
+        "extracted_text": text,
+        "summary": analysis.summary,
+        "strengths": analysis.strengths,
+        "weaknesses": analysis.weaknesses,
+        "improvements": [
+            {
+                "id": imp.id,
+                "title": imp.title,
+                "description": imp.description,
+                "severity": imp.severity,
+            }
+            for imp in analysis.improvements
+        ],
+        "detected_sections": analysis.detected_sections,
+        "raw_text_length": analysis.raw_text_length,
+    }
+
+
+class _PdfImportBody(BaseModel):
+    text: str
+    title: str = "Imported plan"
+    language: str = "ar"
+    period_days: int = 30
+    apply_improvement_ids: list[str] = []
+    improvements: list[dict[str, Any]] = []  # full improvement objects from the analyze step
+
+
+@router.post("/pdf/import", response_model=PlanResponse, dependencies=[STRICT])
+async def pdf_import(
+    data: _PdfImportBody,
+    user: CurrentUser,
+    db: DbSession,
+):
+    if not user.tenant_id:
+        raise HTTPException(status_code=403, detail="No tenant")
+    if not data.text.strip():
+        raise HTTPException(status_code=400, detail="text_required")
+
+    selected_ids = set(data.apply_improvement_ids)
+    apply_list: list[Improvement] = []
+    for imp in data.improvements:
+        if not isinstance(imp, dict):
+            continue
+        imp_id = str(imp.get("id") or "")
+        if imp_id and imp_id in selected_ids:
+            apply_list.append(
+                Improvement(
+                    id=imp_id,
+                    title=str(imp.get("title") or ""),
+                    description=str(imp.get("description") or ""),
+                    severity=str(imp.get("severity") or "medium"),
+                )
+            )
+
+    try:
+        plan = await build_plan_from_pdf(
+            db,
+            user.tenant_id,
+            user.id,
+            text=data.text,
+            title=data.title,
+            language=data.language,
+            apply_improvements=apply_list,
+            period_days=data.period_days,
+        )
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"PDF import failed: {e}")
     return plan

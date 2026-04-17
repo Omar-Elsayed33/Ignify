@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import DashboardHeader from "@/components/DashboardHeader";
 import { api } from "@/lib/api";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, Zap, Hand, FileText } from "lucide-react";
+import { clsx } from "clsx";
 
 interface BestTimeSuggestion {
   day: string;
@@ -13,7 +15,23 @@ interface BestTimeSuggestion {
   score: number;
 }
 
-const ALL_PLATFORMS = ["facebook", "instagram"] as const;
+interface ContentPostLite {
+  id: string;
+  title: string;
+  body: string;
+  platform: string | null;
+  metadata: Record<string, unknown> | null;
+}
+
+const ALL_PLATFORMS = [
+  "facebook",
+  "instagram",
+  "linkedin",
+  "twitter",
+  "youtube",
+  "tiktok",
+  "snapchat",
+] as const;
 
 const DAY_TO_WEEKDAY: Record<string, number> = {
   mon: 1,
@@ -43,6 +61,8 @@ function toInputDateTime(d: Date): string {
 export default function NewScheduledPostPage() {
   const t = useTranslations("scheduler");
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const contentPostId = searchParams.get("content_post_id");
 
   const [caption, setCaption] = useState("");
   const [platforms, setPlatforms] = useState<string[]>(["facebook"]);
@@ -51,6 +71,21 @@ export default function NewScheduledPostPage() {
   const [submitting, setSubmitting] = useState(false);
   const [loadingBest, setLoadingBest] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [publishMode, setPublishMode] = useState<"auto" | "manual">("auto");
+  const [linkedPost, setLinkedPost] = useState<ContentPostLite | null>(null);
+
+  // Prefill from a ContentPost if ?content_post_id= is present
+  useEffect(() => {
+    if (!contentPostId) return;
+    api
+      .get<ContentPostLite>(`/api/v1/content/posts/${contentPostId}`)
+      .then((p) => {
+        setLinkedPost(p);
+        setCaption(p.body || "");
+        if (p.platform) setPlatforms([p.platform]);
+      })
+      .catch(() => setLinkedPost(null));
+  }, [contentPostId]);
 
   function togglePlatform(p: string) {
     setPlatforms((list) =>
@@ -96,6 +131,8 @@ export default function NewScheduledPostPage() {
         scheduled_at: new Date(scheduledAt).toISOString(),
         caption: caption.trim(),
         media_urls,
+        content_post_id: contentPostId || undefined,
+        publish_mode: publishMode,
       });
       router.push("/scheduler");
     } catch (err) {
@@ -118,6 +155,60 @@ export default function NewScheduledPostPage() {
               {error}
             </div>
           )}
+
+          {linkedPost && (
+            <div className="flex items-center gap-2 rounded-lg bg-emerald-50 px-4 py-2.5 text-sm">
+              <FileText className="h-4 w-4 shrink-0 text-emerald-600" />
+              <span className="font-medium text-emerald-800">
+                مرتبط بالمقال: {linkedPost.title}
+              </span>
+            </div>
+          )}
+
+          {/* Publish mode toggle */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-text-secondary">
+              وضع النشر
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setPublishMode("auto")}
+                className={clsx(
+                  "flex items-start gap-3 rounded-xl border-2 p-3 text-start transition-all",
+                  publishMode === "auto"
+                    ? "border-primary bg-primary/5"
+                    : "border-border bg-background hover:bg-surface-hover"
+                )}
+              >
+                <Zap className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">نشر تلقائي</p>
+                  <p className="text-xs text-text-muted">
+                    ينشر تلقائياً في الوقت المحدد عبر الحسابات المربوطة
+                  </p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPublishMode("manual")}
+                className={clsx(
+                  "flex items-start gap-3 rounded-xl border-2 p-3 text-start transition-all",
+                  publishMode === "manual"
+                    ? "border-primary bg-primary/5"
+                    : "border-border bg-background hover:bg-surface-hover"
+                )}
+              >
+                <Hand className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">نشر يدوي</p>
+                  <p className="text-xs text-text-muted">
+                    تذكيرك بالوقت وأنت تنشر يدوياً ثم تأكّد النشر
+                  </p>
+                </div>
+              </button>
+            </div>
+          </div>
 
           <div>
             <label className="mb-1 block text-sm font-medium text-text-secondary">

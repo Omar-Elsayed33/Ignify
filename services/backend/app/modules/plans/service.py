@@ -363,15 +363,22 @@ async def regenerate_full_plan(
     run.latency_ms = int((time.perf_counter() - started) * 1000)
     run.output = {"_traces": tracer.traces}
 
-    # Patch every known section key from the result onto the plan row
-    for key in (
+    # Patch every known section key from the result onto the plan row.
+    # swot / trends / competitors are NOT columns — merge them into market_analysis.
+    _REAL_COLUMNS = (
         "goals", "personas", "channels", "calendar", "kpis",
-        "market_analysis", "competitors", "swot", "trends", "positioning",
-        "customer_journey", "offer", "funnel", "conversion", "retention",
-        "growth_loops", "execution_roadmap",
-    ):
+        "market_analysis", "positioning", "customer_journey", "offer",
+        "funnel", "conversion", "retention", "growth_loops", "execution_roadmap",
+    )
+    for key in _REAL_COLUMNS:
         if key in result:
             setattr(plan, key, result[key])
+    # Merge embedded-in-market_analysis fields
+    embedded = {k: result[k] for k in ("swot", "trends", "competitors") if k in result}
+    if embedded:
+        ma = dict(plan.market_analysis or {})
+        ma.update(embedded)
+        plan.market_analysis = ma
 
     plan.version = (plan.version or 1) + 1
     # Regenerated plans go back to draft so the user re-reviews
