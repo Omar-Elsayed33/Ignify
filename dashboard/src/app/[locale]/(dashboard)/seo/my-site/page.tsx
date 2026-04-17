@@ -232,10 +232,10 @@ export default function MySiteSEOPage() {
   const currentPage = result?.pages[activePageIdx];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 py-4 md:px-8 md:py-6">
       {/* ── Hero ── */}
       <div className="brand-gradient rounded-3xl p-[2px] shadow-soft-lg">
-        <div className="rounded-[22px] bg-surface-container-lowest p-8">
+        <div className="rounded-[22px] bg-surface-container-lowest p-5 md:p-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <div className="mb-2 flex items-center gap-2">
@@ -244,7 +244,7 @@ export default function MySiteSEOPage() {
                   AI · SEO INTELLIGENCE
                 </span>
               </div>
-              <h1 className="font-headline text-3xl font-bold tracking-tight text-on-surface md:text-4xl">
+              <h1 className="font-headline text-2xl font-bold tracking-tight text-on-surface md:text-3xl lg:text-4xl">
                 {isAr ? "تحليل موقعك بعمق" : "Deep site analysis"}
               </h1>
               <p className="mt-2 max-w-xl text-sm leading-relaxed text-on-surface-variant">
@@ -314,7 +314,7 @@ export default function MySiteSEOPage() {
       {/* ── Loading skeleton (audit running) ── */}
       {loading && !result && (
         <>
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <SkeletonStatCard key={i} />
             ))}
@@ -342,7 +342,7 @@ export default function MySiteSEOPage() {
       {result && (
         <>
           {/* Top stats row */}
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {/* Score */}
             <div className="rounded-2xl bg-surface-container-lowest p-5 shadow-soft">
               <div className="flex items-center gap-2 mb-3">

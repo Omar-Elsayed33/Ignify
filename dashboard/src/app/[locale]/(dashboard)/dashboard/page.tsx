@@ -6,6 +6,7 @@ import { Link } from "@/i18n/navigation";
 import DashboardHeader from "@/components/DashboardHeader";
 import StatCard from "@/components/StatCard";
 import { SkeletonCard } from "@/components/Skeleton";
+import WelcomeTour from "@/components/WelcomeTour";
 import { api } from "@/lib/api";
 import {
   Users,
@@ -30,6 +31,11 @@ import {
   UserCircle,
   Mail,
   X,
+  MessageCircle,
+  Instagram,
+  Globe,
+  MessageSquare,
+  Inbox as InboxIcon,
   LucideIcon,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
@@ -88,6 +94,17 @@ interface ActionItem {
   onClick?: () => void | Promise<void>;
 }
 
+interface InboxConversation {
+  id: string;
+  channel_id: string;
+  channel_type?: string | null;
+  customer_name?: string | null;
+  customer_phone?: string | null;
+  last_message?: string | null;
+  last_message_at?: string | null;
+  updated_at: string;
+}
+
 function SkeletonStatCard() {
   return (
     <div className="animate-pulse rounded-2xl bg-surface-container-lowest p-6 shadow-soft">
@@ -120,6 +137,8 @@ export default function DashboardPage() {
   const [profileIncomplete, setProfileIncomplete] = useState<boolean>(false);
   const [incompleteSteps, setIncompleteSteps] = useState<string[]>([]);
   const [onboardingPillDismissed, setOnboardingPillDismissed] = useState<boolean>(true);
+  const [inboxConversations, setInboxConversations] = useState<InboxConversation[] | null>(null);
+  const [inboxLoading, setInboxLoading] = useState<boolean>(true);
   const user = useAuthStore((state) => state.user);
   const tenant = useAuthStore((state) => state.tenant);
 
@@ -221,6 +240,18 @@ export default function DashboardPage() {
         setPendingManualPosts(pending);
       } catch {
         // ignore
+      }
+
+      // Priority inbox messages — endpoint doesn't support priority filter; take 5 most recent.
+      try {
+        const convs = await api.get<InboxConversation[]>(
+          "/api/v1/inbox/conversations?limit=5"
+        );
+        setInboxConversations(Array.isArray(convs) ? convs.slice(0, 5) : []);
+      } catch {
+        setInboxConversations([]);
+      } finally {
+        setInboxLoading(false);
       }
 
       // Onboarding skip-ahead detection: completed=true but some step still blank.
@@ -345,6 +376,32 @@ export default function DashboardPage() {
     });
   }
 
+  function channelIconFor(type?: string | null): LucideIcon {
+    const t = (type ?? "").toLowerCase();
+    if (t.includes("whatsapp")) return MessageCircle;
+    if (t.includes("instagram")) return Instagram;
+    if (t.includes("messenger") || t.includes("facebook")) return MessageSquare;
+    if (t.includes("web")) return Globe;
+    return InboxIcon;
+  }
+
+  function timeAgo(iso?: string | null): string {
+    if (!iso) return "";
+    const then = new Date(iso).getTime();
+    if (!Number.isFinite(then)) return "";
+    const diffMs = Date.now() - then;
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return isAr ? "الآن" : "now";
+    if (mins < 60) return isAr ? `منذ ${mins} د` : `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return isAr ? `منذ ${hours} س` : `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return isAr ? `منذ ${days} ي` : `${days}d ago`;
+  }
+
+  const showInboxWidget =
+    inboxLoading || (inboxConversations && inboxConversations.length > 0);
+
   const quickActions = [
     { label: t("createContent"), icon: PenLine, tint: "bg-primary-fixed text-primary" },
     { label: t("launchCampaign"), icon: Rocket, tint: "bg-secondary-fixed text-secondary" },
@@ -354,9 +411,10 @@ export default function DashboardPage() {
 
   return (
     <div>
+      <WelcomeTour />
       <DashboardHeader title={t("title")} />
 
-      <div className="px-8 pb-12 pt-2">
+      <div className="px-4 pb-12 pt-2 md:px-8">
         <div className="mx-auto max-w-7xl space-y-10">
           {error && (
             <div className="flex items-center gap-3 rounded-2xl bg-error-container px-5 py-3 text-sm text-on-error-container">
@@ -571,14 +629,74 @@ export default function DashboardPage() {
             </div>
           )}
 
+          {/* Priority inbox messages */}
+          {showInboxWidget && (
+            <div className="rounded-3xl bg-surface-container-lowest p-6 shadow-soft">
+              <div className="mb-4 flex items-center gap-2">
+                <InboxIcon className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-bold text-on-surface">
+                  {isAr ? "رسائل اليوم ذات الأولوية" : "Today's priority messages"}
+                </h3>
+              </div>
+              {inboxLoading ? (
+                <div className="space-y-2">
+                  <SkeletonCard />
+                  <SkeletonCard />
+                </div>
+              ) : (
+                <ul className="space-y-2">
+                  {(inboxConversations ?? []).map((conv) => {
+                    const ChannelIcon = channelIconFor(conv.channel_type);
+                    const name =
+                      (conv.customer_name && conv.customer_name.trim()) ||
+                      conv.customer_phone ||
+                      (isAr ? "عميل" : "Customer");
+                    return (
+                      <li
+                        key={conv.id}
+                        className="flex items-center gap-3 rounded-2xl bg-surface-container p-3 transition-colors hover:bg-surface-container-high"
+                      >
+                        <div className="rounded-xl bg-primary-fixed p-2 text-primary">
+                          <ChannelIcon className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="truncate text-sm font-semibold text-on-surface">
+                              {name}
+                            </p>
+                            <span className="shrink-0 text-[10px] text-on-surface-variant/70">
+                              {timeAgo(conv.last_message_at ?? conv.updated_at)}
+                            </span>
+                          </div>
+                          <p className="truncate text-xs text-on-surface-variant">
+                            {conv.last_message ?? ""}
+                          </p>
+                        </div>
+                        <Link
+                          href={`/inbox?conversation_id=${conv.id}`}
+                          className="shrink-0 rounded-xl bg-primary-fixed px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary-fixed/80"
+                        >
+                          {isAr ? "رد" : "Reply"}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          )}
+
           {/* Hero */}
-          <section className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
+          <section
+            data-tour="dashboard-home"
+            className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end"
+          >
             <div className="space-y-3">
               <span className="insight-chip">
                 <Sparkles className="h-3 w-3" />
                 {t("welcome")}
               </span>
-              <h2 className="font-headline text-4xl font-bold tracking-tight text-on-surface md:text-5xl">
+              <h2 className="font-headline text-3xl font-bold tracking-tight text-on-surface md:text-4xl lg:text-5xl">
                 {t("title")}
               </h2>
               <p className="max-w-lg text-sm font-medium leading-relaxed text-on-surface-variant">

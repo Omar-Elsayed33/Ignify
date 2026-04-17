@@ -15,6 +15,7 @@ import {
   Palette,
   Users,
   Check,
+  AlertCircle,
 } from "lucide-react";
 import DashboardHeader from "@/components/DashboardHeader";
 import AIAssistButton from "@/components/AIAssistButton";
@@ -65,6 +66,10 @@ export default function SettingsBusinessProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>("business");
+  const [autosaveChip, setAutosaveChip] = useState<"saved" | "error" | null>(null);
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const chipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasHydratedRef = useRef(false);
 
   // Business fields
   const [businessName, setBusinessName] = useState("");
@@ -132,9 +137,71 @@ export default function SettingsBusinessProfilePage() {
         setError(e instanceof Error ? e.message : t("errors.failed"));
       } finally {
         setLoading(false);
+        // Allow autosave only after hydration finishes and the first render using loaded values completes.
+        setTimeout(() => {
+          hasHydratedRef.current = true;
+        }, 0);
       }
     })();
   }, [t]);
+
+  // Debounced autosave (800ms) for the Business Info section.
+  useEffect(() => {
+    if (loading || !hasHydratedRef.current) return;
+
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = setTimeout(async () => {
+      setSaving(true);
+      try {
+        await api.put("/api/v1/tenant-settings/business-profile", {
+          business_name: businessName || null,
+          industry,
+          country,
+          primary_language: primaryLanguage,
+          description,
+          target_audience: targetAudience,
+          products: products.map((p) => p.trim()).filter(Boolean),
+          competitors: competitors.map((c) => c.trim()).filter(Boolean),
+          website: website || null,
+          phone: phone || null,
+          business_email: businessEmail || null,
+        });
+        setAutosaveChip("saved");
+        if (chipTimerRef.current) clearTimeout(chipTimerRef.current);
+        chipTimerRef.current = setTimeout(() => setAutosaveChip(null), 2000);
+      } catch {
+        setAutosaveChip("error");
+        if (chipTimerRef.current) clearTimeout(chipTimerRef.current);
+        chipTimerRef.current = setTimeout(() => setAutosaveChip(null), 3000);
+      } finally {
+        setSaving(false);
+      }
+    }, 800);
+
+    return () => {
+      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    };
+  }, [
+    loading,
+    businessName,
+    industry,
+    country,
+    primaryLanguage,
+    description,
+    targetAudience,
+    products,
+    competitors,
+    website,
+    phone,
+    businessEmail,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+      if (chipTimerRef.current) clearTimeout(chipTimerRef.current);
+    };
+  }, []);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -335,7 +402,30 @@ export default function SettingsBusinessProfilePage() {
       )}
       <div className="p-6">
         <form onSubmit={saveAll} className="max-w-4xl space-y-5 rounded-xl border border-border bg-surface p-6 shadow-sm">
-          <p className="text-sm text-text-secondary">{t("subtitle")}</p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm text-text-secondary">{t("subtitle")}</p>
+            {autosaveChip && (
+              <span
+                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold transition-opacity duration-300 ${
+                  autosaveChip === "saved"
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-red-100 text-red-700"
+                }`}
+              >
+                {autosaveChip === "saved" ? (
+                  <>
+                    <Check className="h-3 w-3" />
+                    تم الحفظ
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="h-3 w-3" />
+                    فشل الحفظ
+                  </>
+                )}
+              </span>
+            )}
+          </div>
 
           {/* Tabs */}
           <div className="flex gap-1 border-b border-border">

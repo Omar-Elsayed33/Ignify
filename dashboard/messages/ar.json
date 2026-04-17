@@ -108,7 +108,8 @@
     "workspaceGroup": "مساحة العمل",
     "notifications": "الإشعارات",
     "editProfile": "تعديل الملف الشخصي",
-    "logout": "تسجيل الخروج"
+    "logout": "تسجيل الخروج",
+    "templates": "القوالب"
   },
   "experiments": {
     "title": "اختبارات محتوى A/B",

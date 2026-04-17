@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import DashboardHeader from "@/components/DashboardHeader";
-import { Loader2, AlertTriangle, ArrowUpRight, Settings2, X, Gift } from "lucide-react";
-import { api } from "@/lib/api";
+import { Loader2, AlertTriangle, ArrowUpRight, Settings2, X, Gift, Zap, Sparkles } from "lucide-react";
+import { api, ApiError } from "@/lib/api";
 import { useToast } from "@/components/Toaster";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -86,6 +86,61 @@ export default function BillingPage() {
   const [cancelReason, setCancelReason] = useState<string | null>(null);
   const [cancelNote, setCancelNote] = useState("");
   const [cancelSubmitting, setCancelSubmitting] = useState(false);
+  const [topupBusy, setTopupBusy] = useState<number | null>(null);
+  const [topupUnavailable, setTopupUnavailable] = useState(false);
+
+  const topupTiers = [
+    {
+      amount: 10,
+      fast: 800,
+      medium: 26,
+      deep: 17,
+      popular: false,
+    },
+    {
+      amount: 25,
+      fast: 2000,
+      medium: 66,
+      deep: 42,
+      popular: true,
+    },
+    {
+      amount: 50,
+      fast: 4000,
+      medium: 132,
+      deep: 85,
+      popular: false,
+    },
+  ];
+
+  async function handleTopup(amount: number) {
+    setTopupBusy(amount);
+    try {
+      const res = await api.post<{ url?: string }>(
+        "/api/v1/billing/credits/topup",
+        { amount_usd: amount }
+      );
+      if (res?.url) {
+        window.location.href = res.url;
+        return;
+      }
+      toast.success(
+        locale === "ar" ? "تم بدء عملية الشراء" : "Top-up initiated"
+      );
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 404) {
+        setTopupUnavailable(true);
+        toast.info(locale === "ar" ? "قادم قريباً" : "Coming soon");
+      } else {
+        toast.error(
+          tt("genericError"),
+          e instanceof Error ? e.message : t("errors.failed")
+        );
+      }
+    } finally {
+      setTopupBusy(null);
+    }
+  }
 
   const cancelReasons: { value: string; labelAr: string; labelEn: string }[] = [
     { value: "too_expensive", labelAr: "السعر مرتفع", labelEn: "Too expensive" },
@@ -311,6 +366,97 @@ export default function BillingPage() {
               ofLabel={t("usage.of")}
             />
           </div>
+        </div>
+
+        {/* Top-up credits */}
+        <div>
+          <div className="mb-3 flex items-center gap-2">
+            <Zap className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-semibold text-text-primary">
+              {locale === "ar" ? "شحن الرصيد" : "Top up credits"}
+            </h3>
+          </div>
+          <p className="mb-4 text-sm text-text-secondary">
+            {locale === "ar"
+              ? "أضف رصيداً فورياً لمواصلة التوليد دون انتظار التجديد الشهري."
+              : "Add credits instantly to keep generating without waiting for your monthly renewal."}
+          </p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {topupTiers.map((tier) => {
+              const isPopular = tier.popular;
+              const busy = topupBusy === tier.amount;
+              const disabled = topupUnavailable || busy;
+              return (
+                <div
+                  key={tier.amount}
+                  className={`relative flex flex-col rounded-xl border bg-surface p-5 shadow-sm transition ${
+                    isPopular
+                      ? "border-primary ring-2 ring-primary/20"
+                      : "border-border"
+                  }`}
+                >
+                  {isPopular && (
+                    <span className="absolute -top-3 start-4 inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white shadow-sm">
+                      <Sparkles className="h-3 w-3" />
+                      {locale === "ar" ? "الأكثر شعبية" : "Most popular"}
+                    </span>
+                  )}
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-bold text-text-primary">
+                      ${tier.amount}
+                    </span>
+                    <span className="text-sm text-text-muted">
+                      {locale === "ar" ? "لمرة واحدة" : "one-time"}
+                    </span>
+                  </div>
+                  <ul className="mt-4 flex-1 space-y-1.5 text-sm text-text-secondary">
+                    <li>
+                      {locale === "ar"
+                        ? `≈ ${tier.fast.toLocaleString()} توليد سريع`
+                        : `≈ ${tier.fast.toLocaleString()} fast generations`}
+                    </li>
+                    <li>
+                      {locale === "ar"
+                        ? `≈ ${tier.medium} توليد متوسط`
+                        : `≈ ${tier.medium} medium generations`}
+                    </li>
+                    <li>
+                      {locale === "ar"
+                        ? `≈ ${tier.deep} توليد عميق`
+                        : `≈ ${tier.deep} deep generations`}
+                    </li>
+                  </ul>
+                  <button
+                    onClick={() => handleTopup(tier.amount)}
+                    disabled={disabled}
+                    className={`mt-5 flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition ${
+                      topupUnavailable
+                        ? "cursor-not-allowed bg-background text-text-muted"
+                        : isPopular
+                          ? "bg-primary text-white hover:bg-primary-dark"
+                          : "border border-border bg-surface text-text-primary hover:bg-surface-hover"
+                    } disabled:opacity-60`}
+                  >
+                    {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {topupUnavailable
+                      ? locale === "ar"
+                        ? "قائمة الانتظار"
+                        : "Waitlist"
+                      : locale === "ar"
+                        ? "شراء"
+                        : "Buy"}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+          {topupUnavailable && (
+            <p className="mt-3 text-xs text-text-muted">
+              {locale === "ar"
+                ? "خاصية الشحن قادمة قريباً — سنخبرك عند توفرها."
+                : "Credit top-ups are coming soon — we'll notify you when available."}
+            </p>
+          )}
         </div>
       </div>
 

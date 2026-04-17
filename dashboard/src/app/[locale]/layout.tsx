@@ -4,6 +4,12 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import Toaster from "@/components/Toaster";
 import ConfirmProvider from "@/components/ConfirmDialog";
+import SWRegister from "@/components/SWRegister";
+
+export const metadata = {
+  manifest: "/manifest.webmanifest",
+  themeColor: "#ab3500",
+};
 
 export default async function LocaleLayout({
   children,
@@ -23,10 +29,17 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} dir={dir} suppressHydrationWarning>
+      <head>
+        <meta name="theme-color" content="#ab3500" />
+        <link rel="manifest" href="/manifest.webmanifest" />
+      </head>
       <body className="bg-surface text-on-surface antialiased">
         <NextIntlClientProvider messages={messages}>
           <Toaster>
-            <ConfirmProvider>{children}</ConfirmProvider>
+            <ConfirmProvider>
+              <SWRegister />
+              {children}
+            </ConfirmProvider>
           </Toaster>
         </NextIntlClientProvider>
       </body>

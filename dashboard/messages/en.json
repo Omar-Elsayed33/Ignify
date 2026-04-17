@@ -105,7 +105,8 @@
     "distributeGroup": "Distribute",
     "engageGroup": "Engage",
     "insightsGroup": "Insights",
-    "workspaceGroup": "Workspace"
+    "workspaceGroup": "Workspace",
+    "templates": "Templates"
   },
   "experiments": {
     "title": "A/B Content Tests",

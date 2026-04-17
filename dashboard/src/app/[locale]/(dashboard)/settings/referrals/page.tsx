@@ -6,7 +6,21 @@ import DashboardHeader from "@/components/DashboardHeader";
 import Skeleton from "@/components/Skeleton";
 import { useToast } from "@/components/Toaster";
 import { api, ApiError } from "@/lib/api";
-import { Copy, Gift, MessageCircle, Twitter, Link2, Users, Clock, CheckCircle2 } from "lucide-react";
+import { useAuthStore } from "@/store/auth.store";
+import {
+  Copy,
+  Gift,
+  MessageCircle,
+  Twitter,
+  Link2,
+  Users,
+  Clock,
+  CheckCircle2,
+  Handshake,
+  Loader2,
+  X,
+  CheckCircle,
+} from "lucide-react";
 
 interface ReferralStats {
   code: string;
@@ -23,6 +37,64 @@ export default function ReferralsPage() {
 
   const [data, setData] = useState<ReferralStats | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const { user } = useAuthStore();
+  const [affiliateOpen, setAffiliateOpen] = useState(false);
+  const [affiliateSubmitted, setAffiliateSubmitted] = useState(false);
+  const [affiliateSubmitting, setAffiliateSubmitting] = useState(false);
+  const [affFullName, setAffFullName] = useState("");
+  const [affEmail, setAffEmail] = useState("");
+  const [affUrl, setAffUrl] = useState("");
+  const [affPitch, setAffPitch] = useState("");
+
+  function openAffiliate() {
+    setAffFullName(user?.full_name ?? "");
+    setAffEmail(user?.email ?? "");
+    setAffUrl("");
+    setAffPitch("");
+    setAffiliateSubmitted(false);
+    setAffiliateOpen(true);
+  }
+
+  function closeAffiliate() {
+    setAffiliateOpen(false);
+    setTimeout(() => setAffiliateSubmitted(false), 200);
+  }
+
+  async function submitAffiliate(e: React.FormEvent) {
+    e.preventDefault();
+    if (affiliateSubmitting) return;
+    setAffiliateSubmitting(true);
+    const payload = {
+      action: "affiliate_application",
+      reason: "affiliate_application",
+      note: JSON.stringify({
+        full_name: affFullName,
+        email: affEmail,
+        url: affUrl,
+        pitch: affPitch,
+      }),
+    };
+    // Try a dedicated endpoint first, then fall back to the shared telemetry catch-all.
+    try {
+      try {
+        await api.post("/api/v1/feedback/affiliate-application", payload);
+      } catch (inner) {
+        if (inner instanceof ApiError && inner.status === 404) {
+          await api.post("/api/v1/feedback/cancellation-reason", payload);
+        } else {
+          throw inner;
+        }
+      }
+      setAffiliateSubmitted(true);
+    } catch {
+      toast.error(
+        isAr ? "تعذر الإرسال، حاول لاحقاً" : "Submission failed, try later"
+      );
+    } finally {
+      setAffiliateSubmitting(false);
+    }
+  }
 
   useEffect(() => {
     (async () => {
@@ -164,6 +236,34 @@ export default function ReferralsPage() {
             </div>
           ) : null}
 
+          {/* Affiliate program */}
+          <div className="overflow-hidden rounded-3xl border border-border bg-surface-container-lowest p-6 shadow-soft">
+            <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <Handshake className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="font-headline text-lg font-bold text-on-surface">
+                    {isAr ? "برنامج الشركاء" : "Affiliate program"}
+                  </h3>
+                  <p className="mt-1 text-sm leading-relaxed text-on-surface-variant">
+                    {isAr
+                      ? "احصل على عمولة متكررة 30% على إحالاتك المدفوعة لمدة سنة كاملة."
+                      : "Earn 30% recurring commission on paid referrals for a full year."}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={openAffiliate}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-bold text-white shadow-soft transition-all hover:bg-primary-dark"
+              >
+                <Handshake className="h-4 w-4" />
+                {isAr ? "انضم للبرنامج" : "Apply to program"}
+              </button>
+            </div>
+          </div>
+
           {/* How it works */}
           <div className="rounded-3xl bg-surface-container-lowest p-6 shadow-soft">
             <h3 className="font-headline text-lg font-bold text-on-surface">
@@ -201,6 +301,132 @@ export default function ReferralsPage() {
           </div>
         </div>
       </div>
+
+      {affiliateOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/50 p-4 backdrop-blur-sm"
+          onClick={closeAffiliate}
+        >
+          <div
+            className="w-full max-w-lg rounded-3xl bg-surface-container-lowest p-6 shadow-soft"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <Handshake className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-bold text-on-surface">
+                  {isAr ? "برنامج الشركاء" : "Affiliate program"}
+                </h3>
+              </div>
+              <button
+                onClick={closeAffiliate}
+                className="rounded-xl p-1 text-on-surface-variant hover:bg-surface-container-low"
+                aria-label={isAr ? "إغلاق" : "Close"}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {affiliateSubmitted ? (
+              <div className="flex flex-col items-center gap-3 py-6 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-500/10 text-green-600">
+                  <CheckCircle className="h-7 w-7" />
+                </div>
+                <p className="text-base font-semibold text-on-surface">
+                  {isAr
+                    ? "شكراً لتقديمك — سنتواصل خلال 48 ساعة"
+                    : "Thanks — we'll reach out within 48 hours"}
+                </p>
+                <button
+                  onClick={closeAffiliate}
+                  className="mt-2 rounded-xl border border-border px-4 py-2 text-sm font-medium text-on-surface-variant hover:bg-surface-container-low"
+                >
+                  {isAr ? "إغلاق" : "Close"}
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={submitAffiliate} className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-on-surface-variant">
+                    {isAr ? "الاسم الكامل" : "Full name"}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={affFullName}
+                    onChange={(e) => setAffFullName(e.target.value)}
+                    className="w-full rounded-2xl border border-border bg-surface-container-lowest p-3 text-sm text-on-surface outline-none focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-on-surface-variant">
+                    {isAr ? "البريد الإلكتروني" : "Email"}
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={affEmail}
+                    onChange={(e) => setAffEmail(e.target.value)}
+                    className="w-full rounded-2xl border border-border bg-surface-container-lowest p-3 text-sm text-on-surface outline-none focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-on-surface-variant">
+                    {isAr
+                      ? "رابط موقعك أو صفحتك الاجتماعية (اختياري)"
+                      : "Website / social URL (optional)"}
+                  </label>
+                  <input
+                    type="url"
+                    value={affUrl}
+                    onChange={(e) => setAffUrl(e.target.value)}
+                    placeholder="https://"
+                    className="w-full rounded-2xl border border-border bg-surface-container-lowest p-3 text-sm text-on-surface outline-none focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-on-surface-variant">
+                    {isAr
+                      ? "كيف ستروّج لـ Ignify؟"
+                      : "How will you promote Ignify?"}
+                  </label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={affPitch}
+                    onChange={(e) => setAffPitch(e.target.value)}
+                    className="w-full rounded-2xl border border-border bg-surface-container-lowest p-3 text-sm text-on-surface outline-none focus:border-primary"
+                    placeholder={
+                      isAr
+                        ? "أخبرنا عن جمهورك وطرق الترويج..."
+                        : "Tell us about your audience and channels..."
+                    }
+                  />
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={closeAffiliate}
+                    className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-on-surface-variant hover:bg-surface-container-low"
+                  >
+                    {isAr ? "إلغاء" : "Cancel"}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={affiliateSubmitting}
+                    className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark disabled:opacity-60"
+                  >
+                    {affiliateSubmitting && (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    )}
+                    {isAr ? "إرسال الطلب" : "Submit application"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

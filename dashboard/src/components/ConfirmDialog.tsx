@@ -74,7 +74,7 @@ export default function ConfirmProvider({ children }: { children: ReactNode }) {
             <div className="mt-6 flex justify-end gap-2">
               <button
                 onClick={() => settle(false)}
-                className="rounded-2xl bg-surface-container-highest px-4 py-2 text-sm font-semibold text-on-surface transition-colors hover:bg-surface-variant"
+                className="rounded-2xl bg-surface-container-highest px-4 py-2 text-sm font-semibold text-on-surface transition-colors hover:bg-surface-variant focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {opts.cancelLabel ?? "Cancel"}
               </button>
@@ -82,8 +82,8 @@ export default function ConfirmProvider({ children }: { children: ReactNode }) {
                 onClick={() => settle(true)}
                 className={
                   kind === "danger"
-                    ? "rounded-2xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700"
-                    : "brand-gradient rounded-2xl px-4 py-2 text-sm font-semibold text-white shadow-soft transition-transform hover:scale-[1.02]"
+                    ? "rounded-2xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
+                    : "brand-gradient rounded-2xl px-4 py-2 text-sm font-semibold text-white shadow-soft transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 }
               >
                 {opts.confirmLabel ?? "Confirm"}

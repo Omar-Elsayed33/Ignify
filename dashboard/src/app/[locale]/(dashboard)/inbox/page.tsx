@@ -8,7 +8,9 @@ import Card from "@/components/Card";
 import Button from "@/components/Button";
 import InsightChip from "@/components/InsightChip";
 import Badge from "@/components/Badge";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
+import { useToast } from "@/components/Toaster";
+import Modal from "@/components/Modal";
 import {
   AlertCircle,
   Loader2,
@@ -19,6 +21,8 @@ import {
   Phone,
   Globe,
   Facebook,
+  Wand2,
+  RefreshCw,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -93,6 +97,8 @@ export default function InboxPage() {
   const t = useTranslations("inbox");
   const locale = useLocale();
   const isRtl = locale === "ar";
+  const isAr = locale === "ar";
+  const toast = useToast();
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loadingList, setLoadingList] = useState(false);
@@ -107,6 +113,13 @@ export default function InboxPage() {
 
   const [lastIntent, setLastIntent] = useState<Intent | null>(null);
   const [needsHuman, setNeedsHuman] = useState(false);
+
+  // AI reply drawer state
+  const [aiReplyOpen, setAiReplyOpen] = useState(false);
+  const [aiReplyText, setAiReplyText] = useState("");
+  const [aiReplyLoading, setAiReplyLoading] = useState(false);
+  const [aiReplyConversationId, setAiReplyConversationId] = useState<string | null>(null);
+  const [aiReplySending, setAiReplySending] = useState(false);
 
   const active = useMemo(
     () => conversations.find((c) => c.id === activeId) || null,
@@ -207,6 +220,83 @@ export default function InboxPage() {
     }
   }
 
+  async function fetchAiReply(conversationId: string): Promise<string | null> {
+    try {
+      const res = await api.post<{ draft: string }>(
+        `/api/v1/inbox/conversations/${conversationId}/ai-reply`,
+        {}
+      );
+      return res?.draft || "";
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        toast.info(isAr ? "قادم قريباً" : "Coming soon");
+        return null;
+      }
+      toast.error(
+        err instanceof Error ? err.message : isAr ? "فشل التوليد" : "Failed to generate"
+      );
+      return null;
+    }
+  }
+
+  async function handleOpenAiReply(conversationId: string) {
+    setAiReplyConversationId(conversationId);
+    setAiReplyText("");
+    setAiReplyOpen(true);
+    setAiReplyLoading(true);
+    const draft = await fetchAiReply(conversationId);
+    setAiReplyLoading(false);
+    if (draft === null) {
+      setAiReplyOpen(false);
+      setAiReplyConversationId(null);
+      return;
+    }
+    setAiReplyText(draft);
+  }
+
+  async function handleRegenerateAiReply() {
+    if (!aiReplyConversationId) return;
+    setAiReplyLoading(true);
+    const draft = await fetchAiReply(aiReplyConversationId);
+    setAiReplyLoading(false);
+    if (draft !== null) setAiReplyText(draft);
+  }
+
+  async function handleSendAiReply() {
+    if (!aiReplyConversationId || !aiReplyText.trim()) return;
+    setAiReplySending(true);
+    try {
+      try {
+        await api.post(
+          `/api/v1/inbox/conversations/${aiReplyConversationId}/messages`,
+          { message: aiReplyText.trim() }
+        );
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) {
+          // Fall back to existing send endpoint
+          await api.post("/api/v1/inbox/send", {
+            conversation_id: aiReplyConversationId,
+            message: aiReplyText.trim(),
+          });
+        } else {
+          throw err;
+        }
+      }
+      toast.success(isAr ? "تم الإرسال" : "Sent");
+      setAiReplyOpen(false);
+      if (active && active.id === aiReplyConversationId) {
+        await loadMessages(active.id);
+      }
+      await loadConversations();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : isAr ? "فشل الإرسال" : "Failed to send"
+      );
+    } finally {
+      setAiReplySending(false);
+    }
+  }
+
   function intentLabel(intent: Intent | null) {
     if (!intent) return null;
     const map: Record<Intent, string> = {
@@ -257,41 +347,57 @@ export default function InboxPage() {
                     const Icon = channelIcon(c.channel_type);
                     const isActive = c.id === activeId;
                     return (
-                      <button
+                      <div
                         key={c.id}
-                        type="button"
-                        onClick={() => setActiveId(c.id)}
                         className={clsx(
-                          "flex w-full items-start gap-3 rounded-2xl p-3 text-start transition-all",
+                          "group relative flex w-full items-start gap-3 rounded-2xl p-3 text-start transition-all",
                           isActive
                             ? "bg-surface-container-lowest shadow-soft"
                             : "hover:bg-surface-container-lowest/70"
                         )}
                       >
-                        <div
-                          className={clsx(
-                            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
-                            isActive
-                              ? "brand-gradient-bg text-white shadow-soft"
-                              : "bg-surface-container-low text-on-surface-variant"
-                          )}
+                        <button
+                          type="button"
+                          onClick={() => setActiveId(c.id)}
+                          className="flex min-w-0 flex-1 items-start gap-3 text-start"
                         >
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="font-headline truncate text-sm font-bold text-on-surface">
-                              {c.customer_name || c.customer_phone || (c.channel_type || "—")}
-                            </p>
-                            <span className="shrink-0 text-[10px] font-medium text-on-surface-variant">
-                              {formatTime(c.last_message_at || c.updated_at)}
-                            </span>
+                          <div
+                            className={clsx(
+                              "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+                              isActive
+                                ? "brand-gradient-bg text-white shadow-soft"
+                                : "bg-surface-container-low text-on-surface-variant"
+                            )}
+                          >
+                            <Icon className="h-4 w-4" />
                           </div>
-                          <p className="truncate text-xs text-on-surface-variant">
-                            {c.last_message || ""}
-                          </p>
-                        </div>
-                      </button>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="font-headline truncate text-sm font-bold text-on-surface">
+                                {c.customer_name || c.customer_phone || (c.channel_type || "—")}
+                              </p>
+                              <span className="shrink-0 text-[10px] font-medium text-on-surface-variant">
+                                {formatTime(c.last_message_at || c.updated_at)}
+                              </span>
+                            </div>
+                            <p className="truncate text-xs text-on-surface-variant">
+                              {c.last_message || ""}
+                            </p>
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenAiReply(c.id);
+                          }}
+                          title={isAr ? "الرد بالذكاء الاصطناعي" : "Reply with AI"}
+                          aria-label={isAr ? "الرد بالذكاء الاصطناعي" : "Reply with AI"}
+                          className="absolute end-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary opacity-0 transition-opacity hover:bg-primary/20 group-hover:opacity-100 focus:opacity-100"
+                        >
+                          <Sparkles className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     );
                   })
                 )}
@@ -383,6 +489,15 @@ export default function InboxPage() {
                       <Button
                         variant="secondary"
                         size="sm"
+                        onClick={() => active && handleOpenAiReply(active.id)}
+                        disabled={generating || sending}
+                        leadingIcon={<Wand2 className="h-4 w-4" />}
+                      >
+                        {isAr ? "الرد بالذكاء الاصطناعي" : "Reply with AI"}
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
                         onClick={handleGenerate}
                         disabled={generating || sending}
                         leadingIcon={
@@ -418,6 +533,73 @@ export default function InboxPage() {
           </div>
         </div>
       </div>
+
+      <Modal
+        open={aiReplyOpen}
+        onOpenChange={(o) => {
+          setAiReplyOpen(o);
+          if (!o) {
+            setAiReplyConversationId(null);
+            setAiReplyText("");
+          }
+        }}
+        title={isAr ? "الرد بالذكاء الاصطناعي" : "Reply with AI"}
+        description={
+          isAr
+            ? "مراجعة المسودة قبل الإرسال. يمكنك تعديلها أو طلب إعادة التوليد."
+            : "Review the draft before sending. You can edit it or regenerate."
+        }
+      >
+        <div className="space-y-3">
+          {aiReplyLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            </div>
+          ) : (
+            <textarea
+              rows={6}
+              value={aiReplyText}
+              onChange={(e) => setAiReplyText(e.target.value)}
+              placeholder={isAr ? "مسودة الرد..." : "Draft reply..."}
+              className="w-full resize-y rounded-xl bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none transition-all focus:ring-2 focus:ring-primary/30"
+            />
+          )}
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleRegenerateAiReply}
+              disabled={aiReplyLoading || aiReplySending}
+              leadingIcon={
+                aiReplyLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )
+              }
+            >
+              {isAr ? "إعادة التوليد" : "Regenerate"}
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleSendAiReply}
+              disabled={aiReplyLoading || aiReplySending || !aiReplyText.trim()}
+              leadingIcon={
+                aiReplySending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )
+              }
+            >
+              {aiReplySending
+                ? isAr ? "جاري الإرسال..." : "Sending..."
+                : isAr ? "إرسال" : "Send"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

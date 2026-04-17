@@ -312,7 +312,7 @@ export default function ContentGenPage() {
     <div>
       <DashboardHeader title={t("title")} />
 
-      <div className="p-8">
+      <div className="p-4 md:p-8">
         <div className="mx-auto max-w-5xl space-y-8">
           <PageHeader
             eyebrow="AI · CONTENT ENGINE"
@@ -387,16 +387,16 @@ export default function ContentGenPage() {
             </Card>
           ) : result ? (
             <Card padding="lg" className="space-y-6">
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col items-start justify-between gap-4 md:flex-row">
                 <div className="min-w-0 flex-1 space-y-2">
                   <InsightChip>{t("result.title")}</InsightChip>
                   {result.title && (
-                    <h2 className="font-headline text-2xl font-bold tracking-tight text-on-surface">
+                    <h2 className="font-headline text-xl font-bold tracking-tight text-on-surface md:text-2xl">
                       {result.title}
                     </h2>
                   )}
                 </div>
-                <div className="flex shrink-0 gap-2">
+                <div className="flex flex-wrap shrink-0 gap-2">
                   <Button
                     type="button"
                     variant="secondary"
@@ -599,9 +599,16 @@ export default function ContentGenPage() {
                     <Button
                       type="submit"
                       variant="primary"
-                      leadingIcon={<Sparkles className="h-4 w-4" />}
+                      disabled={generating || !form.brief.trim()}
+                      leadingIcon={
+                        generating ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-4 w-4" />
+                        )
+                      }
                     >
-                      {t("form.submit")}
+                      {generating ? (isAr ? "جارٍ الإرسال…" : "Submitting…") : t("form.submit")}
                     </Button>
                   </div>
                 </form>

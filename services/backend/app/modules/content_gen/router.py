@@ -78,6 +78,35 @@ async def generate(data: ContentGenerateRequest, user: CurrentUser, db: DbSessio
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tenant")
     plan_ctx = await fetch_plan_context(db, user.tenant_id, data.plan_id, data.language)
     effective_brief = f"{plan_ctx}\n\n{data.brief}" if plan_ctx else data.brief
+
+    if data.variants > 1:
+        import asyncio
+
+        async def _one():
+            return await generate_content(
+                db,
+                tenant_id=user.tenant_id,
+                user_id=user.id,
+                brief=effective_brief,
+                target=data.target,
+                channel=data.channel,
+                language=data.language,
+                brand_voice=data.brand_voice,
+                model_override=data.model_override,
+                plan_id=data.plan_id,
+            )
+
+        try:
+            # Run N generations sequentially (sharing the same DB session can't be concurrent).
+            variants = []
+            for _ in range(data.variants):
+                variants.append(await _one())
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Content generation failed: {e}")
+        # Return the first variant in the primary fields, plus all as `variants` for frontend.
+        primary = variants[0]
+        return {**primary, "variants": variants}
+
     try:
         result = await generate_content(
             db,
@@ -94,6 +123,49 @@ async def generate(data: ContentGenerateRequest, user: CurrentUser, db: DbSessio
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Content generation failed: {e}")
     return result
+
+
+@router.post("/image-suggestions")
+async def image_suggestions(data: dict, user: CurrentUser, db: DbSession):
+    """Generate 4 image thumbnails to accompany a just-generated piece of content.
+
+    Body: `{content: str, language: str = "ar", count: int = 4}`. Delegates to the creative
+    generator N times with slight style variations and returns the image URLs.
+    """
+    from app.modules.creative_gen.service import generate_creative
+
+    content = str(data.get("content", "")).strip()
+    if not content:
+        raise HTTPException(status_code=400, detail="content_required")
+    language = data.get("language", "ar")
+    count = int(data.get("count", 4))
+    count = max(1, min(count, 4))
+
+    # Derive 4 distinct style seeds.
+    styles = ["modern clean", "bold illustrative", "minimal photography", "bright gradient"]
+
+    results = []
+    for i in range(count):
+        try:
+            res = await generate_creative(
+                db,
+                tenant_id=user.tenant_id,
+                user_id=user.id,
+                idea=content[:400],
+                style=styles[i % len(styles)],
+                dimensions="1080x1080",
+                language=language,
+                brand_voice=None,
+            )
+            results.append({
+                "style": styles[i % len(styles)],
+                "url": res.get("final_url") or res.get("url") or res.get("image_url"),
+                "asset_id": res.get("asset_id"),
+            })
+        except Exception as e:  # noqa: BLE001
+            results.append({"style": styles[i % len(styles)], "error": str(e)[:200]})
+
+    return {"count": len(results), "suggestions": results}
 
 
 @router.post("/bulk-generate", response_model=BulkGenerateResponse)

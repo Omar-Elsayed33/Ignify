@@ -14,6 +14,7 @@ class ContentGenerateRequest(BaseModel):
     brand_voice: dict[str, Any] | None = None
     model_override: str | None = None
     plan_id: uuid.UUID | None = None
+    variants: int = Field(1, ge=1, le=3)  # generate N independent drafts; UI can show as options
 
 
 class ContentGenerateResponse(BaseModel):

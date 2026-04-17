@@ -9,6 +9,7 @@ import { hasPermission } from "@/lib/rbac";
 import * as Avatar from "@radix-ui/react-avatar";
 import {
   LayoutDashboard,
+  LayoutGrid,
   Compass,
   Sparkles,
   FileText,
@@ -101,6 +102,7 @@ export default function Sidebar() {
   // Top-level "home" items (no children) + grouped parents
   const homeItem: NavItem = { key: "dashboard", href: "/dashboard", icon: LayoutDashboard };
   const plansItem: NavItem = { key: "plans", href: "/plans", icon: Compass };
+  const templatesItem: NavItem = { key: "templates", href: "/templates", icon: LayoutGrid };
 
   const groups: NavGroup[] = [
     {
@@ -201,6 +203,13 @@ export default function Sidebar() {
     router.push(pathname, { locale: otherLocale });
   };
 
+  const tourAttr = (key: string): Record<string, string> => {
+    if (key === "plans") return { "data-tour": "nav-plans" };
+    if (key === "contentGen") return { "data-tour": "nav-content" };
+    if (key === "settings") return { "data-tour": "nav-settings" };
+    return {};
+  };
+
   const renderTopItem = (item: NavItem) => {
     const Icon = item.icon;
     const active = isActive(item.href);
@@ -208,12 +217,13 @@ export default function Sidebar() {
       <Link
         href={item.href}
         className={clsx(
-          "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
+          "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
           active
             ? "bg-surface-container-lowest text-primary shadow-soft"
             : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
         )}
         title={collapsed ? t(item.key) : undefined}
+        {...tourAttr(item.key)}
       >
         <Icon className={clsx("h-5 w-5 shrink-0", active && "text-primary")} />
         {!collapsed && <span>{t(item.key)}</span>}
@@ -251,6 +261,7 @@ export default function Sidebar() {
         <ul className="mb-3 space-y-1">
           <li>{renderTopItem(homeItem)}</li>
           <li>{renderTopItem(plansItem)}</li>
+          <li>{renderTopItem(templatesItem)}</li>
         </ul>
 
         {/* Collapsible groups */}
@@ -290,7 +301,7 @@ export default function Sidebar() {
                   onClick={() => toggleGroup(group.id)}
                   aria-expanded={isOpen}
                   className={clsx(
-                    "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all",
+                    "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                     hasActiveChild
                       ? "text-on-surface"
                       : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
@@ -317,11 +328,12 @@ export default function Sidebar() {
                           <Link
                             href={item.href}
                             className={clsx(
-                              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all",
+                              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                               active
                                 ? "bg-surface-container-lowest font-medium text-primary shadow-soft"
                                 : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
                             )}
+                            {...tourAttr(item.key)}
                           >
                             <Icon className={clsx("h-4 w-4 shrink-0", active && "text-primary")} />
                             <span className="truncate">{t(item.key)}</span>

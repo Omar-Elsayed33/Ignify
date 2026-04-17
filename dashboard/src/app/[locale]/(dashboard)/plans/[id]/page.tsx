@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useMemo, useRef, useState, use } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";
 import DashboardHeader from "@/components/DashboardHeader";
@@ -10,7 +10,9 @@ import Button from "@/components/Button";
 import Badge from "@/components/Badge";
 import InsightChip from "@/components/InsightChip";
 import Avatar from "@/components/Avatar";
+import EmptyState from "@/components/EmptyState";
 import { api, BASE_URL, getAccessToken } from "@/lib/api";
+import { useAuthStore } from "@/store/auth.store";
 import Skeleton, { SkeletonStatCard, SkeletonText } from "@/components/Skeleton";
 import * as Tabs from "@radix-ui/react-tabs";
 import {
@@ -33,10 +35,23 @@ import {
   History,
   X,
   Trash2,
+  Sparkles,
+  MessageCircle,
+  DollarSign,
+  BarChart3,
 } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { clsx } from "clsx";
 import { useToast } from "@/components/Toaster";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip as ReTooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
 
 interface Persona {
   name?: string;
@@ -437,6 +452,500 @@ function SectionCard({
   );
 }
 
+// ---------- Inline comments (localStorage only) ----------
+
+interface PlanComment {
+  id: string;
+  text: string;
+  author: string;
+  created_at: string;
+}
+
+function commentsStorageKey(planId: string): string {
+  return `ignify_plan_comments_${planId}`;
+}
+
+function loadPlanComments(planId: string): Record<string, PlanComment[]> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(commentsStorageKey(planId));
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function savePlanComments(planId: string, data: Record<string, PlanComment[]>) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(commentsStorageKey(planId), JSON.stringify(data));
+  } catch {
+    /* quota or serialization error — ignore */
+  }
+}
+
+function SectionCommentButton({
+  planId,
+  section,
+  lang,
+  comments,
+  onChange,
+}: {
+  planId: string;
+  section: string;
+  lang: "ar" | "en";
+  comments: Record<string, PlanComment[]>;
+  onChange: (next: Record<string, PlanComment[]>) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  const authUser = useAuthStore((s) => s.user);
+  const list = comments[section] ?? [];
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Click-outside to close.
+  useEffect(() => {
+    if (!open) return;
+    function onDocClick(e: MouseEvent) {
+      if (!containerRef.current) return;
+      if (!containerRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [open]);
+
+  function addComment() {
+    const t = text.trim();
+    if (!t) return;
+    const newComment: PlanComment = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      text: t,
+      author: authUser?.full_name || (lang === "ar" ? "مستخدم" : "User"),
+      created_at: new Date().toISOString(),
+    };
+    const next = { ...comments, [section]: [...list, newComment] };
+    savePlanComments(planId, next);
+    onChange(next);
+    setText("");
+  }
+
+  function deleteComment(id: string) {
+    const next = {
+      ...comments,
+      [section]: list.filter((c) => c.id !== id),
+    };
+    savePlanComments(planId, next);
+    onChange(next);
+  }
+
+  return (
+    <div ref={containerRef} className="relative inline-block">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="inline-flex items-center gap-1.5 rounded-full bg-surface-container-low px-3 py-1.5 text-xs font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-high"
+      >
+        <MessageCircle className="h-3.5 w-3.5" />
+        {lang === "ar" ? "تعليقات" : "Comments"}
+        {list.length > 0 && (
+          <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-white">
+            {list.length}
+          </span>
+        )}
+      </button>
+      {open && (
+        <div
+          dir={lang === "ar" ? "rtl" : "ltr"}
+          className={clsx(
+            "absolute z-[80] mt-2 w-[320px] rounded-2xl bg-surface-container-lowest p-4 shadow-[0_8px_30px_rgba(0,0,0,0.15)] ring-1 ring-outline/10",
+            lang === "ar" ? "start-0" : "end-0"
+          )}
+        >
+          <div className="mb-2 flex items-center justify-between">
+            <p className="font-headline text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+              {lang === "ar" ? "التعليقات" : "Comments"}
+            </p>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              aria-label={lang === "ar" ? "إغلاق" : "Close"}
+              className="rounded-full p-1 text-on-surface-variant hover:bg-surface-container"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          <p className="mb-3 text-[11px] text-on-surface-variant/80">
+            {lang === "ar"
+              ? "التعليقات محفوظة محلياً على هذا الجهاز"
+              : "Comments stored on this device only"}
+          </p>
+
+          <div className="max-h-56 space-y-2 overflow-y-auto pe-1">
+            {list.length === 0 ? (
+              <p className="rounded-xl bg-surface-container-low p-3 text-center text-xs text-on-surface-variant">
+                {lang === "ar" ? "لا توجد تعليقات بعد" : "No comments yet"}
+              </p>
+            ) : (
+              list.map((c) => (
+                <div
+                  key={c.id}
+                  className="rounded-xl bg-surface-container-low p-3 text-xs"
+                >
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <span className="font-semibold text-on-surface">
+                      {c.author}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-on-surface-variant">
+                        {new Date(c.created_at).toLocaleString(
+                          lang === "ar" ? "ar" : "en"
+                        )}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => deleteComment(c.id)}
+                        aria-label={lang === "ar" ? "حذف" : "Delete"}
+                        className="rounded-full p-0.5 text-on-surface-variant hover:bg-error-container hover:text-on-error-container"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                  <p className="whitespace-pre-wrap text-on-surface">{c.text}</p>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="mt-3 space-y-2">
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              rows={2}
+              placeholder={
+                lang === "ar" ? "اكتب تعليقك..." : "Write a comment..."
+              }
+              className="w-full resize-none rounded-xl bg-surface-container-low p-2 text-xs text-on-surface outline-none ring-1 ring-outline/10 focus:ring-2 focus:ring-primary"
+            />
+            <div className="flex justify-end">
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={addComment}
+                disabled={!text.trim()}
+              >
+                {lang === "ar" ? "إضافة" : "Add"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------- SWOT tooltip banner ----------
+
+const SWOT_TOOLTIP_KEY = "ignify_swot_tooltip_dismissed";
+
+function SwotTooltipBanner({ lang }: { lang: "ar" | "en" }) {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const dismissed = window.localStorage.getItem(SWOT_TOOLTIP_KEY);
+    if (dismissed === "1") return;
+    setVisible(true);
+    const t = window.setTimeout(() => setVisible(false), 8000);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  function dismiss() {
+    setVisible(false);
+    try {
+      window.localStorage.setItem(SWOT_TOOLTIP_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+  }
+
+  if (!visible) return null;
+  return (
+    <div
+      className="flex items-start gap-3 rounded-2xl border border-primary/20 bg-primary-fixed/40 p-4 shadow-soft"
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
+      <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+      <p className="flex-1 text-sm font-medium text-on-surface">
+        {lang === "ar"
+          ? "هذا ما استخرجه الذكاء الاصطناعي من سوقك — راجع وأعد التوليد لتحسين النتيجة."
+          : "This is what the AI extracted from your market — review and regenerate to improve."}
+      </p>
+      <button
+        type="button"
+        onClick={dismiss}
+        aria-label={lang === "ar" ? "إغلاق" : "Dismiss"}
+        className="rounded-full p-1 text-on-surface-variant hover:bg-surface-container"
+      >
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+// ---------- ROI tab ----------
+
+interface RoiStats {
+  posts_published: number;
+  total_reach?: number | null;
+  avg_engagement_rate?: number | null;
+  leads_attributed?: number | null;
+  timeseries?: Array<{ date: string; posts: number; engagement: number }>;
+}
+
+interface ContentPostRow {
+  id: string;
+  title: string;
+  status: string;
+  published_at?: string | null;
+  created_at: string;
+  metadata?: { plan_id?: string } | null;
+}
+
+function PlanRoiTab({
+  planId,
+  lang,
+  router,
+}: {
+  planId: string;
+  lang: "ar" | "en";
+  router: ReturnType<typeof useRouter>;
+}) {
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<RoiStats | null>(null);
+  const [usedFallback, setUsedFallback] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      // Try the dedicated ROI endpoint first.
+      try {
+        const data = await api.get<RoiStats>(
+          `/api/v1/analytics/plans/${planId}/roi`
+        );
+        if (!cancelled) {
+          setStats(data);
+          setUsedFallback(false);
+        }
+      } catch (err) {
+        // 404 => endpoint not implemented yet; any other error => still fall back
+        // so the UI stays usable even if analytics is down.
+        void err;
+        // Fallback: pull all content posts and filter by plan_id.
+        try {
+          const rows = await api.get<ContentPostRow[]>(
+            `/api/v1/content/posts?plan_id=${planId}`
+          );
+          const attributed = (rows || []).filter(
+            (r) => r.metadata?.plan_id === planId
+          );
+          // Build a 30-day timeseries from created_at/published_at.
+          const today = new Date();
+          const days: Array<{ date: string; posts: number; engagement: number }> = [];
+          for (let i = 29; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(today.getDate() - i);
+            days.push({
+              date: d.toISOString().slice(0, 10),
+              posts: 0,
+              engagement: 0,
+            });
+          }
+          const index: Record<string, number> = {};
+          days.forEach((d, i) => {
+            index[d.date] = i;
+          });
+          for (const row of attributed) {
+            const when = (row.published_at || row.created_at || "").slice(0, 10);
+            const i = index[when];
+            if (i !== undefined) days[i].posts += 1;
+          }
+          const publishedCount = attributed.filter(
+            (r) => r.status === "published"
+          ).length;
+          if (!cancelled) {
+            setStats({
+              posts_published: publishedCount || attributed.length,
+              total_reach: null,
+              avg_engagement_rate: null,
+              leads_attributed: null,
+              timeseries: days,
+            });
+            setUsedFallback(true);
+          }
+        } catch {
+          if (!cancelled) {
+            setStats({
+              posts_published: 0,
+              timeseries: [],
+            });
+            setUsedFallback(true);
+          }
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [planId]);
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonStatCard key={i} />
+          ))}
+        </div>
+        <div className="rounded-2xl bg-surface-container-lowest p-6 shadow-soft">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="mt-4 h-64 w-full" />
+        </div>
+      </div>
+    );
+  }
+
+  const hasData = (stats?.posts_published ?? 0) > 0;
+
+  if (!hasData) {
+    return (
+      <EmptyState
+        icon={BarChart3}
+        title={lang === "ar" ? "لا توجد بيانات مرتبطة بعد" : "No attributed data yet"}
+        description={
+          lang === "ar"
+            ? "ابدأ بإنشاء محتوى من هذه الخطة ليظهر عائد الاستثمار هنا."
+            : "Generate content from this plan to see attributed ROI here."
+        }
+        actionLabel={
+          lang === "ar" ? "إنشاء محتوى من الخطة" : "Generate content from plan"
+        }
+        onAction={() => router.push(`/content-gen?plan_id=${planId}`)}
+      />
+    );
+  }
+
+  const statCards: Array<{ label: string; value: string; icon: React.ElementType }> = [
+    {
+      label: lang === "ar" ? "منشورات مرتبطة" : "Posts attributed",
+      value: String(stats?.posts_published ?? 0),
+      icon: FileText,
+    },
+    {
+      label: lang === "ar" ? "الوصول الإجمالي" : "Total reach",
+      value:
+        stats?.total_reach != null
+          ? stats.total_reach.toLocaleString(lang === "ar" ? "ar" : "en")
+          : "—",
+      icon: TrendingUp,
+    },
+    {
+      label: lang === "ar" ? "متوسط التفاعل" : "Avg engagement",
+      value:
+        stats?.avg_engagement_rate != null
+          ? `${(stats.avg_engagement_rate * 100).toFixed(1)}%`
+          : "—",
+      icon: Sparkles,
+    },
+    {
+      label: lang === "ar" ? "عملاء محتملون" : "Leads",
+      value:
+        stats?.leads_attributed != null
+          ? String(stats.leads_attributed)
+          : "—",
+      icon: DollarSign,
+    },
+  ];
+
+  return (
+    <div className="space-y-4" dir={lang === "ar" ? "rtl" : "ltr"}>
+      {usedFallback && (
+        <p className="text-xs text-on-surface-variant">
+          {lang === "ar"
+            ? "البيانات محسوبة من المنشورات المرتبطة — بدون مقاييس تفاعل حتى توفر endpoint العائد."
+            : "Computed from attributed posts — engagement metrics require the ROI endpoint."}
+        </p>
+      )}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {statCards.map((s, i) => (
+          <Card key={i} padding="md">
+            <div className="flex items-center gap-3">
+              <div className="brand-gradient flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-soft">
+                <s.icon className="h-4 w-4 text-white" />
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-[11px] font-semibold uppercase tracking-widest text-on-surface-variant">
+                  {s.label}
+                </p>
+                <p className="font-headline text-lg font-bold text-on-surface">
+                  {s.value}
+                </p>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      <Card padding="lg">
+        <div className="mb-4 flex items-center gap-3 border-b border-outline/10 pb-3">
+          <div className="brand-gradient flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-soft">
+            <BarChart3 className="h-4 w-4 text-white" />
+          </div>
+          <h3 className="font-headline text-base font-bold text-on-surface">
+            {lang === "ar" ? "النشاط خلال 30 يوماً" : "Activity over 30 days"}
+          </h3>
+        </div>
+        <div className="h-64 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={stats?.timeseries ?? []}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.08)" />
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 10 }}
+                tickFormatter={(v: string) => v.slice(5)}
+              />
+              <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+              <ReTooltip />
+              <Line
+                type="monotone"
+                dataKey="posts"
+                stroke="#6750A4"
+                strokeWidth={2}
+                dot={{ r: 2 }}
+                name={lang === "ar" ? "منشورات" : "Posts"}
+              />
+              <Line
+                type="monotone"
+                dataKey="engagement"
+                stroke="#10b981"
+                strokeWidth={2}
+                dot={{ r: 2 }}
+                name={lang === "ar" ? "تفاعل" : "Engagement"}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 export default function PlanDetailPage({
   params,
 }: {
@@ -484,6 +993,28 @@ export default function PlanDetailPage({
   const [approving, setApproving] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [regenSection, setRegenSection] = useState<string | null>(null);
+  const [showSwotTip, setShowSwotTip] = useState(false);
+  const [planComments, setPlanComments] = useState<Record<string, PlanComment[]>>({});
+
+  // Load comments from localStorage once the plan id is known.
+  useEffect(() => {
+    if (!id) return;
+    setPlanComments(loadPlanComments(id));
+  }, [id]);
+
+  const SectionComments = useMemo(() => {
+    const Comp = ({ section }: { section: string }) => (
+      <SectionCommentButton
+        planId={id}
+        section={section}
+        lang={lang}
+        comments={planComments}
+        onChange={setPlanComments}
+      />
+    );
+    Comp.displayName = "SectionComments";
+    return Comp;
+  }, [id, lang, planComments]);
 
   const toast = useToast();
   const [shareOpen, setShareOpen] = useState(false);
@@ -595,6 +1126,15 @@ export default function PlanDetailPage({
         { language: plan.language || "ar", note: note.trim() }
       );
       setPlan(updated);
+      // Auto-scroll to Market tab + show SWOT tip banner.
+      setActiveTab("market");
+      // Respect dismissal; the banner component checks localStorage itself.
+      setShowSwotTip(true);
+      setTimeout(() => {
+        document
+          .getElementById("section-market_analysis")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 300);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Regeneration failed");
     } finally {
@@ -682,6 +1222,7 @@ export default function PlanDetailPage({
     { value: "calendar", label: t("sections.calendar") },
     { value: "kpis", label: t("sections.kpis") },
     { value: "roadmap", label: t("sections.roadmap") },
+    { value: "roi", label: lang === "ar" ? "العائد" : "ROI" },
   ];
 
   const personas = Array.isArray(plan?.personas) ? (plan?.personas as Persona[]) : [];
@@ -736,7 +1277,7 @@ export default function PlanDetailPage({
     <div>
       <DashboardHeader title={plan?.title ?? t("title")} />
 
-      <div className="p-8">
+      <div className="p-4 md:p-8">
         <div className="space-y-8">
           <button
             onClick={() => router.push("/plans")}
@@ -1038,7 +1579,8 @@ export default function PlanDetailPage({
                 </Tabs.List>
 
                 <Tabs.Content value="overview" className="space-y-4">
-                  <div className="flex justify-end">
+                  <div className="flex justify-end gap-2">
+                    <SectionComments section="goals" />
                     <RegenBtn section="goals" />
                   </div>
                   <SectionCard icon={Target} title={t("fields.goals")} lang={lang}>
@@ -1061,6 +1603,10 @@ export default function PlanDetailPage({
                 </Tabs.Content>
 
                 <Tabs.Content value="market" className="space-y-4" id="section-market_analysis">
+                  {showSwotTip && <SwotTooltipBanner lang={lang} />}
+                  <div className="flex justify-end">
+                    <SectionComments section="market_analysis" />
+                  </div>
                   {/* SWOT — colorful grid at the top */}
                   {plan.swot !== undefined && (() => {
                     const swot = plan.swot as Record<string, unknown> | null | undefined;
@@ -1123,7 +1669,8 @@ export default function PlanDetailPage({
                 </Tabs.Content>
 
                 <Tabs.Content value="audience" className="space-y-4" id="section-personas">
-                  <div className="flex justify-end">
+                  <div className="flex justify-end gap-2">
+                    <SectionComments section="personas" />
                     <RegenBtn section="personas" />
                   </div>
                   {personas.length > 0 ? (
@@ -1155,7 +1702,8 @@ export default function PlanDetailPage({
                 </Tabs.Content>
 
                 <Tabs.Content value="channels" className="space-y-4" id="section-channels">
-                  <div className="flex justify-end">
+                  <div className="flex justify-end gap-2">
+                    <SectionComments section="channels" />
                     <RegenBtn section="channels" />
                   </div>
                   <SectionCard icon={Radio} title={t("fields.channels")} lang={lang}>
@@ -1164,7 +1712,8 @@ export default function PlanDetailPage({
                 </Tabs.Content>
 
                 <Tabs.Content value="calendar" className="space-y-4" id="section-calendar">
-                  <div className="flex justify-end">
+                  <div className="flex justify-end gap-2">
+                    <SectionComments section="calendar" />
                     <RegenBtn section="calendar" />
                   </div>
                   {calendar.length > 0 ? (
@@ -1223,24 +1772,36 @@ export default function PlanDetailPage({
                 </Tabs.Content>
 
                 <Tabs.Content value="positioning" className="space-y-4" id="section-positioning">
+                  <div className="flex justify-end">
+                    <SectionComments section="positioning" />
+                  </div>
                   <SectionCard icon={Target} title={t("sections.positioning")} lang={lang}>
                     <JsonBlock data={plan.positioning} lang={lang} />
                   </SectionCard>
                 </Tabs.Content>
 
                 <Tabs.Content value="journey" className="space-y-4" id="section-customer_journey">
+                  <div className="flex justify-end">
+                    <SectionComments section="customer_journey" />
+                  </div>
                   <SectionCard icon={Users} title={t("sections.journey")} lang={lang}>
                     <JsonBlock data={plan.customer_journey} lang={lang} />
                   </SectionCard>
                 </Tabs.Content>
 
                 <Tabs.Content value="offer" className="space-y-4" id="section-offer">
+                  <div className="flex justify-end">
+                    <SectionComments section="offer" />
+                  </div>
                   <SectionCard icon={FileText} title={t("sections.offer")} lang={lang}>
                     <JsonBlock data={plan.offer} lang={lang} />
                   </SectionCard>
                 </Tabs.Content>
 
                 <Tabs.Content value="funnel" className="space-y-5" id="section-funnel">
+                  <div className="flex justify-end">
+                    <SectionComments section="funnel" />
+                  </div>
                   <Card padding="lg" className="transition-shadow hover:shadow-md">
                     <div
                       className="mb-5 flex items-center gap-3 border-b border-outline/10 pb-4"
@@ -1315,36 +1876,53 @@ export default function PlanDetailPage({
                 </Tabs.Content>
 
                 <Tabs.Content value="conversion" className="space-y-4" id="section-conversion">
+                  <div className="flex justify-end">
+                    <SectionComments section="conversion" />
+                  </div>
                   <SectionCard icon={Radio} title={t("sections.conversion")} lang={lang}>
                     <JsonBlock data={plan.conversion} lang={lang} />
                   </SectionCard>
                 </Tabs.Content>
 
                 <Tabs.Content value="retention" className="space-y-4" id="section-retention">
+                  <div className="flex justify-end">
+                    <SectionComments section="retention" />
+                  </div>
                   <SectionCard icon={Users} title={t("sections.retention")} lang={lang}>
                     <JsonBlock data={plan.retention} lang={lang} />
                   </SectionCard>
                 </Tabs.Content>
 
                 <Tabs.Content value="growthLoops" className="space-y-4" id="section-growth_loops">
+                  <div className="flex justify-end">
+                    <SectionComments section="growth_loops" />
+                  </div>
                   <SectionCard icon={TrendingUp} title={t("sections.growthLoops")} lang={lang}>
                     <JsonBlock data={plan.growth_loops} lang={lang} />
                   </SectionCard>
                 </Tabs.Content>
 
                 <Tabs.Content value="roadmap" className="space-y-4" id="section-execution_roadmap">
+                  <div className="flex justify-end">
+                    <SectionComments section="execution_roadmap" />
+                  </div>
                   <SectionCard icon={CalendarIcon} title={t("sections.roadmap")} lang={lang}>
                     <JsonBlock data={plan.execution_roadmap} lang={lang} />
                   </SectionCard>
                 </Tabs.Content>
 
                 <Tabs.Content value="kpis" className="space-y-4" id="section-kpis">
-                  <div className="flex justify-end">
+                  <div className="flex justify-end gap-2">
+                    <SectionComments section="kpis" />
                     <RegenBtn section="kpis" />
                   </div>
                   <SectionCard icon={TrendingUp} title={t("fields.kpis")} lang={lang}>
                     <JsonBlock data={plan.kpis} lang={lang} />
                   </SectionCard>
+                </Tabs.Content>
+
+                <Tabs.Content value="roi" className="space-y-4" id="section-roi">
+                  <PlanRoiTab planId={plan.id} lang={lang} router={router} />
                 </Tabs.Content>
               </Tabs.Root>
                 </div>

@@ -21,7 +21,8 @@
     "@radix-ui/react-avatar": "^1.1.2",
     "lucide-react": "^0.468.0",
     "recharts": "^2.15.0",
-    "clsx": "^2.1.1"
+    "clsx": "^2.1.1",
+    "@sentry/nextjs": "^8.0.0"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

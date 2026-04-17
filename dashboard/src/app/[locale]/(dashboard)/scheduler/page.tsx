@@ -11,6 +11,7 @@ import { useConfirm } from "@/components/ConfirmDialog";
 import Skeleton from "@/components/Skeleton";
 import {
   AlertTriangle,
+  BarChart3,
   Calendar,
   Check,
   ChevronLeft,
@@ -349,7 +350,7 @@ export default function SchedulerPage() {
             <p className="text-sm text-text-muted">{t("subtitle")}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex rounded-2xl bg-surface-container-highest p-1">
+            <div className="hidden rounded-2xl bg-surface-container-highest p-1 lg:inline-flex">
               <button
                 type="button"
                 onClick={() => setView("week")}
@@ -419,6 +420,171 @@ export default function SchedulerPage() {
           </div>
         </div>
 
+        {/* Mobile list view (< lg) */}
+        <div className="lg:hidden">
+          {loading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="rounded-xl border border-border bg-surface p-3"
+                >
+                  <Skeleton className="h-4 w-1/3" />
+                  <Skeleton className="mt-2 h-3 w-full" />
+                </div>
+              ))}
+            </div>
+          ) : posts.length === 0 ? (
+            <EmptyState
+              icon={Calendar}
+              title={isAr ? "لا توجد منشورات مجدولة" : "No scheduled posts"}
+              description={
+                isAr
+                  ? "جدول منشوراتك على منصات التواصل ليتم نشرها تلقائياً أو متابعتها يدوياً."
+                  : "Schedule posts on social platforms to publish automatically or track manually."
+              }
+              actionLabel={t("calendar.newPost")}
+              onAction={() => router.push("/scheduler/new")}
+            />
+          ) : (
+            (() => {
+              // Group by date (upcoming only: >= today), sorted chronologically
+              const sorted = posts
+                .filter((p) => !!p.scheduled_at)
+                .slice()
+                .sort((a, b) =>
+                  (a.scheduled_at || "").localeCompare(b.scheduled_at || "")
+                );
+              const groups: Record<string, ScheduledPost[]> = {};
+              for (const p of sorted) {
+                const key = toISODate(new Date(p.scheduled_at as string));
+                (groups[key] ||= []).push(p);
+              }
+              const dateKeys = Object.keys(groups).sort();
+              return (
+                <div className="space-y-5">
+                  {dateKeys.map((dkey) => {
+                    const dayPosts = groups[dkey];
+                    const dateObj = new Date(dkey);
+                    const label = dateObj.toLocaleDateString(isAr ? "ar" : "en", {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                    });
+                    return (
+                      <section key={dkey}>
+                        <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-text-muted">
+                          {label}
+                        </h3>
+                        <ul className="space-y-2">
+                          {dayPosts.map((p) => {
+                            const time = p.scheduled_at
+                              ? new Date(p.scheduled_at).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
+                              : "--";
+                            const color =
+                              PLATFORM_COLORS[p.platform] ??
+                              "bg-text-muted/10 text-text-muted";
+                            const isManual = p.publish_mode === "manual";
+                            const hasConflict = conflictIds.has(p.id);
+                            const href = `/scheduler/new?edit=${encodeURIComponent(p.id)}`;
+                            return (
+                              <li key={p.id}>
+                                <div
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={() => router.push(href)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter" || e.key === " ") {
+                                      e.preventDefault();
+                                      router.push(href);
+                                    }
+                                  }}
+                                  className="flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-surface p-3 transition-colors hover:bg-surface-hover"
+                                >
+                                  <span
+                                    className={clsx(
+                                      "mt-0.5 shrink-0 rounded-full px-2 py-1 text-[10px] font-bold capitalize",
+                                      color
+                                    )}
+                                  >
+                                    {p.platform.slice(0, 2)}
+                                  </span>
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center justify-between gap-2">
+                                      <span className="text-sm font-semibold text-text-primary">
+                                        {time}
+                                      </span>
+                                      <div className="flex items-center gap-1">
+                                        {hasConflict && (
+                                          <span
+                                            className="inline-flex items-center gap-0.5 rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-bold text-red-700"
+                                            title={
+                                              isAr
+                                                ? "تعارض في التوقيت"
+                                                : "Timing conflict"
+                                            }
+                                          >
+                                            <AlertTriangle className="h-2.5 w-2.5" />
+                                            {isAr ? "تعارض" : "Conflict"}
+                                          </span>
+                                        )}
+                                        <span
+                                          className={clsx(
+                                            "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold",
+                                            isManual
+                                              ? "bg-amber-100 text-amber-700"
+                                              : "bg-emerald-100 text-emerald-700"
+                                          )}
+                                        >
+                                          {isManual ? (
+                                            <Hand className="h-2.5 w-2.5" />
+                                          ) : (
+                                            <Zap className="h-2.5 w-2.5" />
+                                          )}
+                                          {isManual
+                                            ? isAr ? "يدوي" : "Manual"
+                                            : isAr ? "تلقائي" : "Auto"}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <p className="mt-0.5 line-clamp-1 text-xs text-text-secondary">
+                                      {p.caption}
+                                    </p>
+                                    <div className="mt-1 flex items-center justify-between gap-2">
+                                      <span className="text-[10px] capitalize text-text-muted">
+                                        {p.status}
+                                      </span>
+                                      {p.status === "published" && p.content_post_id && (
+                                        <Link
+                                          href={`/content/posts/${p.content_post_id}/analytics`}
+                                          onClick={(e) => e.stopPropagation()}
+                                          className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary hover:bg-primary/20"
+                                        >
+                                          <BarChart3 className="h-3 w-3" />
+                                          {isAr ? "التحليلات" : "Analytics"}
+                                        </Link>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </section>
+                    );
+                  })}
+                </div>
+              );
+            })()
+          )}
+        </div>
+
+        {/* Desktop grid views (>= lg) */}
+        <div className="hidden lg:block">
         {loading ? (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-7">
             {Array.from({ length: 7 }).map((_, i) => (
@@ -499,7 +665,7 @@ export default function SchedulerPage() {
                               checked={isSelected}
                               onChange={() => toggleSelected(p.id)}
                               aria-label={isAr ? "تحديد" : "Select"}
-                              className="absolute top-2 start-2 h-3.5 w-3.5 cursor-pointer accent-primary"
+                              className="absolute top-2 start-2 h-3.5 w-3.5 cursor-pointer accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
                             />
                             <div className="mb-1 flex items-center justify-between gap-2">
                               <span className="font-medium text-text-primary">{time}</span>
@@ -558,6 +724,16 @@ export default function SchedulerPage() {
                                   <Check className="h-2.5 w-2.5" />
                                   نشرت
                                 </button>
+                              )}
+                              {p.status === "published" && p.content_post_id && (
+                                <Link
+                                  href={`/content/posts/${p.content_post_id}/analytics`}
+                                  className="inline-flex items-center gap-0.5 rounded-full border border-primary/30 bg-transparent px-1.5 py-0.5 text-[9px] font-bold text-primary hover:bg-primary/10"
+                                  title={isAr ? "عرض التحليلات" : "View analytics"}
+                                >
+                                  <BarChart3 className="h-2.5 w-2.5" />
+                                  {isAr ? "التحليلات" : "Analytics"}
+                                </Link>
                               )}
                             </div>
                           </div>
@@ -629,7 +805,7 @@ export default function SchedulerPage() {
                               checked={isSelected}
                               onChange={() => toggleSelected(p.id)}
                               aria-label={isAr ? "تحديد" : "Select"}
-                              className="absolute top-1/2 start-1 h-3 w-3 -translate-y-1/2 cursor-pointer accent-primary"
+                              className="absolute top-1/2 start-1 h-3 w-3 -translate-y-1/2 cursor-pointer accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
                             />
                             <span
                               className={clsx(
@@ -673,10 +849,11 @@ export default function SchedulerPage() {
             </div>
           </div>
         )}
+        </div>
       </div>
 
       {selected.size > 0 && (
-        <div className="fixed inset-x-4 bottom-20 z-30 mx-auto flex max-w-xl items-center justify-between rounded-3xl bg-on-surface px-5 py-3 text-surface shadow-[0_8px_30px_rgba(0,0,0,0.3)] lg:bottom-4">
+        <div className="fixed inset-x-4 bottom-20 z-30 mx-auto hidden max-w-xl items-center justify-between rounded-3xl bg-on-surface px-5 py-3 text-surface shadow-[0_8px_30px_rgba(0,0,0,0.3)] lg:bottom-4 lg:flex">
           <span className="text-sm font-semibold">
             {isAr ? `${selected.size} محدد` : `${selected.size} selected`}
           </span>

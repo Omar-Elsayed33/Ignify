@@ -878,9 +878,16 @@ export default function NewPlanPage() {
                   <Button
                     type="submit"
                     variant="primary"
-                    leadingIcon={<Sparkles className="h-4 w-4" />}
+                    disabled={generating || !form.title.trim()}
+                    leadingIcon={
+                      generating ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-4 w-4" />
+                      )
+                    }
                   >
-                    {t("form.submit")}
+                    {generating ? (locale === "ar" ? "جارٍ الإرسال…" : "Submitting…") : t("form.submit")}
                   </Button>
                 </div>
               </form>

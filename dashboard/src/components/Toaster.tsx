@@ -98,7 +98,7 @@ export default function Toaster({ children }: { children: ReactNode }) {
               </div>
               <Toast.Close
                 aria-label="Close"
-                className="shrink-0 rounded-full p-1 text-on-surface-variant hover:bg-surface-container"
+                className="shrink-0 rounded-full p-1 text-on-surface-variant hover:bg-surface-container focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </Toast.Close>

@@ -11,6 +11,7 @@ export interface User {
   email_verified?: boolean;
   email_verified_at?: string | null;
   tenant_id?: string;
+  created_at?: string | null;
 }
 
 export interface Tenant {

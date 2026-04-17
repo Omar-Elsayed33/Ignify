@@ -45,6 +45,17 @@ const CURRENCY_SYMBOL: Record<Currency, string> = {
   aed: "AED ",
 };
 
+// MENA 50%-off overrides, keyed by plan code → currency → monthly price
+const MENA_PRICE_OVERRIDES: Record<string, Partial<Record<Currency, number>>> = {
+  starter: { egp: 450, sar: 55, aed: 55 },
+  pro: { egp: 1500, sar: 185, aed: 180 },
+  agency: { egp: 4500, sar: 565, aed: 555 },
+};
+
+function isMenaCurrency(c: Currency): boolean {
+  return c === "egp" || c === "sar" || c === "aed";
+}
+
 function providersForCurrency(currency: Currency): Provider[] {
   if (currency === "usd") return ["stripe"];
   if (currency === "egp") return ["paymob", "paytabs", "geidea"];
@@ -120,6 +131,10 @@ export default function PlansPage() {
   }
 
   function getDisplayPrice(plan: PlanItem, c: Currency): number {
+    // MENA override wins: use 50%-off localized price
+    const menaOverride = MENA_PRICE_OVERRIDES[plan.code]?.[c];
+    if (typeof menaOverride === "number") return menaOverride;
+
     const key = c.toUpperCase();
     const entry = plan.prices?.[key];
     if (entry && typeof entry.monthly === "number") return entry.monthly;
@@ -155,8 +170,8 @@ export default function PlansPage() {
   return (
     <div>
       <DashboardHeader title={t("plans.title")} />
-      <div className="p-6">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div className="p-4 md:p-6">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <p className="text-sm text-text-secondary">{t("plans.subtitle")}</p>
           <div className="flex rounded-lg border border-border bg-surface p-1">
             {CURRENCIES.map((c) => (
@@ -201,6 +216,26 @@ export default function PlansPage() {
           </div>
         </div>
 
+        {isMenaCurrency(currency) && (
+          <div className="mb-6 rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent px-5 py-4">
+            <div className="flex items-start gap-3">
+              <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <div>
+                <p className="text-sm font-semibold text-on-surface">
+                  {locale === "ar"
+                    ? "أسعار خاصة لمنطقة الشرق الأوسط وشمال أفريقيا — خصم 50%"
+                    : "Special MENA pricing — 50% off"}
+                </p>
+                <p className="mt-1 text-xs text-on-surface-variant">
+                  {locale === "ar"
+                    ? "أسعار معدّلة لعملتك المحلية مقارنة بالسعر العالمي بالدولار."
+                    : "Localized pricing in your regional currency vs. global USD."}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {plans.map((plan) => {
             const name = locale === "ar" ? plan.name_ar : plan.name_en;
@@ -209,6 +244,13 @@ export default function PlansPage() {
             const price =
               billingCycle === "yearly" ? yearlyTotal : monthlyPrice;
             const isCurrent = currentCode === plan.code;
+            const showMenaDiscount =
+              isMenaCurrency(currency) &&
+              typeof MENA_PRICE_OVERRIDES[plan.code]?.[currency] === "number";
+            const usdMonthly = plan.price_usd;
+            const usdYearly = Math.round(usdMonthly * 12 * 0.83);
+            const usdOriginal =
+              billingCycle === "yearly" ? usdYearly : usdMonthly;
             return (
               <div
                 key={plan.id}
@@ -239,6 +281,16 @@ export default function PlansPage() {
                         : "yr"
                       : t("plans.perMonth")}
                   </span>
+                  {showMenaDiscount && (
+                    <div className="mt-1 text-xs text-text-muted">
+                      <span className="line-through">
+                        ${usdOriginal.toLocaleString()}
+                      </span>{" "}
+                      <span className="font-medium text-success">
+                        {locale === "ar" ? "خصم 50%" : "50% off"}
+                      </span>
+                    </div>
+                  )}
                   {billingCycle === "yearly" && (
                     <div className="mt-1 text-xs text-text-muted">
                       <span className="line-through">

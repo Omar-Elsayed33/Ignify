@@ -121,10 +121,10 @@ export default function SecurityPage() {
     <div>
       <DashboardHeader title={isAr ? "الأمان والخصوصية" : "Security & Privacy"} />
 
-      <div className="px-8 pb-12 pt-2">
+      <div className="px-4 pb-12 pt-2 md:px-8">
         <div className="mx-auto max-w-4xl space-y-4">
           <div className="rounded-3xl bg-surface-container-lowest p-6 shadow-soft">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
               <div>
                 <h3 className="text-base font-bold text-on-surface">
                   {isAr ? "تصدير بياناتي" : "Export my data"}
@@ -146,7 +146,7 @@ export default function SecurityPage() {
           </div>
 
           <div className="rounded-3xl bg-surface-container-lowest p-6 shadow-soft">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
               <div>
                 <h3 className="text-base font-bold text-red-600 dark:text-red-400">
                   {isAr ? "حذف الحساب" : "Delete account"}

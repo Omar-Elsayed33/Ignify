@@ -1040,8 +1040,15 @@ def build_plan_pdf(
     lang: str = "en",
     tenant_name: str | None = None,
     tenant_logo_url: str | None = None,
+    brand_primary: str | None = None,
+    brand_accent: str | None = None,
+    brand_tagline: str | None = None,
 ) -> bytes:
-    """Produce a full marketing plan PDF from a MarketingPlan ORM row or dict."""
+    """Produce a full marketing plan PDF from a MarketingPlan ORM row or dict.
+
+    If brand colors/tagline are provided, the PDF begins with a branded cover page
+    before the existing content. Colors should be CSS-valid (e.g. `#d4af37`, `rgb(...)`).
+    """
     if hasattr(plan_row, "__table__"):  # ORM row
         plan = {
             "title": plan_row.title,
@@ -1074,9 +1081,24 @@ def build_plan_pdf(
             "plan": plan,
             "tenant_name": tenant_name or "",
             "tenant_logo_url": tenant_logo_url or "",
+            "brand_tagline": brand_tagline or "",
         },
         lang,
     )
+
+    # Inject a brand-color override at the top of <style> if provided.
+    if brand_primary or brand_accent:
+        primary = brand_primary or "#111"
+        accent = brand_accent or primary
+        override = (
+            f"<style>:root {{ --brand-primary: {primary}; --brand-accent: {accent}; }}"
+            f" .cover .logo-strip, .badge, h1, h2, h3 {{ color: {primary}; }}"
+            f" .cover {{ border-top: 8px solid {accent}; }}"
+            f"</style>"
+        )
+        # Insert right before </head> so it takes precedence over inline template CSS.
+        html = html.replace("</head>", override + "</head>", 1)
+
     return html_to_pdf(html)
 
 

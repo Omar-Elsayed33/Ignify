@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useEffect, useRef, useState } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import DashboardHeader from "@/components/DashboardHeader";
-import { Loader2, Save, Building2, Radio, UserPlus, Shield, User, Lock, Check, AlertCircle, Calendar, Badge as BadgeIcon, Key, Webhook, Gift } from "lucide-react";
+import { Loader2, Save, Building2, Radio, UserPlus, Shield, User, Lock, Check, AlertCircle, Calendar, Badge as BadgeIcon, Key, Webhook, Gift, LayoutGrid } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
@@ -23,6 +23,7 @@ const inputCls =
 
 export default function SettingsPage() {
   const t = useTranslations("settingsPage");
+  const locale = useLocale();
   const { user, setUser } = useAuthStore();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -33,6 +34,10 @@ export default function SettingsPage() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [autosaveChip, setAutosaveChip] = useState<"saved" | "error" | null>(null);
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const chipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSavedNameRef = useRef<string>("");
 
   // Password fields
   const [currentPassword, setCurrentPassword] = useState("");
@@ -48,12 +53,54 @@ export default function SettingsPage() {
       .then((data) => {
         setProfile(data);
         setFullName(data.full_name);
+        lastSavedNameRef.current = data.full_name;
       })
       .finally(() => setLoading(false));
   }, []);
 
+  // Debounced autosave for full_name (800ms after last keystroke)
+  useEffect(() => {
+    if (loading || !profile) return;
+    const trimmed = fullName.trim();
+    if (!trimmed) return;
+    if (trimmed === lastSavedNameRef.current) return;
+
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = setTimeout(async () => {
+      setSavingProfile(true);
+      setProfileError(null);
+      try {
+        const updated = await api.patch<UserProfile>("/api/v1/auth/me", { full_name: trimmed });
+        setProfile(updated);
+        if (setUser) setUser({ ...user!, full_name: updated.full_name });
+        lastSavedNameRef.current = updated.full_name;
+        setAutosaveChip("saved");
+        if (chipTimerRef.current) clearTimeout(chipTimerRef.current);
+        chipTimerRef.current = setTimeout(() => setAutosaveChip(null), 2000);
+      } catch {
+        setAutosaveChip("error");
+        if (chipTimerRef.current) clearTimeout(chipTimerRef.current);
+        chipTimerRef.current = setTimeout(() => setAutosaveChip(null), 3000);
+      } finally {
+        setSavingProfile(false);
+      }
+    }, 800);
+
+    return () => {
+      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    };
+  }, [fullName, loading, profile, setUser, user]);
+
+  useEffect(() => {
+    return () => {
+      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+      if (chipTimerRef.current) clearTimeout(chipTimerRef.current);
+    };
+  }, []);
+
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault();
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     setSavingProfile(true);
     setProfileError(null);
     setProfileSuccess(false);
@@ -61,6 +108,7 @@ export default function SettingsPage() {
       const updated = await api.patch<UserProfile>("/api/v1/auth/me", { full_name: fullName });
       setProfile(updated);
       if (setUser) setUser({ ...user!, full_name: updated.full_name });
+      lastSavedNameRef.current = updated.full_name;
       setProfileSuccess(true);
       setTimeout(() => setProfileSuccess(false), 3000);
     } catch {
@@ -126,6 +174,7 @@ export default function SettingsPage() {
               { href: "/settings/api-keys", Icon: Key, key: "apiKeys" },
               { href: "/settings/webhooks", Icon: Webhook, key: "webhooks" },
               { href: "/settings/referrals", Icon: Gift, key: "referrals" },
+              { href: "/templates", Icon: LayoutGrid, key: "templates" },
             ].map(({ href, Icon, key }) => (
               <Link
                 key={href}
@@ -135,7 +184,11 @@ export default function SettingsPage() {
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
                   <Icon className="h-4 w-4 text-primary" />
                 </div>
-                <span className="text-center text-xs font-semibold text-on-surface">{t(key)}</span>
+                <span className="text-center text-xs font-semibold text-on-surface">
+                  {key === "templates"
+                    ? locale === "ar" ? "القوالب" : "Templates"
+                    : t(key)}
+                </span>
               </Link>
             ))}
           </div>
@@ -171,6 +224,28 @@ export default function SettingsPage() {
             <div className="mb-5 flex items-center gap-2">
               <User className="h-5 w-5 text-primary" />
               <h3 className="font-headline text-lg font-bold text-on-surface">{t("profileTitle")}</h3>
+              {autosaveChip && (
+                <span
+                  className={clsx(
+                    "ms-2 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold transition-opacity duration-300",
+                    autosaveChip === "saved"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-error-container text-on-error-container"
+                  )}
+                >
+                  {autosaveChip === "saved" ? (
+                    <>
+                      <Check className="h-3 w-3" />
+                      تم الحفظ
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="h-3 w-3" />
+                      فشل الحفظ
+                    </>
+                  )}
+                </span>
+              )}
             </div>
 
             {profileSuccess && (
@@ -223,7 +298,7 @@ export default function SettingsPage() {
                   ) : (
                     <Save className="h-4 w-4" />
                   )}
-                  {t("saveProfile")}
+                  {savingProfile ? "جاري الحفظ…" : t("saveProfile")}
                 </button>
               </div>
             </form>

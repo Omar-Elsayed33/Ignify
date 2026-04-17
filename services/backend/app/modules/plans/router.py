@@ -551,22 +551,35 @@ async def export_plan_pdf(
     if tenant:
         tenant_name = tenant.name
 
-    # Tenant logo from BrandSettings (white-label / brand-kit) — optional.
+    # Tenant logo + colors + tagline from BrandSettings (white-label / brand-kit) — optional.
     logo_url: str | None = None
+    brand_primary: str | None = None
+    brand_accent: str | None = None
+    brand_tagline: str | None = None
     try:
         brand_res = await db.execute(
             select(BrandSettings).where(BrandSettings.tenant_id == user.tenant_id)
         )
         brand_row = brand_res.scalar_one_or_none()
-        logo_url = brand_row.logo_url if brand_row else None
-        if brand_row and brand_row.brand_name:
-            tenant_name = brand_row.brand_name
+        if brand_row:
+            logo_url = brand_row.logo_url
+            brand_primary = getattr(brand_row, "primary_color", None)
+            brand_accent = getattr(brand_row, "accent_color", None)
+            brand_tagline = getattr(brand_row, "tagline", None)
+            if brand_row.brand_name:
+                tenant_name = brand_row.brand_name
     except Exception:
         logo_url = None
 
     try:
         pdf_bytes = build_plan_pdf(
-            plan, lang=lang, tenant_name=tenant_name, tenant_logo_url=logo_url
+            plan,
+            lang=lang,
+            tenant_name=tenant_name,
+            tenant_logo_url=logo_url,
+            brand_primary=brand_primary,
+            brand_accent=brand_accent,
+            brand_tagline=brand_tagline,
         )
     except Exception as e:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=f"PDF generation failed: {e}")
