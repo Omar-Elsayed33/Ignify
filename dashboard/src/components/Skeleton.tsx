@@ -16,7 +16,7 @@ const roundedMap = {
   full: "rounded-full",
 } as const;
 
-export default function Skeleton({
+export function Skeleton({
   className,
   rounded = "lg",
   ...props
@@ -92,3 +92,5 @@ export function SkeletonStatCard() {
     </div>
   );
 }
+
+export default Skeleton;
