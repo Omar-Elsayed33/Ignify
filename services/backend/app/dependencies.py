@@ -119,3 +119,21 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 CurrentUserFlex = Annotated[User, Depends(get_current_user_flex)]
 CurrentTenant = Annotated[Tenant, Depends(get_current_tenant)]
 DbSession = Annotated[AsyncSession, Depends(get_db)]
+
+
+async def require_active_subscription(
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> None:
+    """Blocks access with 402 if the tenant has not activated a paid subscription.
+
+    Superadmins always bypass this gate.
+    """
+    if user.role == UserRole.superadmin:
+        return
+    if not user.tenant_id:
+        raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail="subscription_required")
+    result = await db.execute(select(Tenant).where(Tenant.id == user.tenant_id))
+    tenant = result.scalar_one_or_none()
+    if not tenant or not tenant.subscription_active:
+        raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail="subscription_required")

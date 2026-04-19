@@ -767,7 +767,9 @@
       "accept": "قبول",
       "reject": "رفض"
     },
-    "errors": { "failed": "فشل الحفظ" }
+    "errors": {
+      "failed": "فشل الحفظ"
+    }
   },
   "settingsBrand": {
     "title": "العلامة والهوية",
@@ -788,7 +790,9 @@
     "extractColors": "استخراج الألوان من الشعار",
     "save": "حفظ التعديلات",
     "saved": "تم حفظ إعدادات العلامة",
-    "errors": { "failed": "فشل الحفظ" }
+    "errors": {
+      "failed": "فشل الحفظ"
+    }
   },
   "settingsChannels": {
     "title": "القنوات",
@@ -2027,5 +2031,16 @@
     "noKey": "بدون مفتاح",
     "totalUsage": "إجمالي الاستهلاك",
     "totalLimit": "إجمالي الحدود"
+  },
+  "Subscription": {
+    "title": "يتطلب اشتراكاً",
+    "subtitle": "يرجى إتمام الدفع لتفعيل حسابك والوصول إلى جميع الميزات",
+    "bankDetails": "بيانات التحويل البنكي",
+    "bankName": "البنك",
+    "accountName": "اسم الحساب",
+    "accountNumber": "رقم الحساب",
+    "iban": "IBAN",
+    "submitPayment": "إرسال إيصال الدفع",
+    "contactUs": "تواصل معنا على support@ignify.ai بعد إتمام الدفع"
   }
 }

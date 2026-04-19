@@ -9,6 +9,7 @@ import BrandedLayout from "@/components/BrandedLayout";
 import QuotaBanner from "@/components/QuotaBanner";
 import EmailVerificationBanner from "@/components/EmailVerificationBanner";
 import NPSWidget from "@/components/NPSWidget";
+import SubscriptionWall from "@/components/SubscriptionWall";
 import { Menu, X } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -17,7 +18,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user, tenant } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -125,6 +126,16 @@ export default function DashboardLayout({
         <div className="pb-20 lg:pb-0">
           <BrandedLayout>{children}</BrandedLayout>
         </div>
+        {/* Subscription gate: show wall for non-superadmin tenants without active subscription */}
+        {hydrated &&
+          isAuthenticated &&
+          user?.role !== "superadmin" &&
+          tenant &&
+          !tenant.subscription_active &&
+          !pathname.includes("/billing") &&
+          !pathname.includes("/onboarding") && (
+            <SubscriptionWall />
+          )}
       </main>
 
       <NPSWidget />

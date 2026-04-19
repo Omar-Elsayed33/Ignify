@@ -21,6 +21,7 @@ class TenantAdminResponse(BaseModel):
     slug: str
     plan_id: Optional[uuid.UUID] = None
     is_active: bool
+    subscription_active: bool = False
     config: Optional[dict[str, Any]] = None
     created_at: datetime
     updated_at: datetime
@@ -32,6 +33,15 @@ class TenantAdminUpdate(BaseModel):
     name: Optional[str] = None
     is_active: Optional[bool] = None
     plan_id: Optional[uuid.UUID] = None
+
+
+class TenantPlanUpdate(BaseModel):
+    plan_code: str
+    activate_subscription: bool = True
+
+
+class TenantSubscriptionUpdate(BaseModel):
+    subscription_active: bool
 
 
 class AIProviderCreate(BaseModel):
@@ -273,3 +283,24 @@ class AuditLogResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class OfflinePaymentAdminResponse(BaseModel):
+    id: uuid.UUID
+    tenant_id: uuid.UUID
+    tenant_name: str
+    plan_id: Optional[uuid.UUID] = None
+    plan_name: Optional[str] = None
+    amount: float
+    currency: str
+    payment_method: str
+    reference_number: Optional[str] = None
+    notes: Optional[str] = None
+    status: str
+    admin_notes: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    created_at: datetime
+
+
+class OfflinePaymentReview(BaseModel):
+    admin_notes: Optional[str] = None

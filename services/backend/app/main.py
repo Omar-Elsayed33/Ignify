@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
@@ -136,6 +136,7 @@ async def custom_domain_tenant(request, call_next):
     return await call_next(request)
 
 # Mount all routers
+from app.dependencies import require_active_subscription
 from app.modules.admin.router import router as admin_router
 from app.modules.agent_configs.router import router as agent_configs_router
 from app.modules.ads.router import router as ads_router
@@ -185,53 +186,57 @@ from app.modules.webhook_subscriptions.router import router as webhook_subs_rout
 from app.modules.ai_usage.router import router as ai_usage_router
 
 prefix = settings.API_V1_PREFIX
+_sub_gate = [Depends(require_active_subscription)]
 
+# ── Exempt routers (no subscription required) ──────────────────────────────
 app.include_router(auth_router, prefix=prefix)
 app.include_router(tenants_router, prefix=prefix)
 app.include_router(users_router, prefix=prefix)
 app.include_router(team_router, prefix=prefix)
 app.include_router(channels_router, prefix=prefix)
-app.include_router(conversations_router, prefix=prefix)
-app.include_router(content_router, prefix=prefix)
-app.include_router(creative_router, prefix=prefix)
-app.include_router(ads_router, prefix=prefix)
-app.include_router(seo_router, prefix=prefix)
-app.include_router(social_router, prefix=prefix)
-app.include_router(social_scheduler_router, prefix=prefix)
 app.include_router(public_leads_router, prefix=prefix)
-app.include_router(leads_router, prefix=prefix)
-app.include_router(campaigns_router, prefix=prefix)
-app.include_router(analytics_router, prefix=prefix)
-app.include_router(analytics_dashboard_router, prefix=prefix)
-app.include_router(competitors_router, prefix=prefix)
-app.include_router(integrations_router, prefix=prefix)
-app.include_router(assistant_router, prefix=prefix)
 app.include_router(billing_router, prefix=prefix)
 app.include_router(admin_router, prefix=prefix)
-app.include_router(agent_configs_router, prefix=prefix)
-app.include_router(plans_router, prefix=prefix)
 app.include_router(onboarding_router, prefix=prefix)
 app.include_router(tenant_settings_router, prefix=prefix)
-app.include_router(content_gen_router, prefix=prefix)
-app.include_router(content_templates_router, prefix=prefix)
-app.include_router(creative_gen_router, prefix=prefix)
-app.include_router(video_gen_router, prefix=prefix)
-app.include_router(inbox_router, prefix=prefix)
-app.include_router(knowledge_router, prefix=prefix)
 app.include_router(webhooks_router, prefix=prefix)
-app.include_router(experiments_router, prefix=prefix)
 app.include_router(geo_router, prefix=prefix)
 app.include_router(white_label_router, prefix=prefix)
-app.include_router(ai_assistant_router, prefix=prefix)
-app.include_router(media_router, prefix=prefix)
-app.include_router(feedback_router, prefix=prefix)
-app.include_router(plan_versioning_router, prefix=prefix)
-app.include_router(plan_share_router, prefix=prefix)
 app.include_router(plan_share_public_router, prefix=prefix)
-app.include_router(referrals_router, prefix=prefix)
-app.include_router(api_keys_router, prefix=prefix)
-app.include_router(webhook_subs_router, prefix=prefix)
 app.include_router(ai_usage_router, prefix=prefix)
+
+# ── Gated routers (require active subscription) ────────────────────────────
+app.include_router(plans_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(content_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(content_gen_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(content_templates_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(creative_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(creative_gen_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(video_gen_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(ads_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(seo_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(social_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(social_scheduler_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(leads_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(campaigns_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(analytics_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(analytics_dashboard_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(competitors_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(integrations_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(assistant_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(ai_assistant_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(inbox_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(knowledge_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(conversations_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(experiments_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(media_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(plan_versioning_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(plan_share_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(feedback_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(referrals_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(api_keys_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(webhook_subs_router, prefix=prefix, dependencies=_sub_gate)
+app.include_router(agent_configs_router, prefix=prefix, dependencies=_sub_gate)
 
 # Ops endpoints mounted at root so external probes don't need /api/v1.
 app.include_router(ops_router)

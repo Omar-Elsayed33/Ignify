@@ -15,6 +15,7 @@ from app.db.models import (
     Channel,
     MarketingPlan,
     Message,
+    OfflinePayment,
     Plan,
     PlanModeConfig,
     PlatformChannel,
@@ -47,11 +48,15 @@ from app.modules.admin.schemas import (
     PlatformChannelCreate,
     PlatformChannelResponse,
     SkillResponse,
+    OfflinePaymentAdminResponse,
+    OfflinePaymentReview,
     TenantAdminResponse,
     TenantAdminUpdate,
     TenantAgentConfigAdminItem,
     TenantAgentConfigUpdate,
     TenantDetailResponse,
+    TenantPlanUpdate,
+    TenantSubscriptionUpdate,
 )
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -811,3 +816,209 @@ async def reset_plan_modes(db: DbSession):
     await db.execute(delete(PlanModeConfig))
     await db.commit()
     return {"ok": True, "message": "Plan mode configs reset to defaults"}
+
+
+# ── Tenant plan & subscription management ──────────────────────────────────
+
+
+@router.put(
+    "/tenants/{tenant_id}/plan",
+    response_model=TenantAdminResponse,
+    dependencies=[superadmin_dep],
+)
+async def change_tenant_plan(tenant_id: uuid.UUID, data: TenantPlanUpdate, db: DbSession):
+    """Admin sets a tenant's plan and optionally activates their subscription (no payment required)."""
+    tenant = (await db.execute(select(Tenant).where(Tenant.id == tenant_id))).scalar_one_or_none()
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+    plan = (
+        await db.execute(select(Plan).where(Plan.slug == data.plan_code, Plan.is_active == True))
+    ).scalar_one_or_none()
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    tenant.plan_id = plan.id
+    if data.activate_subscription:
+        tenant.subscription_active = True
+    # Update OpenRouter key limit to match new plan
+    try:
+        from app.db.models import TenantOpenRouterConfig
+        from app.modules.ai_usage.service import update_tenant_plan_limit
+        await update_tenant_plan_limit(db, tenant_id, data.plan_code)
+    except Exception:
+        pass
+    await db.commit()
+    await db.refresh(tenant)
+    return tenant
+
+
+@router.put(
+    "/tenants/{tenant_id}/subscription",
+    response_model=TenantAdminResponse,
+    dependencies=[superadmin_dep],
+)
+async def set_tenant_subscription(tenant_id: uuid.UUID, data: TenantSubscriptionUpdate, db: DbSession):
+    """Admin manually activates or deactivates a tenant's subscription."""
+    tenant = (await db.execute(select(Tenant).where(Tenant.id == tenant_id))).scalar_one_or_none()
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+    tenant.subscription_active = data.subscription_active
+    await db.commit()
+    await db.refresh(tenant)
+    return tenant
+
+
+# ── Offline payment management ─────────────────────────────────────────────
+
+
+@router.get(
+    "/payments/offline",
+    response_model=list[OfflinePaymentAdminResponse],
+    dependencies=[superadmin_dep],
+)
+async def list_offline_payments(db: DbSession, status_filter: Optional[str] = None):
+    """List all offline payment requests. Filter by status=pending|approved|rejected."""
+    q = select(OfflinePayment, Tenant.name.label("tenant_name"), Plan.name.label("plan_name")).join(
+        Tenant, Tenant.id == OfflinePayment.tenant_id
+    ).outerjoin(Plan, Plan.id == OfflinePayment.plan_id)
+    if status_filter:
+        q = q.where(OfflinePayment.status == status_filter)
+    q = q.order_by(OfflinePayment.created_at.desc())
+    rows = (await db.execute(q)).all()
+    result = []
+    for payment, tenant_name, plan_name in rows:
+        result.append(
+            OfflinePaymentAdminResponse(
+                id=payment.id,
+                tenant_id=payment.tenant_id,
+                tenant_name=tenant_name,
+                plan_id=payment.plan_id,
+                plan_name=plan_name,
+                amount=float(payment.amount),
+                currency=payment.currency,
+                payment_method=payment.payment_method,
+                reference_number=payment.reference_number,
+                notes=payment.notes,
+                status=payment.status,
+                admin_notes=payment.admin_notes,
+                reviewed_at=payment.reviewed_at,
+                created_at=payment.created_at,
+            )
+        )
+    return result
+
+
+@router.post(
+    "/payments/offline/{payment_id}/approve",
+    response_model=OfflinePaymentAdminResponse,
+    dependencies=[superadmin_dep],
+)
+async def approve_offline_payment(
+    payment_id: uuid.UUID,
+    data: OfflinePaymentReview,
+    db: DbSession,
+    current_user: User = Depends(require_role(UserRole.superadmin)),
+):
+    """Approve offline payment → activates tenant subscription and sets their plan."""
+    payment = (
+        await db.execute(select(OfflinePayment).where(OfflinePayment.id == payment_id))
+    ).scalar_one_or_none()
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    if payment.status != "pending":
+        raise HTTPException(status_code=400, detail=f"Payment is already {payment.status}")
+
+    payment.status = "approved"
+    payment.admin_notes = data.admin_notes
+    payment.reviewed_by_id = current_user.id
+    payment.reviewed_at = datetime.now(timezone.utc)
+
+    # Activate tenant subscription and apply plan
+    tenant = (await db.execute(select(Tenant).where(Tenant.id == payment.tenant_id))).scalar_one_or_none()
+    if tenant:
+        tenant.subscription_active = True
+        if payment.plan_id:
+            tenant.plan_id = payment.plan_id
+        # Update OpenRouter limit
+        try:
+            plan = (await db.execute(select(Plan).where(Plan.id == payment.plan_id))).scalar_one_or_none()
+            if plan:
+                from app.modules.ai_usage.service import update_tenant_plan_limit
+                await update_tenant_plan_limit(db, tenant.id, plan.slug)
+        except Exception:
+            pass
+
+    await db.commit()
+    await db.refresh(payment)
+
+    # Build response manually since we need join data
+    tenant_name = tenant.name if tenant else "Unknown"
+    plan = None
+    if payment.plan_id:
+        plan = (await db.execute(select(Plan).where(Plan.id == payment.plan_id))).scalar_one_or_none()
+
+    return OfflinePaymentAdminResponse(
+        id=payment.id,
+        tenant_id=payment.tenant_id,
+        tenant_name=tenant_name,
+        plan_id=payment.plan_id,
+        plan_name=plan.name if plan else None,
+        amount=float(payment.amount),
+        currency=payment.currency,
+        payment_method=payment.payment_method,
+        reference_number=payment.reference_number,
+        notes=payment.notes,
+        status=payment.status,
+        admin_notes=payment.admin_notes,
+        reviewed_at=payment.reviewed_at,
+        created_at=payment.created_at,
+    )
+
+
+@router.post(
+    "/payments/offline/{payment_id}/reject",
+    response_model=OfflinePaymentAdminResponse,
+    dependencies=[superadmin_dep],
+)
+async def reject_offline_payment(
+    payment_id: uuid.UUID,
+    data: OfflinePaymentReview,
+    db: DbSession,
+    current_user: User = Depends(require_role(UserRole.superadmin)),
+):
+    """Reject an offline payment request."""
+    payment = (
+        await db.execute(select(OfflinePayment).where(OfflinePayment.id == payment_id))
+    ).scalar_one_or_none()
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    if payment.status != "pending":
+        raise HTTPException(status_code=400, detail=f"Payment is already {payment.status}")
+
+    payment.status = "rejected"
+    payment.admin_notes = data.admin_notes
+    payment.reviewed_by_id = current_user.id
+    payment.reviewed_at = datetime.now(timezone.utc)
+    await db.commit()
+    await db.refresh(payment)
+
+    tenant = (await db.execute(select(Tenant).where(Tenant.id == payment.tenant_id))).scalar_one_or_none()
+    plan = None
+    if payment.plan_id:
+        plan = (await db.execute(select(Plan).where(Plan.id == payment.plan_id))).scalar_one_or_none()
+
+    return OfflinePaymentAdminResponse(
+        id=payment.id,
+        tenant_id=payment.tenant_id,
+        tenant_name=tenant.name if tenant else "Unknown",
+        plan_id=payment.plan_id,
+        plan_name=plan.name if plan else None,
+        amount=float(payment.amount),
+        currency=payment.currency,
+        payment_method=payment.payment_method,
+        reference_number=payment.reference_number,
+        notes=payment.notes,
+        status=payment.status,
+        admin_notes=payment.admin_notes,
+        reviewed_at=payment.reviewed_at,
+        created_at=payment.created_at,
+    )

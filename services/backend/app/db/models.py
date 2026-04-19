@@ -191,6 +191,7 @@ class Tenant(Base):
     slug: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     plan_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("plans.id"), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    subscription_active: Mapped[bool] = mapped_column(Boolean, default=False)
     config: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
@@ -200,6 +201,7 @@ class Tenant(Base):
     channels: Mapped[list["Channel"]] = relationship(back_populates="tenant")
     brand_settings: Mapped[Optional["BrandSettings"]] = relationship(back_populates="tenant", uselist=False)
     openrouter_config: Mapped[Optional["TenantOpenRouterConfig"]] = relationship(back_populates="tenant", uselist=False)
+    offline_payments: Mapped[list["OfflinePayment"]] = relationship(back_populates="tenant")
 
 
 class TenantOpenRouterConfig(Base):
@@ -1189,3 +1191,34 @@ class Webhook(Base):
     last_status_code: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     created_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+# ──────────────────────────── Offline Payments ────────────────────────────
+
+
+class OfflinePayment(Base):
+    """Manual/offline payment submitted by tenant, approved by admin to activate subscription."""
+    __tablename__ = "offline_payments"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    plan_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("plans.id", ondelete="SET NULL"), nullable=True
+    )
+    amount: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(String(10), nullable=False, default="USD")
+    payment_method: Mapped[str] = mapped_column(String(50), nullable=False)
+    reference_number: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # pending | approved | rejected
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
+    reviewed_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    reviewed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    admin_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+    tenant: Mapped["Tenant"] = relationship(back_populates="offline_payments")

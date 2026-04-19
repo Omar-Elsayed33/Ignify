@@ -11,6 +11,7 @@ class TenantResponse(BaseModel):
     slug: str
     plan_id: Optional[uuid.UUID] = None
     is_active: bool
+    subscription_active: bool = False
     config: Optional[dict[str, Any]] = None
     created_at: datetime
     updated_at: datetime

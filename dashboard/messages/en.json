@@ -748,7 +748,9 @@
       "accept": "Accept",
       "reject": "Reject"
     },
-    "errors": { "failed": "Failed to save" }
+    "errors": {
+      "failed": "Failed to save"
+    }
   },
   "settingsBrand": {
     "title": "Brand & Identity",
@@ -769,7 +771,9 @@
     "extractColors": "Extract colors from logo",
     "save": "Save changes",
     "saved": "Brand settings saved",
-    "errors": { "failed": "Failed to save" }
+    "errors": {
+      "failed": "Failed to save"
+    }
   },
   "settingsChannels": {
     "title": "Channels",
@@ -2006,5 +2010,16 @@
     "noKey": "No key",
     "totalUsage": "Total Usage",
     "totalLimit": "Total Limit"
+  },
+  "Subscription": {
+    "title": "Subscription Required",
+    "subtitle": "Please complete your payment to activate your account and access all features",
+    "bankDetails": "Bank Transfer Details",
+    "bankName": "Bank",
+    "accountName": "Account name",
+    "accountNumber": "Account number",
+    "iban": "IBAN",
+    "submitPayment": "Submit payment receipt",
+    "contactUs": "Contact us at support@ignify.ai after completing your payment"
   }
 }

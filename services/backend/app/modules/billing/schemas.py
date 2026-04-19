@@ -105,3 +105,29 @@ class UsageResponse(BaseModel):
 
 class PortalResponse(BaseModel):
     url: str
+
+
+class OfflinePaymentCreate(BaseModel):
+    plan_code: str
+    amount: float
+    currency: Literal["USD", "EGP", "SAR", "AED"] = "USD"
+    payment_method: Literal["bank_transfer", "cash", "check", "other"] = "bank_transfer"
+    reference_number: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class OfflinePaymentResponse(BaseModel):
+    id: uuid.UUID
+    tenant_id: uuid.UUID
+    plan_id: Optional[uuid.UUID] = None
+    amount: float
+    currency: str
+    payment_method: str
+    reference_number: Optional[str] = None
+    notes: Optional[str] = None
+    status: str
+    admin_notes: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

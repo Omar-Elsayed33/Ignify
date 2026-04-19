@@ -5,7 +5,9 @@ import json
 from fastapi import APIRouter, Header, HTTPException, Request, status
 from sqlalchemy import func, select
 
-from app.db.models import CreditBalance, CreditPurchase, CreditTransaction, Tenant
+import uuid as _uuid
+
+from app.db.models import CreditBalance, CreditPurchase, CreditTransaction, OfflinePayment, Plan, Tenant
 from app.dependencies import CurrentUser, DbSession
 from app.modules.billing.schemas import (
     BalanceResponse,
@@ -13,6 +15,8 @@ from app.modules.billing.schemas import (
     CheckoutResponse,
     CreditPurchaseRequest,
     CreditPurchaseResponse,
+    OfflinePaymentCreate,
+    OfflinePaymentResponse,
     CreditTransactionResponse,
     PlanListItem,
     PortalResponse,
@@ -267,3 +271,51 @@ async def purchase_credits(data: CreditPurchaseRequest, user: CurrentUser, db: D
     db.add(tx)
     await db.flush()
     return purchase
+
+
+# ── Offline / manual payments ───────────────────────────────────────────────
+
+
+@router.post(
+    "/offline-payment",
+    response_model=OfflinePaymentResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def submit_offline_payment(data: OfflinePaymentCreate, user: CurrentUser, db: DbSession):
+    """Tenant submits a manual payment request. Admin reviews and approves to activate subscription."""
+    if not user.tenant_id:
+        raise HTTPException(status_code=403, detail="No tenant")
+    plan = (
+        await db.execute(select(Plan).where(Plan.slug == data.plan_code, Plan.is_active == True))
+    ).scalar_one_or_none()
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+
+    payment = OfflinePayment(
+        tenant_id=user.tenant_id,
+        plan_id=plan.id,
+        amount=data.amount,
+        currency=data.currency,
+        payment_method=data.payment_method,
+        reference_number=data.reference_number,
+        notes=data.notes,
+        status="pending",
+    )
+    db.add(payment)
+    await db.flush()
+    await db.commit()
+    await db.refresh(payment)
+    return payment
+
+
+@router.get("/offline-payment/my", response_model=list[OfflinePaymentResponse])
+async def list_my_offline_payments(user: CurrentUser, db: DbSession):
+    """Return all offline payment requests for the current tenant."""
+    if not user.tenant_id:
+        return []
+    result = await db.execute(
+        select(OfflinePayment)
+        .where(OfflinePayment.tenant_id == user.tenant_id)
+        .order_by(OfflinePayment.created_at.desc())
+    )
+    return list(result.scalars().all())

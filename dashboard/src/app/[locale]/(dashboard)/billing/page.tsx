@@ -4,12 +4,21 @@ import { useEffect, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import DashboardHeader from "@/components/DashboardHeader";
-import { Loader2, AlertTriangle, ArrowUpRight, Settings2, X, Gift, Zap, Sparkles } from "lucide-react";
+import { Loader2, AlertTriangle, ArrowUpRight, Settings2, X, Gift, Zap, Sparkles, CreditCard, CheckCircle, Clock } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { useToast } from "@/components/Toaster";
 import AIUsageWidget from "@/components/AIUsageWidget";
+import { useAuthStore } from "@/store/auth.store";
 
 // ── Types ────────────────────────────────────────────────────────────────────
+
+interface Plan {
+  id: string;
+  code: string;
+  name_en: string;
+  name_ar: string;
+  price_usd: number;
+}
 
 interface SubscriptionStatus {
   plan_code: string;
@@ -73,16 +82,39 @@ function UsageBar({
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
+interface OfflinePaymentRequest {
+  id: string;
+  amount: number;
+  currency: string;
+  payment_method: string;
+  reference_number: string | null;
+  status: string;
+  admin_notes: string | null;
+  created_at: string;
+}
+
 export default function BillingPage() {
   const t = useTranslations("billing");
   const tt = useTranslations("toasts");
   const toast = useToast();
   const locale = useLocale();
+  const { tenant } = useAuthStore();
   const [sub, setSub] = useState<SubscriptionStatus | null>(null);
   const [usage, setUsage] = useState<UsageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [managing, setManaging] = useState(false);
+
+  // Offline payment form
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [offlinePayments, setOfflinePayments] = useState<OfflinePaymentRequest[]>([]);
+  const [offlineLoading, setOfflineLoading] = useState(false);
+  const [offlinePlanCode, setOfflinePlanCode] = useState("");
+  const [offlineAmount, setOfflineAmount] = useState("");
+  const [offlineCurrency, setOfflineCurrency] = useState("USD");
+  const [offlineMethod, setOfflineMethod] = useState("bank_transfer");
+  const [offlineRef, setOfflineRef] = useState("");
+  const [offlineNotes, setOfflineNotes] = useState("");
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState<string | null>(null);
   const [cancelNote, setCancelNote] = useState("");
@@ -201,12 +233,18 @@ export default function BillingPage() {
     (async () => {
       try {
         setLoading(true);
-        const [s, u] = await Promise.all([
-          api.get<SubscriptionStatus>("/api/v1/billing/subscription"),
-          api.get<UsageData>("/api/v1/billing/usage"),
+        const [s, u, payments, planList] = await Promise.all([
+          api.get<SubscriptionStatus>("/api/v1/billing/subscription").catch(() => null),
+          api.get<UsageData>("/api/v1/billing/usage").catch(() => null),
+          api.get<OfflinePaymentRequest[]>("/api/v1/billing/offline-payment/my").catch(() => []),
+          api.get<Plan[]>("/api/v1/billing/plans").catch(() => []),
         ]);
-        setSub(s);
-        setUsage(u);
+        if (s) setSub(s);
+        if (u) setUsage(u);
+        setOfflinePayments(payments ?? []);
+        const activePlans = planList ?? [];
+        setPlans(activePlans);
+        if (activePlans.length > 0) setOfflinePlanCode(activePlans[0].code);
       } catch (e) {
         setError(e instanceof Error ? e.message : t("errors.failed"));
       } finally {
@@ -214,6 +252,34 @@ export default function BillingPage() {
       }
     })();
   }, [t]);
+
+  async function submitOfflinePayment(e: React.FormEvent) {
+    e.preventDefault();
+    if (!offlineAmount || isNaN(Number(offlineAmount))) return;
+    setOfflineLoading(true);
+    try {
+      const res = await api.post<OfflinePaymentRequest>("/api/v1/billing/offline-payment", {
+        plan_code: offlinePlanCode,
+        amount: Number(offlineAmount),
+        currency: offlineCurrency,
+        payment_method: offlineMethod,
+        reference_number: offlineRef || null,
+        notes: offlineNotes || null,
+      });
+      setOfflinePayments((prev) => [res, ...prev]);
+      setOfflineAmount("");
+      setOfflineRef("");
+      setOfflineNotes("");
+      toast.success(
+        locale === "ar" ? "تم إرسال طلب الدفع" : "Payment request submitted",
+        locale === "ar" ? "سيقوم الفريق بمراجعته قريباً" : "Our team will review it shortly"
+      );
+    } catch (e) {
+      toast.error(tt("genericError"), e instanceof Error ? e.message : "");
+    } finally {
+      setOfflineLoading(false);
+    }
+  }
 
   async function openPortal() {
     try {
@@ -264,11 +330,184 @@ export default function BillingPage() {
       })
     : false;
 
+  const isSubscribed = tenant?.subscription_active;
+
   return (
     <div>
       <DashboardHeader title={t("title")} />
       <div className="space-y-6 p-6">
         <p className="text-sm text-text-secondary">{t("subtitle")}</p>
+
+        {/* Offline / manual payment section — always shown */}
+        <div className="rounded-2xl border border-border bg-surface-container-low p-6">
+          <div className="mb-4 flex items-center gap-3">
+            <CreditCard className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-semibold text-on-surface">
+              {locale === "ar" ? "الدفع اليدوي / التحويل البنكي" : "Manual / Offline Payment"}
+            </h3>
+            {isSubscribed && (
+              <span className="ms-auto flex items-center gap-1 rounded-full bg-success/10 px-2.5 py-0.5 text-xs font-medium text-success">
+                <CheckCircle className="h-3 w-3" />
+                {locale === "ar" ? "مفعّل" : "Active"}
+              </span>
+            )}
+          </div>
+
+          {/* Bank details */}
+          <div className="mb-5 rounded-xl bg-surface-container p-4">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+              {locale === "ar" ? "بيانات الحساب البنكي" : "Bank Account Details"}
+            </p>
+            <div className="grid gap-1 text-sm text-on-surface sm:grid-cols-2">
+              <div><span className="font-medium">{locale === "ar" ? "البنك:" : "Bank:"}</span> Banque Misr</div>
+              <div><span className="font-medium">{locale === "ar" ? "اسم الحساب:" : "Account name:"}</span> Ignify Technologies</div>
+              <div><span className="font-medium">{locale === "ar" ? "رقم الحساب:" : "Account no:"}</span> 1234567890</div>
+              <div><span className="font-medium">IBAN:</span> EG00 0002 0000 0000 0000 1234 5678</div>
+            </div>
+          </div>
+
+          {/* Submission form */}
+          <form onSubmit={submitOfflinePayment} className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-on-surface-variant">
+                  {locale === "ar" ? "الباقة" : "Plan"}
+                </label>
+                <select
+                  value={offlinePlanCode}
+                  onChange={(e) => setOfflinePlanCode(e.target.value)}
+                  className="w-full rounded-xl border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
+                >
+                  {plans.map((pl) => (
+                    <option key={pl.code} value={pl.code}>
+                      {locale === "ar" ? pl.name_ar : pl.name_en}
+                      {pl.price_usd > 0 ? ` – $${pl.price_usd}/mo` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-on-surface-variant">
+                  {locale === "ar" ? "طريقة الدفع" : "Payment method"}
+                </label>
+                <select
+                  value={offlineMethod}
+                  onChange={(e) => setOfflineMethod(e.target.value)}
+                  className="w-full rounded-xl border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
+                >
+                  <option value="bank_transfer">{locale === "ar" ? "تحويل بنكي" : "Bank transfer"}</option>
+                  <option value="cash">{locale === "ar" ? "نقدي" : "Cash"}</option>
+                  <option value="check">{locale === "ar" ? "شيك" : "Check"}</option>
+                  <option value="other">{locale === "ar" ? "أخرى" : "Other"}</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-on-surface-variant">
+                  {locale === "ar" ? "المبلغ" : "Amount"}
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    step="0.01"
+                    value={offlineAmount}
+                    onChange={(e) => setOfflineAmount(e.target.value)}
+                    placeholder="29.00"
+                    className="w-full rounded-xl border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
+                  />
+                  <select
+                    value={offlineCurrency}
+                    onChange={(e) => setOfflineCurrency(e.target.value)}
+                    className="rounded-xl border border-outline-variant bg-surface px-2 py-2 text-sm text-on-surface"
+                  >
+                    <option value="USD">USD</option>
+                    <option value="EGP">EGP</option>
+                    <option value="SAR">SAR</option>
+                    <option value="AED">AED</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-on-surface-variant">
+                  {locale === "ar" ? "رقم مرجع التحويل (اختياري)" : "Transfer reference no. (optional)"}
+                </label>
+                <input
+                  type="text"
+                  value={offlineRef}
+                  onChange={(e) => setOfflineRef(e.target.value)}
+                  placeholder={locale === "ar" ? "مثل: TXN123456" : "e.g. TXN123456"}
+                  className="w-full rounded-xl border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
+                />
+              </div>
+            </div>
+            <textarea
+              value={offlineNotes}
+              onChange={(e) => setOfflineNotes(e.target.value)}
+              rows={2}
+              placeholder={locale === "ar" ? "ملاحظات إضافية (اختياري)" : "Additional notes (optional)"}
+              className="w-full rounded-xl border border-outline-variant bg-surface px-3 py-2 text-sm text-on-surface"
+            />
+            <button
+              type="submit"
+              disabled={offlineLoading}
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary hover:opacity-90 disabled:opacity-60"
+            >
+              {offlineLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+              {locale === "ar" ? "إرسال طلب الدفع" : "Submit payment request"}
+            </button>
+          </form>
+
+          {/* Previous requests */}
+          {offlinePayments.length > 0 && (
+            <div className="mt-5 space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+                {locale === "ar" ? "طلباتك السابقة" : "Your requests"}
+              </p>
+              {offlinePayments.map((p) => (
+                <div
+                  key={p.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border px-4 py-3 text-sm"
+                >
+                  <div className="flex items-center gap-2">
+                    {p.status === "approved" ? (
+                      <CheckCircle className="h-4 w-4 text-success" />
+                    ) : p.status === "rejected" ? (
+                      <X className="h-4 w-4 text-error" />
+                    ) : (
+                      <Clock className="h-4 w-4 text-warning" />
+                    )}
+                    <span className="font-medium text-on-surface">
+                      {p.amount} {p.currency}
+                    </span>
+                    <span className="text-on-surface-variant">{p.payment_method.replace("_", " ")}</span>
+                    {p.reference_number && (
+                      <span className="text-on-surface-variant">#{p.reference_number}</span>
+                    )}
+                  </div>
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      p.status === "approved"
+                        ? "bg-success/10 text-success"
+                        : p.status === "rejected"
+                        ? "bg-error/10 text-error"
+                        : "bg-warning/10 text-warning"
+                    }`}
+                  >
+                    {p.status === "approved"
+                      ? locale === "ar" ? "تمت الموافقة" : "Approved"
+                      : p.status === "rejected"
+                      ? locale === "ar" ? "مرفوض" : "Rejected"
+                      : locale === "ar" ? "قيد المراجعة" : "Pending"}
+                  </span>
+                  {p.admin_notes && (
+                    <p className="w-full text-xs text-on-surface-variant">{p.admin_notes}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {anyOver80 && (
           <div className="flex items-start gap-3 rounded-xl border border-error/30 bg-error/5 p-4">

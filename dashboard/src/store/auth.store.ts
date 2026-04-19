@@ -20,6 +20,7 @@ export interface Tenant {
   slug: string;
   plan_id?: string;
   is_active: boolean;
+  subscription_active: boolean;
 }
 
 interface AuthState {
