@@ -68,11 +68,19 @@ async def health(client: httpx.AsyncClient, ctx: Ctx) -> None:
 
 async def register(client: httpx.AsyncClient, ctx: Ctx) -> None:
     email = f"smoke+{int(time.time())}@test.ignify.local"
-    payload = {"email": email, "password": "Smoke12345!", "full_name": "Smoke Tester"}
+    payload = {
+        "email": email,
+        "password": "Smoke12345!",
+        "full_name": "Smoke Tester",
+        "company_name": "Smoke Corp",
+        "lang_preference": "ar",
+    }
     r = await client.post(f"{ctx.base}/api/v1/auth/register", json=payload)
     r.raise_for_status()
     data = r.json()
-    ctx.token = data["tokens"]["access_token"]
+    # Response is flat: {access_token, refresh_token} — not nested under "tokens"
+    ctx.token = data.get("access_token") or data.get("tokens", {}).get("access_token")
+    assert ctx.token, f"no access_token in response: {data}"
     print(f"  user: {email}")
 
 
@@ -184,7 +192,7 @@ async def schedule_manual(client: httpx.AsyncClient, ctx: Ctx) -> None:
 
     when = (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()
     r = await client.post(
-        f"{ctx.base}/api/v1/social-scheduler/scheduled",
+        f"{ctx.base}/api/v1/social-scheduler/schedule",
         json={
             "platforms": ["facebook"],
             "scheduled_at": when,
@@ -244,6 +252,24 @@ async def integrations_status(client: httpx.AsyncClient, ctx: Ctx) -> None:
         print(f"  {svc}: connected={info.get('connected')}")
 
 
+async def ai_usage_me(client: httpx.AsyncClient, ctx: Ctx) -> None:
+    """Verify /ai-usage/me returns a valid usage object for the registered tenant."""
+    r = await client.get(f"{ctx.base}/api/v1/ai-usage/me", headers=ctx.headers())
+    r.raise_for_status()
+    data = r.json()
+    assert "monthly_limit_usd" in data, "missing monthly_limit_usd"
+    assert "usage_usd" in data, "missing usage_usd"
+    assert "remaining_usd" in data, "missing remaining_usd"
+    assert "usage_pct" in data, "missing usage_pct"
+    assert "has_key" in data, "missing has_key"
+    assert data["monthly_limit_usd"] > 0, "monthly_limit_usd must be > 0"
+    assert data["remaining_usd"] >= 0, "remaining_usd must be >= 0"
+    assert 0.0 <= data["usage_pct"] <= 100.0, f"usage_pct out of range: {data['usage_pct']}"
+    print(f"  limit=${data['monthly_limit_usd']:.2f}  used=${data['usage_usd']:.4f}  "
+          f"remaining=${data['remaining_usd']:.2f}  pct={data['usage_pct']}%  "
+          f"has_key={data['has_key']}")
+
+
 async def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--base", default="http://localhost:8000")
@@ -271,6 +297,7 @@ async def main() -> int:
                     await step("fetch content post (scheduler prefill path)", ctx, fetch_content_post(client, ctx))
                     await step("schedule (manual)", ctx, schedule_manual(client, ctx))
                     await step("mark-published", ctx, mark_published(client, ctx))
+        await step("ai-usage balance", ctx, ai_usage_me(client, ctx))
         if not args.skip_audit:
             await step("deep SEO audit", ctx, deep_audit(client, ctx))
         await step("integrations status", ctx, integrations_status(client, ctx))

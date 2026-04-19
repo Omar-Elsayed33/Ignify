@@ -67,7 +67,19 @@ async def get_post(post_id: uuid.UUID, user: CurrentUser, db: DbSession):
     post = result.scalar_one_or_none()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
-    return post
+    return ContentPostResponse(
+        id=post.id,
+        tenant_id=post.tenant_id,
+        title=post.title,
+        body=post.body,
+        post_type=post.post_type,
+        platform=post.platform,
+        status=post.status,
+        scheduled_at=post.scheduled_at,
+        published_at=post.published_at,
+        metadata=post.metadata_,
+        created_at=post.created_at,
+    )
 
 
 @router.put("/posts/{post_id}", response_model=ContentPostResponse)
