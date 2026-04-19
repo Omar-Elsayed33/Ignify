@@ -11,6 +11,7 @@
     "pricing": "Pricing",
     "about": "About",
     "contact": "Contact",
+    "guide": "User Guide",
     "login": "Login",
     "register": "Start Free",
     "language": "AR"
@@ -351,5 +352,70 @@
       "privacy": "Privacy Policy",
       "refund": "Refund Policy"
     }
+  },
+  "guide": {
+    "badge": "User Guide",
+    "title": "How to Get Started with Ignify",
+    "subtitle": "From registration to your first marketing campaign — clear steps, no complexity.",
+    "cta": "Start Free Now",
+    "stepsTitle": "Your Journey in 6 Steps",
+    "steps": {
+      "register": {
+        "title": "Create Your Account",
+        "body": "Enter your email and password. You'll receive a confirmation email — click the link and complete registration in under a minute."
+      },
+      "onboarding": {
+        "title": "Tell Us About Your Business",
+        "body": "In the setup wizard, add your business name, industry, products/services, and brand identity. This is the fuel that powers all AI features."
+      },
+      "plan": {
+        "title": "Generate Your Marketing Plan",
+        "body": "With one click, Ignify produces a comprehensive 90-day marketing plan: goals, customer personas, channels, calendar, and KPIs. Review and edit any section in seconds."
+      },
+      "content": {
+        "title": "Create Content with AI",
+        "body": "Write posts, articles, and emails in your brand voice — in Arabic or English. Get three variations per generation and choose the best fit."
+      },
+      "schedule": {
+        "title": "Schedule Publishing Automatically",
+        "body": "Connect your social media accounts (Instagram, Facebook, TikTok, and more) and schedule posts at optimal times. Ignify publishes on your behalf."
+      },
+      "analytics": {
+        "title": "Track Results and Improve",
+        "body": "See the performance of every post and channel in a unified dashboard. Get weekly AI recommendations to continuously improve your results."
+      }
+    },
+    "benefitsTitle": "What You Get with a Subscription",
+    "benefits": [
+      "Full 90-day marketing plan generated in under a minute",
+      "AI-written content and images in your brand voice",
+      "Automatic scheduling and publishing on all platforms",
+      "Analytics and performance in one unified dashboard",
+      "Team collaboration with role-based permissions",
+      "Full Arabic and English language support",
+      "Weekly AI performance reports",
+      "Google Search Console and GA4 integration"
+    ],
+    "plansTitle": "Choose Your Plan",
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "price": "$29/mo",
+        "desc": "20 fast generations — ideal for getting started and testing the platform."
+      },
+      "pro": {
+        "name": "Professional",
+        "price": "$99/mo",
+        "desc": "30 medium + 10 fast generations — for active marketing teams."
+      },
+      "agency": {
+        "name": "Agency",
+        "price": "$299/mo",
+        "desc": "50 deep + 50 medium generations — for agencies and large teams."
+      }
+    },
+    "plansNote": "Bank transfer payment available — contact us for details.",
+    "bottomTitle": "Ready to Start?",
+    "bottomSubtitle": "Join hundreds of businesses igniting their marketing with AI."
   }
 }
