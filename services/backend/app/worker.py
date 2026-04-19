@@ -54,6 +54,18 @@ celery_app.conf.update(
             "task": "ignify.cleanup_stale_video_runs",
             "schedule": crontab(minute="*/15"),
         },
+        "sync-ai-usage": {
+            "task": "ignify.sync_all_tenants_ai_usage",
+            "schedule": 60 * 60.0,  # every hour
+        },
+        "reset-monthly-ai-limits": {
+            "task": "ignify.reset_monthly_ai_limits",
+            "schedule": crontab(hour=0, minute=5, day_of_month=1),
+        },
+        "notify-high-ai-usage": {
+            "task": "ignify.notify_high_ai_usage",
+            "schedule": crontab(hour=8, minute=0),
+        },
     },
 )
 
@@ -203,3 +215,4 @@ def sync_social_metrics(self, social_account_id: str, tenant_id: str) -> dict:
 
 # Register analytics snapshot task (import side-effect).
 import app.modules.analytics_dashboard.tasks  # noqa: E402,F401
+import app.modules.ai_usage.tasks  # noqa: E402,F401

@@ -5,11 +5,7 @@ import { routing } from "@/i18n/routing";
 import Toaster from "@/components/Toaster";
 import ConfirmProvider from "@/components/ConfirmDialog";
 import SWRegister from "@/components/SWRegister";
-
-export const metadata = {
-  manifest: "/manifest.webmanifest",
-  themeColor: "#ab3500",
-};
+import LocaleHtmlAttrs from "@/components/LocaleHtmlAttrs";
 
 export default async function LocaleLayout({
   children,
@@ -25,24 +21,16 @@ export default async function LocaleLayout({
   }
 
   const messages = await getMessages();
-  const dir = locale === "ar" ? "rtl" : "ltr";
 
   return (
-    <html lang={locale} dir={dir} suppressHydrationWarning>
-      <head>
-        <meta name="theme-color" content="#ab3500" />
-        <link rel="manifest" href="/manifest.webmanifest" />
-      </head>
-      <body className="bg-surface text-on-surface antialiased">
-        <NextIntlClientProvider messages={messages}>
-          <Toaster>
-            <ConfirmProvider>
-              <SWRegister />
-              {children}
-            </ConfirmProvider>
-          </Toaster>
-        </NextIntlClientProvider>
-      </body>
-    </html>
+    <NextIntlClientProvider messages={messages}>
+      <LocaleHtmlAttrs locale={locale} />
+      <Toaster>
+        <ConfirmProvider>
+          <SWRegister />
+          {children}
+        </ConfirmProvider>
+      </Toaster>
+    </NextIntlClientProvider>
   );
 }

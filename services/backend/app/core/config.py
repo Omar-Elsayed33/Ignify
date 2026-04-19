@@ -18,6 +18,12 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
 
     # LLM Gateway — OpenRouter is the single gateway for all models
+    # OPENROUTER_MANAGER_KEY: the "provisioning" key that creates/manages sub-keys.
+    #   Must be a key with "Manage keys" permission on your OpenRouter account.
+    #   Used only by the provisioning API — never sent to tenants.
+    # OPENROUTER_API_KEY: fallback key used when a tenant has no provisioned sub-key yet
+    #   (e.g. legacy accounts, admin accounts without their own sub-key).
+    OPENROUTER_MANAGER_KEY: str = ""
     OPENROUTER_API_KEY: str = ""
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
     OPENROUTER_SITE_URL: str = "https://ignify.ai"

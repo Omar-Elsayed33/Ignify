@@ -7,6 +7,7 @@ import DashboardHeader from "@/components/DashboardHeader";
 import StatCard from "@/components/StatCard";
 import { SkeletonCard } from "@/components/Skeleton";
 import WelcomeTour from "@/components/WelcomeTour";
+import AIUsageWidget from "@/components/AIUsageWidget";
 import { api } from "@/lib/api";
 import {
   Users,
@@ -849,6 +850,9 @@ export default function DashboardPage() {
 
             {/* Right 1/3 — activity */}
             <div className="space-y-6">
+              {/* AI Credit Widget */}
+              <AIUsageWidget />
+
               {/* Recent Activity */}
               <div className="rounded-2xl bg-surface-container-lowest p-6 shadow-soft ghost-border">
                 <h4 className="mb-5 font-headline text-lg font-bold text-on-surface">

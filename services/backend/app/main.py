@@ -182,6 +182,7 @@ from app.modules.plan_share.router import public_router as plan_share_public_rou
 from app.modules.referrals.router import router as referrals_router
 from app.modules.api_keys.router import router as api_keys_router
 from app.modules.webhook_subscriptions.router import router as webhook_subs_router
+from app.modules.ai_usage.router import router as ai_usage_router
 
 prefix = settings.API_V1_PREFIX
 
@@ -230,6 +231,7 @@ app.include_router(plan_share_public_router, prefix=prefix)
 app.include_router(referrals_router, prefix=prefix)
 app.include_router(api_keys_router, prefix=prefix)
 app.include_router(webhook_subs_router, prefix=prefix)
+app.include_router(ai_usage_router, prefix=prefix)
 
 # Ops endpoints mounted at root so external probes don't need /api/v1.
 app.include_router(ops_router)

@@ -7,6 +7,7 @@ import DashboardHeader from "@/components/DashboardHeader";
 import { Loader2, AlertTriangle, ArrowUpRight, Settings2, X, Gift, Zap, Sparkles } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { useToast } from "@/components/Toaster";
+import AIUsageWidget from "@/components/AIUsageWidget";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -330,6 +331,9 @@ export default function BillingPage() {
             </div>
           </div>
         </div>
+
+        {/* AI Credit Balance */}
+        <AIUsageWidget />
 
         {/* Usage */}
         <div>

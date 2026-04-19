@@ -199,6 +199,23 @@ class Tenant(Base):
     users: Mapped[list["User"]] = relationship(back_populates="tenant")
     channels: Mapped[list["Channel"]] = relationship(back_populates="tenant")
     brand_settings: Mapped[Optional["BrandSettings"]] = relationship(back_populates="tenant", uselist=False)
+    openrouter_config: Mapped[Optional["TenantOpenRouterConfig"]] = relationship(back_populates="tenant", uselist=False)
+
+
+class TenantOpenRouterConfig(Base):
+    __tablename__ = "tenant_ai_config"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), unique=True, nullable=False)
+    openrouter_key_id: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    openrouter_key_encrypted: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    monthly_limit_usd: Mapped[float] = mapped_column(Numeric(10, 4), default=2.50)
+    usage_usd: Mapped[float] = mapped_column(Numeric(10, 4), default=0.0)
+    usage_synced_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    reset_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    tenant: Mapped["Tenant"] = relationship(back_populates="openrouter_config")
 
 
 class User(Base):

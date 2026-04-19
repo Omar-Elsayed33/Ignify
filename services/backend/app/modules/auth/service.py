@@ -88,6 +88,13 @@ async def register_user(db: AsyncSession, data: RegisterRequest) -> tuple[User, 
     except Exception:
         pass
 
+    # Provision OpenRouter sub-key for this tenant (non-fatal)
+    try:
+        from app.modules.ai_usage.service import provision_tenant_ai_key
+        await provision_tenant_ai_key(db, tenant, plan)
+    except Exception:
+        pass
+
     tokens = await _issue_tokens(db, user)
     return user, tokens
 
@@ -137,6 +144,24 @@ async def login_user(db: AsyncSession, email: str, password: str) -> tuple[User,
 
     if settings.EMAIL_VERIFICATION_REQUIRED and not user.email_verified:
         raise ValueError("email_not_verified")
+
+    # Superadmin: ensure their tenant has a provisioned sub-key for future plan testing
+    if user.role == UserRole.superadmin and user.tenant_id:
+        try:
+            from app.db.models import TenantOpenRouterConfig
+            from sqlalchemy import select as sel
+            existing = await db.execute(
+                sel(TenantOpenRouterConfig).where(TenantOpenRouterConfig.tenant_id == user.tenant_id)
+            )
+            if existing.scalar_one_or_none() is None:
+                tenant_r = await db.execute(select(Tenant).where(Tenant.id == user.tenant_id))
+                tenant = tenant_r.scalar_one_or_none()
+                if tenant:
+                    from app.modules.ai_usage.service import provision_tenant_ai_key
+                    await provision_tenant_ai_key(db, tenant, None)
+                    await db.commit()
+        except Exception:
+            pass  # non-fatal
 
     tokens = await _issue_tokens(db, user)
     return user, tokens

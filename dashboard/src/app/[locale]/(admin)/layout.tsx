@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import { Link, useRouter, usePathname } from "@/i18n/navigation";
-import { Flame, LayoutDashboard, Building2, Cpu, Settings, ChevronLeft, Network, CreditCard } from "lucide-react";
+import { Flame, LayoutDashboard, Building2, Cpu, Settings, ChevronLeft, Network, CreditCard, Sparkles } from "lucide-react";
 import { clsx } from "clsx";
 
 const adminNav = [
@@ -12,6 +12,7 @@ const adminNav = [
   { key: "plans", href: "/admin/plans", icon: CreditCard, label: "Plans" },
   { key: "agents", href: "/admin/agents", icon: Network, label: "Agents" },
   { key: "aiProviders", href: "/admin/ai-providers", icon: Cpu, label: "AI Providers" },
+  { key: "ai-usage", href: "/admin/ai-usage", icon: Sparkles, label: "AI Usage" },
   { key: "settings", href: "/admin/settings", icon: Settings, label: "Settings" },
 ];
 

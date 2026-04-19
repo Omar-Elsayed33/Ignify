@@ -1988,5 +1988,23 @@
     "description": "The app ran into an issue. You can retry or go back to the home page.",
     "retry": "Retry",
     "goHome": "Home"
+  },
+  "AIUsage": {
+    "title": "AI Credit Balance",
+    "of": "of",
+    "used": "used",
+    "resetsOn": "Resets",
+    "upgrade": "Upgrade",
+    "remaining": "remaining this month",
+    "adminTitle": "AI Usage Analytics",
+    "tenant": "Tenant",
+    "plan": "Plan",
+    "usedLabel": "Used",
+    "limit": "Limit",
+    "pct": "Usage %",
+    "lastSync": "Last Sync",
+    "noKey": "No key",
+    "totalUsage": "Total Usage",
+    "totalLimit": "Total Limit"
   }
 }
