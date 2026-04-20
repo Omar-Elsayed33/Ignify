@@ -42,6 +42,73 @@ async def _fetch_html(url: str) -> str:
         return ""
 
 
+def _extract_internal_links(html: str, base_url: str) -> list[str]:
+    """Return up to 8 internal page URLs worth crawling (about/services/contact etc.)."""
+    try:
+        from bs4 import BeautifulSoup  # type: ignore
+    except ImportError:
+        return []
+    if not html:
+        return []
+
+    parsed = urlparse(base_url)
+    base_domain = f"{parsed.scheme}://{parsed.netloc}"
+
+    soup = BeautifulSoup(html, "lxml")
+    seen: set[str] = set()
+    results: list[str] = []
+
+    # Priority slugs that typically carry rich business info
+    priority = ("about", "service", "خدمات", "من-نحن", "about-us", "our-service",
+                 "contact", "who-we-are", "what-we-do", "solutions", "product", "team")
+
+    all_links: list[str] = []
+    for a in soup.find_all("a", href=True):
+        href: str = a["href"].strip()
+        if not href or href.startswith(("#", "mailto:", "tel:", "javascript:")):
+            continue
+        full = urljoin(base_url, href)
+        fp = urlparse(full)
+        # Keep only same-domain, non-file links
+        if fp.netloc != parsed.netloc:
+            continue
+        if fp.path.split(".")[-1].lower() in ("pdf", "jpg", "png", "gif", "svg", "zip"):
+            continue
+        if full not in seen:
+            seen.add(full)
+            all_links.append(full)
+
+    # Sort priority slugs first
+    def _priority(u: str) -> int:
+        low = u.lower()
+        for i, kw in enumerate(priority):
+            if kw in low:
+                return i
+        return len(priority)
+
+    all_links.sort(key=_priority)
+    return all_links[:8]
+
+
+async def _fetch_page_text(url: str) -> str:
+    """Fetch a page and return plain text (no HTML tags), max ~2000 chars."""
+    html = await _fetch_html(url)
+    if not html:
+        return ""
+    try:
+        from bs4 import BeautifulSoup  # type: ignore
+        soup = BeautifulSoup(html, "lxml")
+        # Remove script/style noise
+        for tag in soup(["script", "style", "nav", "footer", "header"]):
+            tag.decompose()
+        text = soup.get_text(" ", strip=True)
+        # Collapse whitespace and truncate
+        text = re.sub(r"\s+", " ", text).strip()
+        return text[:2000]
+    except Exception:  # noqa: BLE001
+        return ""
+
+
 def _extract_meta(html: str, base_url: str) -> dict[str, Any]:
     """Pull title / description / og tags / logo / first paragraphs."""
     try:
@@ -144,41 +211,63 @@ async def _llm_json(
 # ─── Public API ──────────────────────────────────────────────────────────────
 
 async def analyze_website(url: str, lang: str = "en") -> dict[str, Any]:
-    """Extract business details from a website URL via scraping + LLM."""
+    """Extract business details by crawling homepage + key internal pages, then LLM analysis."""
     if not url:
         return {}
     if not url.startswith(("http://", "https://")):
         url = "https://" + url
 
-    html = await _fetch_html(url)
-    meta = _extract_meta(html, url)
-
+    # ── Step 1: fetch homepage ───────────────────────────────────────────────
+    homepage_html = await _fetch_html(url)
+    meta = _extract_meta(homepage_html, url)
     if not meta:
         return {"website": url, "error": "could_not_fetch"}
 
+    # ── Step 2: discover and crawl internal pages (about/services/contact…) ─
+    internal_links = _extract_internal_links(homepage_html, url)
+    import asyncio as _asyncio
+    page_texts: list[str] = []
+    if internal_links:
+        tasks = [_fetch_page_text(link) for link in internal_links[:5]]
+        results = await _asyncio.gather(*tasks, return_exceptions=True)
+        for r in results:
+            if isinstance(r, str) and r:
+                page_texts.append(r[:1500])
+
+    # ── Step 3: build rich LLM prompt ───────────────────────────────────────
+    pages_block = ""
+    if page_texts:
+        pages_block = "\n\nADDITIONAL PAGES CONTENT:\n" + "\n---\n".join(page_texts)
+
     system = (
-        "You analyze business websites and extract structured metadata. "
-        "Reply with a single JSON object only — no prose, no markdown."
+        "You are an expert business analyst. You analyze multi-page website content and extract "
+        "rich structured business intelligence. Reply with a single JSON object only — no prose, no markdown."
         + (" Return all string values in Arabic." if lang == "ar" else "")
     )
     user = (
         f"Website: {url}\n"
         f"Page title: {meta.get('title','')}\n"
         f"Meta description: {meta.get('description','')}\n"
-        f"OG title: {meta.get('og_title','')}\n"
         f"OG description: {meta.get('og_description','')}\n"
         f"H1: {meta.get('h1','')}\n"
-        f"First paragraphs:\n- " + "\n- ".join(meta.get("paragraphs") or []) + "\n\n"
-        "Return JSON with keys: business_name, industry, description (2 sentences), "
-        "target_audience, main_products (array of 3-5 strings), "
-        "main_services (array of 3-5 strings), brand_tone "
-        "(one of: professional, friendly, playful, luxury, bold, educational), "
-        "probable_competitors (array of objects with real name and real url — ONLY include real known companies, "
-        "never use placeholders like 'Company XYZ', 'ABC Corp', or fictional names; if unsure return empty array)."
+        f"Homepage paragraphs:\n- " + "\n- ".join(meta.get("paragraphs") or [])
+        + pages_block + "\n\n"
+        "Analyze ALL the content above carefully and return JSON with these keys:\n"
+        "- business_name: string\n"
+        "- industry: specific industry/niche (e.g. 'Construction HR outsourcing Saudi Arabia', not just 'HR')\n"
+        "- description: 2-3 sentences describing exactly what the company does\n"
+        "- target_audience: who are the primary buyers (role, company size, sector, geography)\n"
+        "- geography: country and cities of operation (extracted from content)\n"
+        "- company_size_estimate: 'startup'|'small'|'medium'|'large'\n"
+        "- main_services: array of 5-8 specific services (be specific, not generic)\n"
+        "- main_products: array of 3-5 specific products (or [] if service company)\n"
+        "- unique_advantages: array of 3-5 competitive advantages you can infer from the content\n"
+        "- brand_tone: one of professional|friendly|playful|luxury|bold|educational\n"
+        "- probable_competitors: array of objects {name, url} — ONLY real known companies in the SAME market, "
+        "never placeholders like 'Company XYZ'. If unsure, return []."
     )
-    ai = await _llm_json(system, user)
+    ai = await _llm_json(system, user, model="openai/gpt-4o-mini", temperature=0.3)
 
-    # Filter out obvious placeholder competitor names
     _PLACEHOLDER_PATTERNS = ("xyz", "abc", "example", "company a", "company b", "شركة xyz", "شركة abc")
     raw_comps = ai.get("probable_competitors") or []
     clean_comps = [
@@ -187,19 +276,22 @@ async def analyze_website(url: str, lang: str = "en") -> dict[str, Any]:
         and not any(p in str(c).lower() for p in _PLACEHOLDER_PATTERNS)
     ]
 
-    # Merge: prefer AI values, fall back to scraped meta
     result = {
         "website": url,
         "business_name": ai.get("business_name") or meta.get("title") or "",
         "industry": ai.get("industry") or "",
-        "description": ai.get("description") or meta.get("description") or meta.get("og_description") or "",
+        "description": ai.get("description") or meta.get("description") or "",
         "target_audience": ai.get("target_audience") or "",
+        "geography": ai.get("geography") or "",
+        "company_size_estimate": ai.get("company_size_estimate") or "medium",
         "main_products": ai.get("main_products") or [],
         "main_services": ai.get("main_services") or [],
-        "brand_tone": ai.get("brand_tone") or "friendly",
+        "unique_advantages": ai.get("unique_advantages") or [],
+        "brand_tone": ai.get("brand_tone") or "professional",
         "probable_competitors": clean_comps,
         "logo_url": meta.get("logo_url") or "",
         "color_hints": meta.get("color_hints") or [],
+        "pages_crawled": len(page_texts) + 1,
     }
     return result
 
@@ -271,40 +363,61 @@ async def discover_competitors(
     description: str = "",
     products: list[str] | None = None,
     website: str = "",
+    geography: str = "",
+    target_audience: str = "",
+    unique_advantages: list[str] | None = None,
 ) -> list[dict[str, Any]]:
     if not business_name:
         return []
     products = products or []
+    unique_advantages = unique_advantages or []
+
     system = (
-        "You are a market research analyst specializing in identifying DIRECT competitors — "
-        "companies that offer the SAME core service to the SAME target customers in the SAME market. "
-        "Reply with a single JSON object that contains a key 'competitors' whose value is an array. "
-        "CRITICAL: read the business description carefully and understand what the company actually does "
-        "before listing competitors. Do NOT list companies in adjacent or unrelated industries."
+        "You are a senior market research analyst. Your task is to find the TOP 10 LARGEST and most "
+        "established DIRECT competitors — companies that serve the SAME customer segment with the SAME "
+        "core service in the SAME market/geography.\n"
+        "RULES:\n"
+        "1. ONLY list real, verifiable companies — never fictional or placeholder names.\n"
+        "2. Rank by market size/dominance (largest first).\n"
+        "3. Read the business description carefully — do NOT list unrelated companies.\n"
+        "4. Include local/regional leaders even if not globally known.\n"
+        "Reply with a single JSON object: {\"competitors\": [...]}."
     )
+
     context_lines = [f"Business name: {business_name}"]
     if website:
         context_lines.append(f"Website: {website}")
     if industry:
-        context_lines.append(f"Industry label: {industry}")
-    if country:
-        context_lines.append(f"Country/market: {country}")
+        context_lines.append(f"Specific industry: {industry}")
+    if country or geography:
+        context_lines.append(f"Geography/Market: {geography or country}")
     if description:
         context_lines.append(f"What they do: {description}")
+    if target_audience:
+        context_lines.append(f"Target customers: {target_audience}")
     if products:
-        context_lines.append("Main products/services: " + ", ".join(products[:8]))
+        context_lines.append("Services/products: " + ", ".join(products[:10]))
+    if unique_advantages:
+        context_lines.append("Their competitive advantages: " + ", ".join(unique_advantages[:5]))
     context = "\n".join(context_lines)
 
     user = (
         f"{context}\n\n"
-        "Find 5 REAL direct competitors — companies offering the same core service to the same customer segment. "
-        "For each: name, url (real homepage), description (1 sentence of what they do), "
-        "positioning (how they differentiate), estimated_size (startup/small/medium/large). "
-        "Only list real, verifiable companies. If you are not sure a competitor is truly direct, skip it."
+        "Find the TOP 10 largest direct competitors ordered by market dominance (biggest first). "
+        "For each competitor return:\n"
+        "- name: company name\n"
+        "- url: real homepage URL\n"
+        "- description: 1 sentence of exactly what they do\n"
+        "- positioning: their main differentiator/claim\n"
+        "- estimated_size: startup|small|medium|large|enterprise\n"
+        "- threat_level: high|medium|low (how directly they compete with this business)\n"
+        "- main_strength: single strongest advantage they have\n"
+        "- exploitable_weakness: one visible weakness this business could exploit\n"
+        "Only list real companies. Skip any you cannot verify."
         + (" Return names and descriptions in Arabic." if lang == "ar" else "")
-        + " Return JSON: {\"competitors\": [...]}."
+        + "\nReturn JSON: {\"competitors\": [...]} with exactly up to 10 items."
     )
-    # perplexity/sonar has web-search; fall back to a cheaper chat model if unavailable.
+
     ai = await _llm_json(system, user, model="perplexity/sonar", temperature=0.2)
     if not ai:
         ai = await _llm_json(system, user, model="openai/gpt-4o", temperature=0.2)
@@ -312,30 +425,45 @@ async def discover_competitors(
     if not isinstance(comps, list):
         return []
 
-    # Filter placeholder names
     placeholders = ("xyz", "abc", "example", "company a", "company b", "شركة xyz", "شركة abc")
     clean = [
         c for c in comps
         if isinstance(c, (dict, str))
         and not any(p in str(c).lower() for p in placeholders)
     ]
-    return clean[:5]
+    return clean[:10]
 
 
 async def generate_business_profile_draft(
     website_url: str, lang: str = "en", country: str = ""
 ) -> dict[str, Any]:
-    """One-shot: scrape site, extract logo colors, discover competitors."""
+    """One-shot: crawl site (multi-page), extract logo colors, discover top 10 competitors."""
     site = await analyze_website(website_url, lang=lang)
     logo_url = site.get("logo_url") or ""
     brand = await extract_brand_from_logo(logo_url) if logo_url else {}
-    competitors = site.get("probable_competitors") or []
-    if not competitors and site.get("business_name"):
-        competitors = await discover_competitors(
-            site["business_name"], site.get("industry", ""), country=country, lang=lang
-        )
+
+    # Always run competitor discovery with all extracted context for best results
+    competitors = await discover_competitors(
+        business_name=site.get("business_name") or "",
+        industry=site.get("industry") or "",
+        country=country or site.get("geography") or "",
+        lang=lang,
+        description=site.get("description") or "",
+        products=(site.get("main_services") or []) + (site.get("main_products") or []),
+        website=website_url,
+        geography=site.get("geography") or "",
+        target_audience=site.get("target_audience") or "",
+        unique_advantages=site.get("unique_advantages") or [],
+    )
+    # Merge any homepage-detected competitors that aren't already in the discovered list
+    existing_names = {str(c.get("name", c) if isinstance(c, dict) else c).lower() for c in competitors}
+    for c in (site.get("probable_competitors") or []):
+        c_name = str(c.get("name", c) if isinstance(c, dict) else c).lower()
+        if c_name not in existing_names:
+            competitors.append(c)
+
     return {
         **site,
         "brand_colors": brand,
-        "probable_competitors": competitors,
+        "probable_competitors": competitors[:10],
     }
