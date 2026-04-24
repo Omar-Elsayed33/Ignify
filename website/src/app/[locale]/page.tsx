@@ -5,6 +5,10 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { motion } from "framer-motion";
 import TrustSection from "@/components/TrustSection";
+import ProblemSolution from "@/components/ProblemSolution";
+import PricingTable from "@/components/PricingTable";
+import OfflinePayCTA from "@/components/OfflinePayCTA";
+import FAQ from "@/components/FAQ";
 import {
   ArrowRight,
   Sparkles,
@@ -359,6 +363,12 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Landing conversion upgrade: agitate pain → show the simple flow.
+          Placed before TrustSection so the reader who now knows WHY
+          they're here reaches the "what we won't do" commitments with
+          context loaded. */}
+      <ProblemSolution />
+
       {/* TRUST — "No fake promises" section. Intentionally placed between
           "what we do" and "how it works" so a skeptical visitor who's
           reached this point has our differentiator clearly stated before
@@ -516,6 +526,16 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      {/* Landing conversion upgrade: pricing table (sourced from
+          app/modules/billing/service.DEFAULT_PLANS), offline-pay flow
+          since online checkout isn't live yet, and FAQ handling the
+          six objections SMB owners always raise. Keep this order —
+          pricing first hooks intent, offline-pay removes friction,
+          FAQ handles remaining doubts before the final CTA. */}
+      <PricingTable />
+      <OfflinePayCTA />
+      <FAQ />
 
       {/* FINAL CTA */}
       <section className="py-24 bg-background">

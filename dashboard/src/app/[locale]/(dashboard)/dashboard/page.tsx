@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import DashboardHeader from "@/components/DashboardHeader";
 import StatCard from "@/components/StatCard";
+import StatusFocus from "@/components/StatusFocus";
 import { SkeletonCard } from "@/components/Skeleton";
 import WelcomeTour from "@/components/WelcomeTour";
 import AIUsageWidget from "@/components/AIUsageWidget";
@@ -730,6 +731,67 @@ export default function DashboardPage() {
               </button>
             </div>
           </section>
+
+          {/* Phase 9 → final: three clear status cards answering the three
+              questions a business owner actually opens the dashboard to ask:
+              what to do now? what's pending? what's working?
+              Uses REAL data only — actionItems from backend, digest metrics,
+              connected-accounts count. No fabricated deltas. */}
+          {!loading && (
+            <StatusFocus
+              todoToday={actionItems
+                .filter((a) => a.href)
+                .map((a) => ({
+                  label: isAr ? a.ar : a.en,
+                  href: a.href!,
+                }))}
+              pending={
+                pendingManualPosts > 0
+                  ? [
+                      {
+                        label: isAr
+                          ? `${pendingManualPosts} منشور ينتظر تأكيد النشر اليدوي`
+                          : `${pendingManualPosts} post(s) waiting for manual publish confirmation`,
+                        href: "/scheduler",
+                      },
+                    ]
+                  : []
+              }
+              working={[
+                ...(typeof postsPublishedWeek === "number" && postsPublishedWeek > 0
+                  ? [
+                      {
+                        label: isAr
+                          ? `${postsPublishedWeek} منشور نُشر هذا الأسبوع`
+                          : `${postsPublishedWeek} post(s) published this week`,
+                        detail:
+                          topPostTitleWeek
+                            ? (isAr ? `الأفضل: ${topPostTitleWeek}` : `Top: ${topPostTitleWeek}`)
+                            : undefined,
+                      },
+                    ]
+                  : []),
+                ...(typeof overview?.total_channels === "number" && overview.total_channels > 0
+                  ? [
+                      {
+                        label: isAr
+                          ? `${overview.total_channels} قناة متصلة`
+                          : `${overview.total_channels} channel(s) connected`,
+                      },
+                    ]
+                  : []),
+                ...(typeof overview?.total_leads === "number" && overview.total_leads > 0
+                  ? [
+                      {
+                        label: isAr
+                          ? `${overview.total_leads} عميل محتمل في CRM`
+                          : `${overview.total_leads} lead(s) in your CRM`,
+                      },
+                    ]
+                  : []),
+              ]}
+            />
+          )}
 
           {/* KPI Grid */}
           <section className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
