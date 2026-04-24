@@ -14,6 +14,12 @@ class CreativeGenerateRequest(BaseModel):
     language: str = Field("en", pattern="^(ar|en|both)$")
     brand_voice: dict[str, Any] | None = None
     plan_id: uuid.UUID | None = None
+    # Phase 8: when set, anchors the generation to a specific content post.
+    # Enables regen-limit counting (max 1 retry per post) and provenance.
+    content_post_id: uuid.UUID | None = None
+    # Phase 8: target platform; the Creative Brief agent uses it to pick
+    # aspect ratio + visual conventions (e.g. Instagram Stories → 9:16).
+    platform: str | None = None
 
 
 class CreativeAssetOut(BaseModel):

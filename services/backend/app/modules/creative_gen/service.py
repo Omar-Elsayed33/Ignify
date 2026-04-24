@@ -54,7 +54,27 @@ async def generate_creative(
     dimensions: str,
     language: str,
     brand_voice: dict[str, Any] | None,
+    content_post_id: uuid.UUID | None = None,
+    platform: str | None = None,
 ) -> dict[str, Any]:
+    # Phase 8: regen-limit gate. Must run BEFORE we spend money on Replicate.
+    # Raises RegenLimitExceeded when the tenant has already hit the cap for
+    # this specific content_post_id. Router translates to HTTP 429.
+    from app.modules.creative_gen.regen_guard import check_regen_limit
+    regen_count = await check_regen_limit(db, tenant_id, content_post_id)
+
+    # Phase 8: resolve the tenant's plan slug so the image generator can
+    # route to the right model tier. Fall back to Free (cheapest, safest).
+    from app.db.models import Plan, Tenant
+    plan_slug: str | None = None
+    tenant_row = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
+    _tenant = tenant_row.scalar_one_or_none()
+    if _tenant is not None and _tenant.plan_id is not None:
+        plan_row = await db.execute(select(Plan).where(Plan.id == _tenant.plan_id))
+        _plan_db = plan_row.scalar_one_or_none()
+        if _plan_db is not None:
+            plan_slug = _plan_db.slug
+
     brand = await _resolve_brand(db, tenant_id)
     voice = await _resolve_brand_voice(db, tenant_id, brand_voice, brand=brand)
 
@@ -84,6 +104,13 @@ async def generate_creative(
                 "dimensions": dimensions,
                 "language": language,
                 "brand_voice": voice,
+                # Phase 8 routing + brief inputs. Brief builder (if in graph)
+                # consumes content_text/platform; image generator picks the
+                # Replicate model from plan_slug.
+                "content_text": idea,
+                "platform": platform,
+                "brand": voice,
+                "plan_slug": plan_slug,
                 "image_urls": [],
                 "meta": {},
             },
@@ -141,7 +168,13 @@ async def generate_creative(
                 stored_url = replicate_url
         persisted_urls.append(stored_url or replicate_url)
 
-    # Persist each image as a CreativeAsset row
+    # Phase 8 P4: every asset row now carries the full provenance trail so
+    # admins can answer "what did we spend, on which model, for which post?"
+    # without joining back to agent_runs.
+    model_used = (meta.get("model") if isinstance(meta, dict) else None) or "unknown"
+    cost_usd = float((meta.get("cost_usd") if isinstance(meta, dict) else 0) or 0)
+    quality_label = (meta.get("quality_label") if isinstance(meta, dict) else None) or "Standard"
+
     assets: list[CreativeAsset] = []
     for idx, url in enumerate(persisted_urls):
         original = image_urls[idx] if idx < len(image_urls) else None
@@ -162,11 +195,40 @@ async def generate_creative(
                 "original_url": original,
                 "logo_overlay": bool(logo_url),
                 "logo_position": logo_position if logo_url else None,
-                **meta,
+                # Phase 8 P4 provenance fields — required for regen-limit
+                # counting, cost audits, and admin spend breakdowns.
+                "content_post_id": str(content_post_id) if content_post_id else None,
+                "platform": platform,
+                "plan_slug": plan_slug,
+                "model": model_used,
+                "quality_label": quality_label,
+                # Cost is divided across outputs so each asset row carries its
+                # share — lets admins sum CreativeAsset.cost_per_image for
+                # tenant totals without double-counting.
+                "cost_usd": round(cost_usd / max(1, len(persisted_urls)), 6),
+                "regen_index": regen_count,  # 0 = initial, 1 = first regen
+                **{k: v for k, v in meta.items() if k not in {
+                    "model", "quality_label", "plan_slug", "cost_usd"
+                }},
             },
         )
         db.add(asset)
         assets.append(asset)
+
+    # Phase 8: record actual spend into the ai_budget ledger so content/plan
+    # and creative gens all share one monthly cap per tenant.
+    if cost_usd > 0:
+        try:
+            from app.core.ai_budget import record as _budget_record
+            await _budget_record(
+                db, tenant_id,
+                actual_cost_usd=cost_usd,
+                feature="creative_gen.image",
+                model=model_used,
+            )
+        except Exception:  # noqa: BLE001
+            # Never block asset persistence on ledger write.
+            pass
 
     await db.commit()
     for a in assets:

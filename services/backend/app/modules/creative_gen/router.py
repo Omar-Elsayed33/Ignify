@@ -61,6 +61,13 @@ async def generate(data: CreativeGenerateRequest, user: CurrentUser, db: DbSessi
 
     plan_ctx = await fetch_plan_context(db, user.tenant_id, data.plan_id, data.language)
     effective_idea = f"{plan_ctx}\n\nCreative brief: {data.idea}" if plan_ctx else data.idea
+    # Phase 8: regen-limit + model-router errors need distinct HTTP codes so
+    # the frontend can show the right UX (regen cap → "already tried once",
+    # budget → upgrade CTA, etc.).
+    from app.modules.creative_gen.regen_guard import (
+        MAX_GENERATIONS_PER_POST,
+        RegenLimitExceeded,
+    )
     try:
         result = await generate_creative(
             db,
@@ -71,7 +78,27 @@ async def generate(data: CreativeGenerateRequest, user: CurrentUser, db: DbSessi
             dimensions=data.dimensions,
             language=data.language,
             brand_voice=data.brand_voice,
+            content_post_id=data.content_post_id,
+            platform=data.platform,
         )
+    except RegenLimitExceeded as e:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={
+                "code": "creative_regen_limit_reached",
+                "message": (
+                    f"You've already generated {e.existing_count} creative(s) "
+                    f"for this post. Limit is {MAX_GENERATIONS_PER_POST} per "
+                    "content post. Edit the source content instead of "
+                    "regenerating images."
+                ),
+                "existing_count": e.existing_count,
+                "limit": MAX_GENERATIONS_PER_POST,
+                "content_post_id": str(e.content_post_id),
+            },
+        ) from None
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Creative generation failed: {e}")
     return result

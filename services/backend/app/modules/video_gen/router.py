@@ -34,6 +34,18 @@ def _video_gen_enabled() -> bool:
     return os.environ.get("VIDEO_GEN_ENABLED", "0") in ("1", "true", "True")
 
 
+def _reel_slideshow_enabled() -> bool:
+    """Safer alternative to AI video — ffmpeg-based slideshow from existing
+    CreativeAssets. Off by default; enable once the ffmpeg pipeline ships.
+
+    Why separate from video generation: the "image → reel" flow is
+    deterministic (concat images + subtitle track + audio) and carries no
+    AI quality risk, so it can ship BEFORE real AI video. Keeps the
+    product's video capability truthful while the renderer is built.
+    """
+    return os.environ.get("REEL_SLIDESHOW_ENABLED", "0") in ("1", "true", "True")
+
+
 @router.post(
     "/generate",
     response_model=VideoQueuedResponse,
@@ -112,4 +124,58 @@ async def get_run(run_id: uuid.UUID, user: CurrentUser, db: DbSession):
         voice_url=out.get("voice_url"),
         subtitle_url=out.get("subtitle_url"),
         meta=out.get("meta") or {},
+    )
+
+
+# ── Phase 8 P2: safe-mode "Post → Reel" slideshow (image-based video) ──────
+#
+# No AI video here. This endpoint takes a ContentPost + 1-5 existing
+# CreativeAssets and produces a 9:16 slideshow (images + captions + optional
+# music). Implementation ships when ffmpeg wiring lands; for now we stub the
+# endpoint with a clear "coming soon" state so the frontend can already wire
+# the UI and the user sees deliberate product direction, not a broken button.
+
+
+@router.post("/reel", status_code=status.HTTP_202_ACCEPTED)
+async def generate_reel_slideshow(user: CurrentUser, db: DbSession):
+    """Post → Reel slideshow.
+
+    Intended pipeline (when enabled):
+      1. Pull the linked ContentPost + its approved CreativeAssets.
+      2. ffmpeg-concat the images into a 9:16 stream at N sec each.
+      3. Overlay caption text segments (already-written Arabic copy works
+         here because it's an OVERLAY layer, not generated inside an image).
+      4. Optionally add royalty-free background music.
+      5. Upload the MP4 to MinIO and return its URL.
+
+    Cost profile: ffmpeg is local compute — fixed cost, no per-run AI spend.
+    That's why it's safer to ship than true AI video: we can size the per-
+    tenant quota independently of the AI dollar budget.
+    """
+    if not user.tenant_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tenant")
+    if not _reel_slideshow_enabled():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "code": "reel_slideshow_unavailable",
+                "message": (
+                    "Reel slideshow (image → short video) is rolling out. "
+                    "You'll be able to stitch your approved creatives into a "
+                    "9:16 Reel/TikTok-ready video with caption overlays. No "
+                    "AI video spend involved — this is a ffmpeg-based renderer."
+                ),
+                "eta": "Next sprint",
+                "renderer": "ffmpeg-slideshow",
+                "ai_cost_impact": "none",
+            },
+        )
+    # Post-enablement body — keep as placeholder so the live endpoint shape
+    # is clear for the ffmpeg task when it lands.
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail={
+            "code": "reel_slideshow_pending_impl",
+            "message": "Slideshow renderer enabled but implementation not yet merged.",
+        },
     )
