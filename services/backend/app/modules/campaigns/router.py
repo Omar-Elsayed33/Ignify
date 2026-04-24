@@ -33,23 +33,46 @@ async def list_campaigns(user: CurrentUser, db: DbSession, skip: int = 0, limit:
 
 @router.post("/generate", response_model=CampaignResponse, status_code=status.HTTP_201_CREATED)
 async def generate_campaign(data: CampaignGenerateRequest, user: CurrentUser, db: DbSession):
-    """AI generates a full campaign with steps based on user's goal."""
+    """AI generates a full campaign with steps based on user's goal.
+
+    Phase 11 (standardize-openrouter-provider-and-key-naming):
+    All LLM text generation flows through OpenRouter via the tenant's
+    provisioned sub-key. No more direct OpenAI / Anthropic fallback — and
+    no more calls to the external AGNO runtime. Budget is pre-flight-gated
+    and actual cost is recorded to the unified ledger.
+    """
     from app.modules.assistant.service import get_tenant_ai_config
-    from app.core.config import settings
-    import httpx
+    from app.core.ai_budget import (
+        AIBudgetExceeded,
+        check as _budget_check,
+        estimate_feature,
+    )
+    from app.core.llm_json import llm_json
 
     ai_config = await get_tenant_ai_config(db, user.tenant_id)
-    provider = ai_config.get("provider") or ""
-    api_key = ai_config.get("api_key") or ""
-    model = ai_config.get("model") or ""
+    # Honor a tenant's admin-chosen model if set, otherwise default to GPT-4o
+    # via OpenRouter. Bare model names (no `/`) get the `openai/` prefix so
+    # every call resolves to an OpenRouter-routed endpoint.
+    model = ai_config.get("model") or "openai/gpt-4o"
+    if "/" not in model:
+        model = f"openai/{model}"
 
-    if not provider or not api_key:
-        if settings.OPENAI_API_KEY:
-            provider, api_key, model = "openai", settings.OPENAI_API_KEY, model or "gpt-4o"
-        elif settings.ANTHROPIC_API_KEY:
-            provider, api_key, model = "anthropic", settings.ANTHROPIC_API_KEY, model or "claude-sonnet-4-20250514"
-        else:
-            raise HTTPException(status_code=400, detail="No AI provider configured. Go to Settings > AI Configuration.")
+    try:
+        await _budget_check(
+            db, user.tenant_id,
+            estimated_cost_usd=estimate_feature("content_gen.generate"),
+            feature="campaigns.generate",
+        )
+    except AIBudgetExceeded as e:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail={
+                "code": f"ai_budget_{e.reason}",
+                "message": "Monthly AI budget reached — upgrade your plan to continue.",
+                "limit_usd": round(e.limit_usd, 2),
+                "usage_usd": round(e.usage_usd, 4),
+            },
+        ) from None
 
     prompt = (
         f"Create a marketing campaign plan for the following goal:\n\n"
@@ -68,38 +91,22 @@ async def generate_campaign(data: CampaignGenerateRequest, user: CurrentUser, db
     )
 
     try:
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            resp = await client.post(
-                f"{settings.AGNO_RUNTIME_URL}/execute",
-                json={
-                    "provider": provider,
-                    "api_key": api_key,
-                    "model": model or "gpt-4o",
-                    "system_prompt": "You are an expert marketing campaign planner. Always respond with valid JSON only, no markdown code blocks.",
-                    "messages": [{"role": "user", "content": prompt}],
-                    "tools": [],
-                    "temperature": 0.7,
-                    "max_tokens": 4096,
-                },
-            )
-            resp.raise_for_status()
-            ai_data = resp.json()
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=f"AI generation failed: {str(e)}")
-
-    # Parse AI response
-    import json as json_module
-    ai_text = ai_data.get("response", "")
-    # Try to extract JSON from response
-    try:
-        # Remove markdown code blocks if present
-        clean = ai_text.strip()
-        if clean.startswith("```"):
-            clean = clean.split("\n", 1)[1] if "\n" in clean else clean[3:]
-            clean = clean.rsplit("```", 1)[0]
-        plan = json_module.loads(clean)
-    except json_module.JSONDecodeError:
+        plan = await llm_json(
+            db,
+            user.tenant_id,
+            system=(
+                "You are an expert marketing campaign planner. "
+                "Always respond with valid JSON only, no markdown code blocks."
+            ),
+            user=prompt,
+            model=model,
+            temperature=0.7,
+            max_tokens=4096,
+        )
+    except ValueError:
         raise HTTPException(status_code=502, detail="AI returned invalid campaign plan. Try again.")
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=502, detail=f"AI generation failed: {e}")
 
     # Create campaign
     campaign = Campaign(

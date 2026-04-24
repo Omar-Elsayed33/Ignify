@@ -166,82 +166,61 @@ async def create_audit(data: SEOAuditCreate, user: CurrentUser, db: DbSession):
     keywords = kw_result.scalars().all()
     kw_list = ", ".join([k.keyword for k in keywords]) if keywords else "No keywords tracked yet"
 
-    # Get AI config
-    ai_config = await get_tenant_ai_config(db, user.tenant_id)
-    provider = ai_config.get("provider") or ""
-    api_key = ai_config.get("api_key") or ""
-    model = ai_config.get("model") or ""
+    # Standardize-openrouter: SEO audit goes through OpenRouter via the
+    # tenant's provisioned sub-key. Model default is GPT-4o (via openai/gpt-4o);
+    # an admin-configured alternative from TenantAIConfig still works as long
+    # as it's an OpenRouter model ID.
+    from app.core.llm_json import llm_json
 
-    if not provider or not api_key:
-        if settings.OPENAI_API_KEY:
-            provider, api_key, model = "openai", settings.OPENAI_API_KEY, model or "gpt-4o"
-        elif settings.ANTHROPIC_API_KEY:
-            provider, api_key, model = "anthropic", settings.ANTHROPIC_API_KEY, model or "claude-sonnet-4-20250514"
+    ai_config = await get_tenant_ai_config(db, user.tenant_id)
+    model = ai_config.get("model") or "openai/gpt-4o"
+    if "/" not in model:
+        model = f"openai/{model}"
 
     score = None
-    issues = []
-    recommendations = []
+    issues: list[dict] = []
+    recommendations: list[dict] = []
 
-    if provider and api_key:
-        prompt = (
-            f"Perform a comprehensive SEO audit for this business:\n\n"
-            f"Business: {business_name}\n"
-            f"Website: {website}\n"
-            f"Tracked Keywords: {kw_list}\n"
-            f"Audit Type: {data.audit_type}\n\n"
-            f"Respond with ONLY valid JSON (no markdown), this exact structure:\n"
-            f'{{"score": 75, '
-            f'"issues": [{{"severity": "high", "category": "technical", "title": "issue title", "description": "details"}}], '
-            f'"recommendations": [{{"priority": "high", "category": "content", "title": "recommendation", "description": "what to do", "impact": "expected impact"}}], '
-            f'"summary": "Overall SEO health summary"}}\n\n'
-            f"Include 5-10 realistic issues and 5-10 actionable recommendations. "
-            f"Score from 0-100. Categories: technical, content, on-page, off-page, performance, mobile."
+    prompt = (
+        f"Perform a comprehensive SEO audit for this business:\n\n"
+        f"Business: {business_name}\n"
+        f"Website: {website}\n"
+        f"Tracked Keywords: {kw_list}\n"
+        f"Audit Type: {data.audit_type}\n\n"
+        f"Respond with ONLY valid JSON (no markdown), this exact structure:\n"
+        f'{{"score": 75, '
+        f'"issues": [{{"severity": "high", "category": "technical", "title": "issue title", "description": "details"}}], '
+        f'"recommendations": [{{"priority": "high", "category": "content", "title": "recommendation", "description": "what to do", "impact": "expected impact"}}], '
+        f'"summary": "Overall SEO health summary"}}\n\n'
+        f"Include 5-10 realistic issues and 5-10 actionable recommendations. "
+        f"Score from 0-100. Categories: technical, content, on-page, off-page, performance, mobile."
+    )
+
+    try:
+        parsed = await llm_json(
+            db,
+            user.tenant_id,
+            system="You are an expert SEO analyst. Always respond with valid JSON only.",
+            user=prompt,
+            model=model,
+            temperature=0.7,
+            max_tokens=4096,
         )
-
-        try:
-            async with httpx.AsyncClient(timeout=120.0) as client:
-                resp = await client.post(
-                    f"{settings.AGNO_RUNTIME_URL}/execute",
-                    json={
-                        "provider": provider,
-                        "api_key": api_key,
-                        "model": model or "gpt-4o",
-                        "system_prompt": "You are an expert SEO analyst. Always respond with valid JSON only.",
-                        "messages": [{"role": "user", "content": prompt}],
-                        "tools": [],
-                        "temperature": 0.7,
-                        "max_tokens": 4096,
-                    },
-                )
-                if resp.status_code == 200:
-                    import json as json_module
-                    ai_text = resp.json().get("response", "")
-                    clean = ai_text.strip()
-                    if clean.startswith("```"):
-                        clean = clean.split("\n", 1)[1] if "\n" in clean else clean[3:]
-                        clean = clean.rsplit("```", 1)[0]
-                    try:
-                        parsed = json_module.loads(clean)
-                        score = parsed.get("score")
-                        issues = parsed.get("issues", [])
-                        recommendations = parsed.get("recommendations", [])
-                        # Add summary to recommendations if present
-                        if parsed.get("summary"):
-                            recommendations.insert(0, {
-                                "priority": "info",
-                                "category": "summary",
-                                "title": "Audit Summary",
-                                "description": parsed["summary"],
-                                "impact": "",
-                            })
-                    except json_module.JSONDecodeError:
-                        issues = [{"severity": "info", "category": "audit", "title": "AI Analysis", "description": ai_text}]
-                        score = None
-        except Exception as e:
-            issues = [{"severity": "error", "category": "system", "title": "Audit Failed", "description": str(e)}]
-
-    else:
-        issues = [{"severity": "info", "category": "config", "title": "No AI Provider", "description": "Configure an AI provider in Settings > AI Configuration to enable SEO audits."}]
+        score = parsed.get("score")
+        issues = parsed.get("issues", [])
+        recommendations = parsed.get("recommendations", [])
+        if parsed.get("summary"):
+            recommendations.insert(0, {
+                "priority": "info",
+                "category": "summary",
+                "title": "Audit Summary",
+                "description": parsed["summary"],
+                "impact": "",
+            })
+    except ValueError as exc:
+        issues = [{"severity": "info", "category": "audit", "title": "AI Analysis", "description": str(exc)}]
+    except Exception as e:  # noqa: BLE001
+        issues = [{"severity": "error", "category": "system", "title": "Audit Failed", "description": str(e)}]
 
     audit = SEOAudit(
         tenant_id=user.tenant_id,
@@ -276,62 +255,43 @@ async def analyze_keyword(keyword_id: uuid.UUID, user: CurrentUser, db: DbSessio
     website = tenant_cfg.get("website", "")
     industry = tenant_cfg.get("industry", "")
 
+    # Standardize-openrouter: keyword analysis via OpenRouter.
+    from app.core.llm_json import llm_json
+
     ai_config = await get_tenant_ai_config(db, user.tenant_id)
-    provider = ai_config.get("provider") or ""
-    api_key = ai_config.get("api_key") or ""
-    model = ai_config.get("model") or ""
+    model = ai_config.get("model") or "openai/gpt-4o"
+    if "/" not in model:
+        model = f"openai/{model}"
 
-    if not provider or not api_key:
-        if settings.OPENAI_API_KEY:
-            provider, api_key, model = "openai", settings.OPENAI_API_KEY, model or "gpt-4o"
-        elif settings.ANTHROPIC_API_KEY:
-            provider, api_key, model = "anthropic", settings.ANTHROPIC_API_KEY, model or "claude-sonnet-4-20250514"
+    prompt = (
+        f"Analyze this SEO keyword:\n\n"
+        f"Keyword: {keyword.keyword}\n"
+        f"Website: {website or 'N/A'}\n"
+        f"Industry: {industry or 'N/A'}\n\n"
+        f"Respond with ONLY valid JSON:\n"
+        f'{{"search_volume": 5000, "difficulty": 65, "suggested_rank": 15, '
+        f'"content_ideas": ["idea 1", "idea 2", "idea 3"], '
+        f'"related_keywords": ["kw1", "kw2", "kw3"]}}\n\n'
+        f"Estimate realistic search volume (monthly), difficulty (0-100), achievable rank. "
+        f"Provide 3 content ideas and 3 related keywords."
+    )
 
-    if provider and api_key:
-        prompt = (
-            f"Analyze this SEO keyword:\n\n"
-            f"Keyword: {keyword.keyword}\n"
-            f"Website: {website or 'N/A'}\n"
-            f"Industry: {industry or 'N/A'}\n\n"
-            f"Respond with ONLY valid JSON:\n"
-            f'{{"search_volume": 5000, "difficulty": 65, "suggested_rank": 15, '
-            f'"content_ideas": ["idea 1", "idea 2", "idea 3"], '
-            f'"related_keywords": ["kw1", "kw2", "kw3"]}}\n\n'
-            f"Estimate realistic search volume (monthly), difficulty (0-100), achievable rank. "
-            f"Provide 3 content ideas and 3 related keywords."
+    try:
+        parsed = await llm_json(
+            db,
+            user.tenant_id,
+            system="You are an SEO keyword analyst. Respond with valid JSON only.",
+            user=prompt,
+            model=model,
+            temperature=0.5,
+            max_tokens=1024,
         )
-
-        try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                resp = await client.post(
-                    f"{settings.AGNO_RUNTIME_URL}/execute",
-                    json={
-                        "provider": provider,
-                        "api_key": api_key,
-                        "model": model or "gpt-4o",
-                        "system_prompt": "You are an SEO keyword analyst. Respond with valid JSON only.",
-                        "messages": [{"role": "user", "content": prompt}],
-                        "tools": [],
-                        "temperature": 0.5,
-                        "max_tokens": 1024,
-                    },
-                )
-                if resp.status_code == 200:
-                    import json as json_module
-                    ai_text = resp.json().get("response", "")
-                    clean = ai_text.strip()
-                    if clean.startswith("```"):
-                        clean = clean.split("\n", 1)[1] if "\n" in clean else clean[3:]
-                        clean = clean.rsplit("```", 1)[0]
-                    try:
-                        parsed = json_module.loads(clean)
-                        keyword.search_volume = parsed.get("search_volume", keyword.search_volume)
-                        keyword.difficulty = parsed.get("difficulty", keyword.difficulty)
-                        keyword.current_rank = parsed.get("suggested_rank", keyword.current_rank)
-                    except json_module.JSONDecodeError:
-                        pass
-        except Exception:
-            pass
+        keyword.search_volume = parsed.get("search_volume", keyword.search_volume)
+        keyword.difficulty = parsed.get("difficulty", keyword.difficulty)
+        keyword.current_rank = parsed.get("suggested_rank", keyword.current_rank)
+    except Exception:  # noqa: BLE001
+        # Analysis is best-effort — don't fail the PATCH if OpenRouter hiccups.
+        pass
 
     await db.flush()
     return keyword

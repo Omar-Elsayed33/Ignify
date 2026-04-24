@@ -76,7 +76,14 @@ class Settings(BaseSettings):
     # CORS - accepts JSON string or comma-separated
     CORS_ORIGINS: str = '["http://localhost:3000","http://localhost:3010"]'
 
-    # AI Providers
+    # AI Providers (DEPRECATED — direct LLM access not used for text generation)
+    #
+    # All LLM text/chat generation now routes through OpenRouter only
+    # (see app/core/llm.py + app/core/llm_json.py). These env vars remain in
+    # the schema for legacy compatibility — e.g., OPENAI_API_KEY is still
+    # consumed by `core/embeddings.py` for semantic search, which is NOT
+    # text generation. If the values are set alongside OPENROUTER_API_KEY
+    # we log a deprecation warning at startup so the operator notices.
     OPENAI_API_KEY: str = ""
     ANTHROPIC_API_KEY: str = ""
     GOOGLE_API_KEY: str = ""
@@ -239,6 +246,34 @@ class Settings(BaseSettings):
 
         return problems
 
+    def warn_deprecated_direct_providers(self) -> None:
+        """Log at startup when a deprecated direct-provider key is set.
+
+        Phase 11 (standardize-openrouter-provider-and-key-naming):
+        `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY` are no longer
+        used for LLM text generation — all text calls route through
+        OpenRouter. If these are configured alongside OPENROUTER_API_KEY
+        we warn so the operator can remove them. Note: OPENAI_API_KEY is
+        still consumed by `core/embeddings.py` (semantic search, not text
+        generation), so we only warn — never raise.
+        """
+        if self.OPENAI_API_KEY and self.OPENROUTER_API_KEY:
+            logger.warning(
+                "OPENAI_API_KEY is DEPRECATED for text generation — OpenRouter "
+                "handles all LLM calls. Retained for embeddings only. "
+                "Remove from env if not using semantic search."
+            )
+        if self.ANTHROPIC_API_KEY:
+            logger.warning(
+                "ANTHROPIC_API_KEY is DEPRECATED — Claude models are routed "
+                "via OpenRouter (e.g. anthropic/claude-sonnet-4-5). Remove from env."
+            )
+        if self.GOOGLE_API_KEY:
+            logger.warning(
+                "GOOGLE_API_KEY is DEPRECATED — Gemini models are routed via "
+                "OpenRouter (e.g. google/gemini-2.5-flash). Remove from env."
+            )
+
     def assert_safe_to_boot(self) -> None:
         """Fail loudly at startup if the production config is unsafe.
 
@@ -247,6 +282,9 @@ class Settings(BaseSettings):
         problem is only a warning since it degrades observability but doesn't
         create a security or availability risk.
         """
+        # Emit deprecation warnings in every mode — dev + prod both benefit.
+        self.warn_deprecated_direct_providers()
+
         if self.DEBUG:
             return
         problems = self.validate_production()

@@ -73,18 +73,45 @@ def limit_for_plan(plan_slug: str | None) -> float:
     return v if v is not None else DEFAULT_LIMIT
 
 
-async def provision_key(tenant_id: str, tenant_name: str, plan_slug: str | None) -> dict[str, Any]:
+def build_key_name(tenant_id: str) -> str:
+    """Canonical OpenRouter sub-key name: the raw tenant UUID, nothing else.
+
+    Explicit helper so the rule is reviewable, testable, and impossible to
+    drift across the 3 code paths that call OpenRouter's keys API
+    (tenant signup, subscription activation / plan change, admin re-
+    provisioning).
+
+    Rules (enforced by tests):
+      - no "ignify" prefix
+      - no tenant name / user email / timestamp
+      - no truncation — full UUID string
+      - whatever OpenRouter dashboard shows for this key will match the
+        tenant_id we can look up in our own DB.
+    """
+    return str(tenant_id)
+
+
+async def provision_key(
+    tenant_id: str,
+    tenant_name: str,  # kept for signature stability; no longer used in key name
+    plan_slug: str | None,
+) -> dict[str, Any]:
     """Create a new sub-key for a tenant. Returns {key_id, key, limit}.
 
     Returns empty dict silently when OPENROUTER_MANAGER_KEY is not configured.
+
+    `tenant_name` was previously used in the key name; we kept the argument
+    so existing callers don't break, but it's only used as the OpenRouter
+    `label` field (the human-readable note inside OpenRouter's UI — not
+    the key's canonical name).
     """
     if not _manager_key():
         logger.info("OPENROUTER_MANAGER_KEY not set — skipping sub-key provisioning")
         return {}
     limit = limit_for_plan(plan_slug)
     payload = {
-        "name": f"ignify-tenant-{tenant_id[:8]}",
-        "label": tenant_name[:64],
+        "name": build_key_name(tenant_id),
+        "label": tenant_name[:64] if tenant_name else str(tenant_id),
         "limit": limit,
     }
     async with httpx.AsyncClient(timeout=15) as client:
