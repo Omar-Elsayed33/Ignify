@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from sqlalchemy import and_, select, update
@@ -93,7 +93,23 @@ async def _publish_async(post_id: str) -> dict:
         await engine.dispose()
 
 
-@celery_app.task(bind=True, name="ignify.publish_scheduled_post")
+@celery_app.task(
+    bind=True,
+    name="ignify.publish_scheduled_post",
+    # Retry transient failures (platform 5xx, network blips, rate limits) with
+    # exponential backoff. Task-level exceptions that should NOT retry (e.g.
+    # invalid token, deleted page) are logged and the row goes to `failed` via
+    # the try/except in `_publish_async`, bypassing autoretry.
+    autoretry_for=(ConnectionError, TimeoutError),
+    retry_backoff=True,        # start at 1s, double up to retry_backoff_max
+    retry_backoff_max=600,     # cap at 10 min
+    retry_jitter=True,
+    max_retries=3,
+    # A single publish should never take longer than 2 min even for LinkedIn
+    # multi-image uploads. time_limit hard-kills beyond that.
+    time_limit=180,
+    soft_time_limit=120,
+)
 def publish_scheduled_post(self, post_id: str) -> dict:
     return asyncio.run(_publish_async(post_id))
 
@@ -127,7 +143,12 @@ async def _scan_due() -> dict:
                         SocialPost.publish_mode == "auto",
                     )
                 )
-                .values(status=SocialPostStatus.publishing)
+                .values(
+                    status=SocialPostStatus.publishing,
+                    # Stamp so reap_stuck_publishing can age rows out if the
+                    # worker that claimed them crashes before producing an outcome.
+                    publishing_started_at=now,
+                )
                 .returning(SocialPost.id)
                 .execution_options(synchronize_session=False)
             )
@@ -146,3 +167,60 @@ async def _scan_due() -> dict:
 @celery_app.task(bind=True, name="ignify.scan_due_posts")
 def scan_due_posts(self) -> dict:
     return asyncio.run(_scan_due())
+
+
+# ── Stuck-publishing watchdog (P2-4) ──────────────────────────────────────────
+# A post enters `publishing` when scan_due_posts claims it. The worker then
+# either moves it to `published` (success) or `failed` (API error). But if the
+# worker itself dies mid-publish (OOM, pod evicted, container killed), the row
+# stays in `publishing` indefinitely and disappears from the user's calendar.
+# The watchdog ages these rows out every 5 min so the user gets a visible
+# failure and can retry.
+_STUCK_THRESHOLD_MINUTES = 15
+
+
+async def _reap_stuck_async() -> dict:
+    """Move rows stuck in `publishing` state older than the threshold back to `failed`.
+
+    Conservative: only considers rows that were claimed (publishing_started_at
+    set). Updates atomically using a single UPDATE ... RETURNING so we can log
+    the exact rows that were rescued. Idempotent — running this twice is safe.
+    """
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=_STUCK_THRESHOLD_MINUTES)
+    engine, maker = _task_session_maker()
+    try:
+        async with maker() as db:
+            result = await db.execute(
+                update(SocialPost)
+                .where(
+                    and_(
+                        SocialPost.status == SocialPostStatus.publishing,
+                        SocialPost.publishing_started_at.is_not(None),
+                        SocialPost.publishing_started_at < cutoff,
+                    )
+                )
+                .values(status=SocialPostStatus.failed)
+                .returning(SocialPost.id)
+                .execution_options(synchronize_session=False)
+            )
+            reaped = [str(row[0]) for row in result.all()]
+            await db.commit()
+    finally:
+        await engine.dispose()
+    if reaped:
+        logger.warning(
+            "reap_stuck_publishing: moved %d stuck rows back to failed: %s",
+            len(reaped),
+            reaped,
+        )
+    return {"reaped": len(reaped), "post_ids": reaped}
+
+
+@celery_app.task(
+    bind=True,
+    name="ignify.reap_stuck_publishing",
+    time_limit=60,
+    soft_time_limit=45,
+)
+def reap_stuck_publishing(self) -> dict:
+    return asyncio.run(_reap_stuck_async())

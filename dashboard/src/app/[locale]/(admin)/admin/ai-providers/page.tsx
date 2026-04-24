@@ -250,7 +250,7 @@ export default function AIProvidersPage() {
         ) : (
           <DataTable
             columns={columns}
-            data={providers as unknown as Record<string, unknown>[]}
+            data={providers}
             emptyTitle={t("noProviders")}
             emptyDescription={t("noProvidersDescription")}
           />

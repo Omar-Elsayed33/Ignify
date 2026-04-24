@@ -197,7 +197,7 @@ export default function SeoPage() {
         ),
     },
     {
-      key: "actions" as keyof SEOKeyword,
+      key: "actions",
       label: "",
       render: (item) => (
         <button
@@ -314,7 +314,7 @@ export default function SeoPage() {
             ) : (
               <DataTable
                 columns={columns}
-                data={keywords as unknown as Record<string, unknown>[]}
+                data={keywords}
               />
             )}
           </div>

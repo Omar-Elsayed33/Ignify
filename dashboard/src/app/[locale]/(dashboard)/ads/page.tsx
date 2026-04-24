@@ -354,7 +354,7 @@ export default function AdsPage() {
         ) : (
           <DataTable
             columns={columns}
-            data={campaigns as unknown as Record<string, unknown>[]}
+            data={campaigns}
           />
         )}
       </div>

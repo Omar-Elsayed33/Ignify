@@ -142,7 +142,7 @@ export default function TenantsPage() {
         ) : (
           <DataTable
             columns={columns}
-            data={tenants as unknown as Record<string, unknown>[]}
+            data={tenants}
             emptyTitle={t("noTenants")}
             emptyDescription={t("noTenantsDescription")}
           />

@@ -664,6 +664,11 @@ class SocialPost(Base):
     publish_mode: Mapped[str] = mapped_column(String(16), default="auto", nullable=False)
     scheduled_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     published_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    # When the atomic scan_due_posts claim moved this row to `publishing`.
+    # The `reap_stuck_publishing` watchdog uses this to detect rows that
+    # were claimed but never transitioned to published/failed (e.g. worker
+    # crash between claim and outcome) and returns them to `failed`.
+    publishing_started_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     external_post_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 

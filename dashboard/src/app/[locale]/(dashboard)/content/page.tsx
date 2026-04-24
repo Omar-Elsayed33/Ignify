@@ -297,7 +297,7 @@ export default function ContentPage() {
         ) : (
           <DataTable
             columns={columns}
-            data={filteredPosts as unknown as Record<string, unknown>[]}
+            data={filteredPosts}
             emptyTitle={t("emptyTitle")}
             emptyDescription={t("emptyDescription")}
           />

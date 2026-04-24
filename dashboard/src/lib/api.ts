@@ -139,8 +139,8 @@ export const api = {
   patch: <T>(endpoint: string, body?: unknown, options?: RequestOptions) =>
     request<T>(endpoint, { ...options, method: "PATCH", body }),
 
-  delete: <T>(endpoint: string, options?: RequestOptions) =>
-    request<T>(endpoint, { ...options, method: "DELETE" }),
+  delete: <T>(endpoint: string, body?: unknown, options?: RequestOptions) =>
+    request<T>(endpoint, { ...options, method: "DELETE", body }),
 };
 
 export { BASE_URL, getAccessToken, setTokens, clearTokens };

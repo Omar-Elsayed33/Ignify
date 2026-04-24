@@ -256,13 +256,8 @@ const FIELD_LABELS: Record<string, { ar: string; en: string }> = {
   expected_monthly_customers: { ar: "العملاء الشهريون المتوقعون", en: "Expected monthly customers" },
   math_check: { ar: "التحقق الحسابي", en: "Math check" },
   common_leaks: { ar: "التسربات الشائعة", en: "Common leaks" },
-  day: { ar: "اليوم", en: "Day" },
   date: { ar: "التاريخ", en: "Date" },
-  channel: { ar: "القناة", en: "Channel" },
-  format: { ar: "الصيغة", en: "Format" },
-  topic: { ar: "الموضوع", en: "Topic" },
   headline: { ar: "العنوان", en: "Headline" },
-  cta: { ar: "دعوة للعمل", en: "CTA" },
   goal: { ar: "الهدف", en: "Goal" },
   notes: { ar: "ملاحظات", en: "Notes" },
 };

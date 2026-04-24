@@ -106,7 +106,7 @@ export default function SecurityPage() {
     if (!phrase) return;
 
     try {
-      await api.del("/api/v1/auth/me", { current_password: pwd, confirm_phrase: phrase });
+      await api.delete("/api/v1/auth/me", { current_password: pwd, confirm_phrase: phrase });
       toast.success(isAr ? "تم إغلاق حسابك" : "Account closed");
       setTimeout(() => (window.location.href = "/login"), 1500);
     } catch (e) {

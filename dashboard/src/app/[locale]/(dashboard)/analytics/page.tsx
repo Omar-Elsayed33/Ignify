@@ -372,7 +372,7 @@ export default function AnalyticsPage() {
         {!reportsLoading && reports.length > 0 && (
           <DataTable
             columns={reportColumns}
-            data={reports as unknown as Record<string, unknown>[]}
+            data={reports}
           />
         )}
       </div>

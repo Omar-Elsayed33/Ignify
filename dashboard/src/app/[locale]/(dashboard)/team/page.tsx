@@ -241,7 +241,7 @@ export default function TeamPage() {
         ) : (
           <DataTable
             columns={columns}
-            data={members as unknown as Record<string, unknown>[]}
+            data={members}
           />
         )}
       </div>

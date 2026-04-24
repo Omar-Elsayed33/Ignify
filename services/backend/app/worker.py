@@ -15,13 +15,46 @@ celery_app.conf.update(
     result_serializer="json",
     timezone="UTC",
     enable_utc=True,
+    # task_track_started so long-running tasks show as STARTED (not PENDING).
     task_track_started=True,
+    # late ack + prefetch=1 means: a worker only claims one message from the
+    # queue at a time, and the broker only marks it delivered after the task
+    # completes. Combined, a worker crash re-queues the message rather than
+    # losing it.
     task_acks_late=True,
     worker_prefetch_multiplier=1,
+
+    # ── P2-4 reliability ──────────────────────────────────────────────────
+    # Hard cap: worker kills the task after this many seconds. Prevents a
+    # single stuck task from hogging a worker slot forever (deep audits,
+    # image gen, misbehaved LLM calls). Individual tasks that need longer
+    # must declare their own `time_limit=...`.
+    task_time_limit=300,          # 5 min hard wall
+    task_soft_time_limit=240,     # 4 min soft — raises SoftTimeLimitExceeded
+    # Retry policy for *broker* connection errors (not task exceptions):
+    # exponential backoff, max 5 attempts.
+    broker_connection_retry_on_startup=True,
+    broker_connection_retry=True,
+    broker_connection_max_retries=5,
+    # If a task's ack never arrives (worker crash mid-run), the broker will
+    # redeliver it. Combined with task_acks_late above this gives at-least-
+    # once semantics; idempotency is the task author's job.
+    task_reject_on_worker_lost=True,
+    # Keep results for 24h (default) — enough for failed-task inspection via
+    # Flower/CLI without bloating Redis indefinitely.
+    result_expires=86400,
+
     beat_schedule={
         "scan-due-social-posts": {
             "task": "ignify.scan_due_posts",
             "schedule": 60.0,
+        },
+        # Rescue rows that got stuck in `publishing` state after a worker crash.
+        # Runs every 5 min; threshold is 15 min inside the task.
+        "reap-stuck-publishing": {
+            "task": "ignify.reap_stuck_publishing",
+            "schedule": 5 * 60.0,
+            "options": {"expires": 60},
         },
         "snapshot-daily-metrics": {
             "task": "ignify.snapshot_daily_metrics",

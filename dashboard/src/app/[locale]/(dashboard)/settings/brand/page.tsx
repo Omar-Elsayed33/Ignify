@@ -1,9 +1,10 @@
 import { redirect } from "@/i18n/navigation";
 
-export default function BrandRedirectPage({
+export default async function BrandRedirectPage({
   params,
 }: {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }) {
-  redirect({ href: "/settings/business-profile", locale: params.locale });
+  const { locale } = await params;
+  redirect({ href: "/settings/business-profile", locale });
 }

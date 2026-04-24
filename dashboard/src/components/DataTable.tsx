@@ -20,7 +20,7 @@ interface DataTableProps<T> {
   emptyDescription?: string;
 }
 
-export default function DataTable<T extends Record<string, unknown>>({
+export default function DataTable<T extends object>({
   columns,
   data,
   pageSize = 10,
@@ -43,8 +43,8 @@ export default function DataTable<T extends Record<string, unknown>>({
 
   const sortedData = [...data].sort((a, b) => {
     if (!sortKey) return 0;
-    const aVal = a[sortKey];
-    const bVal = b[sortKey];
+    const aVal = (a as Record<string, unknown>)[sortKey];
+    const bVal = (b as Record<string, unknown>)[sortKey];
     if (aVal == null || bVal == null) return 0;
     const cmp = String(aVal).localeCompare(String(bVal));
     return sortDir === "asc" ? cmp : -cmp;
@@ -103,7 +103,9 @@ export default function DataTable<T extends Record<string, unknown>>({
               >
                 {columns.map((col) => (
                   <td key={col.key} className="px-4 py-3 text-text-primary">
-                    {col.render ? col.render(item) : String(item[col.key] ?? "")}
+                    {col.render
+                      ? col.render(item)
+                      : String((item as Record<string, unknown>)[col.key] ?? "")}
                   </td>
                 ))}
               </tr>

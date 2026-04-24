@@ -21,7 +21,7 @@ export default function AIUsageWidget() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api<AIUsage>("/api/v1/ai-usage/me")
+    api.get<AIUsage>("/api/v1/ai-usage/me")
       .then(setData)
       .catch(() => {})
       .finally(() => setLoading(false));

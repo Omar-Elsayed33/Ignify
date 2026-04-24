@@ -34,6 +34,8 @@ class Ctx:
         self.base = base.rstrip("/")
         self.audit_url = audit_url
         self.token: str | None = None
+        self.admin_token: str | None = None
+        self.tenant_id: str | None = None
         self.plan_id: str | None = None
         self.content_post_id: str | None = None
         self.scheduled_id: str | None = None
@@ -41,6 +43,9 @@ class Ctx:
 
     def headers(self) -> dict[str, str]:
         return {"Authorization": f"Bearer {self.token}"} if self.token else {}
+
+    def admin_headers(self) -> dict[str, str]:
+        return {"Authorization": f"Bearer {self.admin_token}"} if self.admin_token else {}
 
 
 async def step(name: str, ctx: Ctx, coro):
@@ -82,6 +87,50 @@ async def register(client: httpx.AsyncClient, ctx: Ctx) -> None:
     ctx.token = data.get("access_token") or data.get("tokens", {}).get("access_token")
     assert ctx.token, f"no access_token in response: {data}"
     print(f"  user: {email}")
+
+
+async def activate_subscription(client: httpx.AsyncClient, ctx: Ctx) -> None:
+    """Unlock the subscription gate introduced in migration p6q7r8s9t0u1.
+
+    Steps:
+    1. Look up the smoke tenant's id via /auth/me (tenant_id is on the user).
+    2. Log in as the seeded superadmin (admin@ignify.com / Admin@2024).
+    3. PUT /admin/tenants/{tenant_id}/subscription → subscription_active=true.
+
+    Without this, every subscription-gated endpoint returns HTTP 402 and the
+    smoke test sees a cascade of failures that aren't real regressions.
+
+    If the seeded superadmin doesn't exist (older seed / manual wipe), raises
+    a clear error so ops notices rather than silently skipping.
+    """
+    # 1. Get the smoke user's tenant_id.
+    r = await client.get(f"{ctx.base}/api/v1/auth/me", headers=ctx.headers())
+    r.raise_for_status()
+    me = r.json()
+    ctx.tenant_id = me.get("tenant_id")
+    assert ctx.tenant_id, f"auth/me did not return tenant_id: {me}"
+
+    # 2. Log in as superadmin.
+    r = await client.post(
+        f"{ctx.base}/api/v1/auth/login",
+        json={"email": "admin@ignify.com", "password": "Admin@2024"},
+    )
+    if r.status_code != 200:
+        raise RuntimeError(
+            "Seeded superadmin admin@ignify.com could not log in — re-seed or "
+            "update this smoke step. HTTP "
+            f"{r.status_code}: {r.text[:200]}"
+        )
+    ctx.admin_token = r.json()["access_token"]
+
+    # 3. Activate subscription for the fresh tenant.
+    r = await client.put(
+        f"{ctx.base}/api/v1/admin/tenants/{ctx.tenant_id}/subscription",
+        json={"subscription_active": True},
+        headers=ctx.admin_headers(),
+    )
+    r.raise_for_status()
+    print(f"  tenant {ctx.tenant_id[:8]}… subscription activated")
 
 
 async def onboarding_flow(client: httpx.AsyncClient, ctx: Ctx) -> None:
@@ -286,6 +335,7 @@ async def main() -> int:
     async with httpx.AsyncClient(timeout=60) as client:
         await step("health", ctx, health(client, ctx))
         await step("register", ctx, register(client, ctx))
+        await step("activate subscription (admin)", ctx, activate_subscription(client, ctx))
         await step("onboarding", ctx, onboarding_flow(client, ctx))
         if not args.skip_plan:
             await step("generate plan (fast)", ctx, generate_plan(client, ctx))
