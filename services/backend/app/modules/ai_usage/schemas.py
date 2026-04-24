@@ -15,6 +15,12 @@ class AIUsageResponse(BaseModel):
     reset_at: Optional[datetime]
     usage_synced_at: Optional[datetime]
     has_key: bool
+    # Phase 5 P1: surface gate state to the frontend so the widget can show
+    # an amber banner at 80% and a red banner at 100%.
+    soft_warning: bool = False  # True once usage_pct >= 80
+    blocked: bool = False       # True once remaining_usd <= 0
+    deep_runs_this_month: int = 0
+    deep_runs_cap: int = 10
 
 
 class AdminTenantAIUsageRow(BaseModel):

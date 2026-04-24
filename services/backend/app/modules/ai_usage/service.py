@@ -66,12 +66,25 @@ async def get_tenant_usage(db: AsyncSession, tenant_id: uuid.UUID) -> AIUsageRes
             reset_at=None,
             usage_synced_at=None,
             has_key=False,
+            soft_warning=False,
+            blocked=False,
+            deep_runs_this_month=0,
+            deep_runs_cap=10,
         )
 
     limit = float(config.monthly_limit_usd)
     usage = float(config.usage_usd)
     remaining = max(0.0, limit - usage)
-    pct = round((usage / limit) * 100, 1) if limit > 0 else 0.0
+    pct_ratio = (usage / limit) if limit > 0 else 0.0
+    pct = round(pct_ratio * 100, 1)
+
+    # Phase 5 P1: include gate flags + deep-run counter for frontend banners.
+    from app.core.ai_budget import (
+        DEEP_MODE_MONTHLY_CAP,
+        SOFT_WARNING_THRESHOLD,
+        _deep_runs_this_month,
+    )
+    deep_runs = await _deep_runs_this_month(db, tenant_id)
 
     return AIUsageResponse(
         monthly_limit_usd=limit,
@@ -81,6 +94,10 @@ async def get_tenant_usage(db: AsyncSession, tenant_id: uuid.UUID) -> AIUsageRes
         reset_at=config.reset_at,
         usage_synced_at=config.usage_synced_at,
         has_key=bool(config.openrouter_key_encrypted),
+        soft_warning=pct_ratio >= SOFT_WARNING_THRESHOLD,
+        blocked=remaining <= 0,
+        deep_runs_this_month=deep_runs,
+        deep_runs_cap=DEEP_MODE_MONTHLY_CAP,
     )
 
 

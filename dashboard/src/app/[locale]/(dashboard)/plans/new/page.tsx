@@ -656,6 +656,17 @@ export default function NewPlanPage() {
                   <span className="font-headline text-xs font-semibold uppercase tracking-widest text-on-surface-variant">
                     {t("form.planMode")}
                   </span>
+                  {/*
+                    Phase 5 P5: plan-mode cards rewritten to explain what
+                    actually differs across modes. Previously all 3 cards
+                    showed "~3 min · $X" which made the 59× price delta
+                    look arbitrary. Now each card surfaces:
+                     - the model stack used (different models = real quality
+                       difference, not just marketing copy)
+                     - a concrete use case so the user knows which is right
+                       for their situation
+                     - the cost and time as a secondary line, not the hook
+                  */}
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     {(
                       [
@@ -665,8 +676,12 @@ export default function NewPlanPage() {
                           color: "text-amber-500",
                           name_ar: "مسودة سريعة",
                           name_en: "Quick Draft",
-                          sub_ar: "~3 دقائق · ~$0.01",
-                          sub_en: "~3 min · ~$0.01",
+                          models_ar: "GPT-4o لكل الأقسام",
+                          models_en: "GPT-4o for all sections",
+                          use_ar: "للتجربة والاستكشاف السريع",
+                          use_en: "For exploring options quickly",
+                          sub_ar: "~3 دقائق · $0.01",
+                          sub_en: "~3 min · $0.01",
                         },
                         {
                           mode: "medium" as PlanMode,
@@ -674,8 +689,12 @@ export default function NewPlanPage() {
                           color: "text-blue-500",
                           name_ar: "متوازن",
                           name_en: "Balanced",
-                          sub_ar: "~3 دقائق · ~$0.38",
-                          sub_en: "~3 min · ~$0.38",
+                          models_ar: "Gemini لتحليل السوق + GPT-4o للتنفيذ",
+                          models_en: "Gemini for analysis + GPT-4o for execution",
+                          use_ar: "الخيار الموصى به لأغلب الأنشطة",
+                          use_en: "Recommended for most businesses",
+                          sub_ar: "~3 دقائق · $0.38",
+                          sub_en: "~3 min · $0.38",
                         },
                         {
                           mode: "deep" as PlanMode,
@@ -683,11 +702,15 @@ export default function NewPlanPage() {
                           color: "text-purple-500",
                           name_ar: "متميز",
                           name_en: "Premium",
-                          sub_ar: "~3 دقائق · ~$0.59",
-                          sub_en: "~3 min · ~$0.59",
+                          models_ar: "Claude للاستراتيجية + Gemini + GPT-4o",
+                          models_en: "Claude for strategy + Gemini + GPT-4o",
+                          use_ar: "لخطط تطلق حقاً وتستخدمها مع فريقك",
+                          use_en: "When the plan will actually drive real spend",
+                          sub_ar: "~3 دقائق · $0.59",
+                          sub_en: "~3 min · $0.59",
                         },
                       ] as const
-                    ).map(({ mode, icon, color, name_ar, name_en, sub_ar, sub_en }) => {
+                    ).map(({ mode, icon, color, name_ar, name_en, models_ar, models_en, use_ar, use_en, sub_ar, sub_en }) => {
                       const active = form.plan_mode === mode;
                       const isAr = locale === "ar";
                       return (
@@ -706,7 +729,16 @@ export default function NewPlanPage() {
                             {icon}
                             <span className="text-sm">{isAr ? name_ar : name_en}</span>
                           </div>
+                          {/* Model stack — the real reason the price differs. */}
+                          <p className="text-[11px] font-medium text-on-surface leading-snug">
+                            {isAr ? models_ar : models_en}
+                          </p>
+                          {/* Concrete use case, in plain language. */}
                           <p className="text-xs text-on-surface-variant leading-relaxed">
+                            {isAr ? use_ar : use_en}
+                          </p>
+                          {/* Cost + time as a footer, no longer the headline. */}
+                          <p className="text-[11px] text-on-surface-variant opacity-75">
                             {isAr ? sub_ar : sub_en}
                           </p>
                           {active && (
@@ -719,6 +751,12 @@ export default function NewPlanPage() {
                       );
                     })}
                   </div>
+                  {/* Per-mode disclaimer: no "X is always best" vibe. */}
+                  <p className="text-[11px] text-on-surface-variant leading-relaxed">
+                    {locale === "ar"
+                      ? "الوضع لا يغير وقت الإنجاز، لكنه يغير جودة التحليل وعمق الاستراتيجية. ابدأ بالسريع لاستكشاف الأفكار، واستخدم المتميز قبل الإنفاق على الإعلانات."
+                      : "Mode doesn't change generation time, but it changes analysis depth and strategic reasoning. Start with Quick Draft to explore, use Premium before committing ad spend."}
+                  </p>
                 </div>
 
                 <Input

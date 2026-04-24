@@ -312,16 +312,31 @@ export default function DashboardPage() {
   const topPostTitleWeek =
     digest?.top_post_title_week ?? overview?.top_post_title_week ?? null;
 
-  const hoursSaved =
+  // Phase 5 P3: "hours saved" was previously `postsPublishedWeek * 0.5`.
+  // That's a made-up factor with no defensible source, and the dashboard
+  // shipped it as if it were measured. Replaced with an explicit range
+  // anchored to an industry benchmark: Sprout Social's 2023 report puts
+  // SMB social-post production at ~30-60 min per post (creative + copy +
+  // scheduling). We show a range and explicitly label it an estimate so
+  // users can sanity-check the math.
+  const MINUTES_PER_POST_LOW = 30;
+  const MINUTES_PER_POST_HIGH = 60;
+  const hoursSavedLow =
     typeof postsPublishedWeek === "number" && Number.isFinite(postsPublishedWeek)
-      ? postsPublishedWeek * 0.5
+      ? (postsPublishedWeek * MINUTES_PER_POST_LOW) / 60
       : null;
+  const hoursSavedHigh =
+    typeof postsPublishedWeek === "number" && Number.isFinite(postsPublishedWeek)
+      ? (postsPublishedWeek * MINUTES_PER_POST_HIGH) / 60
+      : null;
+  const fmtHours = (h: number) =>
+    Number.isInteger(h) ? h.toString() : h.toFixed(1);
   const hoursSavedDisplay =
-    hoursSaved === null
+    hoursSavedLow === null || hoursSavedHigh === null
       ? null
-      : Number.isInteger(hoursSaved)
-        ? hoursSaved.toString()
-        : hoursSaved.toFixed(1);
+      : hoursSavedLow === hoursSavedHigh
+        ? fmtHours(hoursSavedLow)
+        : `${fmtHours(hoursSavedLow)}–${fmtHours(hoursSavedHigh)}`;
 
   const collectingText = isAr ? "قيد التجميع" : "Collecting data";
 
@@ -571,8 +586,8 @@ export default function DashboardPage() {
                   </p>
                   <p className="mt-2 text-sm text-white/85">
                     {isAr
-                      ? "لو كتبت هذه المنشورات يدوياً"
-                      : "if you'd written these manually"}
+                      ? "تقدير بناءً على ٣٠–٦٠ دقيقة لكل منشور (متوسط الصناعة)"
+                      : "Estimate based on 30–60 min/post industry benchmark"}
                   </p>
                 </div>
               </>
@@ -727,11 +742,16 @@ export default function DashboardPage() {
               </>
             ) : (
               <>
+                {/* Phase 5 P3: deltas removed — the previous values (+14.2%,
+                    +5.4%, +22%) were hardcoded literals with no real data
+                    source. Showing fake trends undermines credibility. When
+                    the analytics service starts returning period-over-period
+                    deltas, pass them through `change=...` from the real API
+                    response. */}
                 <StatCard
                   icon={Users}
                   label={t("totalLeads")}
                   value={overview?.total_leads.toLocaleString() ?? "0"}
-                  change={14.2}
                   iconColor="text-primary"
                   iconBg="bg-primary-fixed"
                 />
@@ -739,7 +759,6 @@ export default function DashboardPage() {
                   icon={Target}
                   label={t("activeCampaigns")}
                   value={overview?.total_campaigns.toLocaleString() ?? "0"}
-                  change={5.4}
                   iconColor="text-secondary"
                   iconBg="bg-secondary-fixed"
                 />
@@ -747,7 +766,6 @@ export default function DashboardPage() {
                   icon={FileText}
                   label={t("contentPublished")}
                   value={overview?.total_content_posts.toLocaleString() ?? "0"}
-                  change={22}
                   iconColor="text-on-tertiary-fixed-variant"
                   iconBg="bg-tertiary-fixed"
                 />

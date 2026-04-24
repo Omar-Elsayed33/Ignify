@@ -12,6 +12,7 @@ from sqlalchemy import select
 from app.agents.plan_modes import load_mode_config
 from app.agents.registry import get_agent
 from app.agents.tracing import AgentTracer
+from app.core.ai_budget import AIBudgetExceeded
 from app.core.pdf import build_plan_pdf
 from app.core.rate_limit import rate_limit_dep  # noqa: F401 — kept for compat
 from app.core.rate_limit_presets import LOOSE, STRICT
@@ -281,6 +282,28 @@ async def generate(data: PlanGenerateRequest, user: CurrentUser, db: DbSession):
             urgency_days=data.urgency_days,
             plan_mode=data.plan_mode,
         )
+    except AIBudgetExceeded as e:
+        # Phase 5 P1: budget gate. Return 402 with structured detail so the
+        # frontend can route to the upgrade CTA rather than showing a generic
+        # "Plan generation failed" error.
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail={
+                "code": f"ai_budget_{e.reason}",
+                "message": (
+                    "You've reached your monthly AI budget."
+                    if e.reason == "limit_reached"
+                    else "This plan would exceed your remaining AI budget."
+                    if e.reason == "would_exceed"
+                    else "Deep-mode plan cap reached for this month."
+                ),
+                "limit_usd": round(e.limit_usd, 2),
+                "usage_usd": round(e.usage_usd, 4),
+                "estimated_cost_usd": round(e.estimated_cost_usd, 4),
+            },
+        ) from None
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Plan generation failed: {e}")
     return plan
@@ -452,6 +475,53 @@ async def get_plan(plan_id: uuid.UUID, user: CurrentUser, db: DbSession):
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
     return plan
+
+
+@router.get("/{plan_id}/ai-notes")
+async def get_plan_ai_notes(plan_id: uuid.UUID, user: CurrentUser, db: DbSession):
+    """Return the realism warnings the guardrails flagged during plan generation.
+
+    Pulled from the latest successful strategy AgentRun for this tenant that
+    produced a plan with this id. Returns an empty list when the plan was
+    imported (no AgentRun) or when validation found nothing to flag.
+
+    Shape:
+        { "warnings": [ {severity, kind, where, message}, ... ],
+          "has_errors": bool }
+    """
+    # Confirm the plan exists and belongs to the caller's tenant.
+    plan_result = await db.execute(
+        select(MarketingPlan.id).where(
+            MarketingPlan.id == plan_id, MarketingPlan.tenant_id == user.tenant_id
+        )
+    )
+    if plan_result.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="Plan not found")
+
+    # Fetch the most recent strategy run for this tenant — the warnings live
+    # in its output JSON. We don't store plan_id on AgentRun today, so we
+    # approximate by "latest successful strategy run" ordered desc; as long
+    # as the user doesn't run parallel generations this is reliable.
+    run_result = await db.execute(
+        select(AgentRun)
+        .where(
+            AgentRun.tenant_id == user.tenant_id,
+            AgentRun.agent_name == "strategy",
+            AgentRun.status == "succeeded",
+        )
+        .order_by(AgentRun.started_at.desc())
+        .limit(1)
+    )
+    run = run_result.scalar_one_or_none()
+    warnings: list = []
+    if run and isinstance(run.output, dict):
+        raw = run.output.get("_realism_warnings")
+        if isinstance(raw, list):
+            warnings = raw
+    has_errors = any(
+        isinstance(w, dict) and w.get("severity") == "error" for w in warnings
+    )
+    return {"warnings": warnings, "has_errors": has_errors}
 
 
 @router.patch("/{plan_id}/section", response_model=PlanResponse, dependencies=[LOOSE])

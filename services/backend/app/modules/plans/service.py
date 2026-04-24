@@ -122,6 +122,25 @@ async def _persist_plan(
         if started_perf is not None:
             run.latency_ms = int((time.perf_counter() - started_perf) * 1000)
 
+        # Phase 5 P1: credit the tenant's spend ledger with the actual cost.
+        # cost_usd is computed by the LangGraph tracer from token counts.
+        # Zero/None cost is common in dev (no real LLM key) — skip quietly.
+        if run.cost_usd:
+            try:
+                from app.core.ai_budget import record as _budget_record
+                await _budget_record(
+                    db, tenant_id,
+                    actual_cost_usd=float(run.cost_usd),
+                    feature="plan.generate",
+                    model=model,
+                )
+            except Exception as e:  # noqa: BLE001
+                # Spend recording must never block plan persistence. Log and move on.
+                import logging
+                logging.getLogger(__name__).warning(
+                    "budget.record failed for tenant %s: %s", tenant_id, e,
+                )
+
     today = date.today()
     kwargs: dict[str, Any] = dict(
         tenant_id=tenant_id,
@@ -168,6 +187,18 @@ async def generate_plan(
     urgency_days: int = 30,
     plan_mode: str = "fast",
 ) -> MarketingPlan:
+    # Phase 5 P1: AI cost gate. Reject unaffordable plan requests BEFORE we
+    # spin up a 3-minute agent run. Surfaces as HTTP 402 with a machine-readable
+    # reason code so the frontend can route the user to the upgrade CTA.
+    from app.core.ai_budget import check as _budget_check, estimate_plan_mode
+    estimated = estimate_plan_mode(plan_mode)
+    await _budget_check(
+        db, tenant_id,
+        estimated_cost_usd=estimated,
+        feature="plan.generate",
+        plan_mode=plan_mode,
+    )
+
     profile = await _build_business_profile(db, tenant_id, business_profile)
     mode_config = await load_mode_config(db, plan_mode)
 
