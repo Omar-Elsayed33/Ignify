@@ -8,6 +8,7 @@ from app.agents.strategy.subagents._helpers import (
     lang_directive,
     budget_context,
     constraint_directive,
+    realism_directive,
 )
 
 
@@ -17,16 +18,29 @@ class KPISetter(BaseSubAgent):
     system_prompt = (
         "For EACH AARRR funnel stage (Awareness, Acquisition, Conversion, Retention, Referral) "
         "define ONE KPI tied to the budget reality.\n"
-        "Return STRICT JSON array. Each KPI: {stage, metric, target (number), unit, "
-        "timeframe_days, measurement_method, why, channel}.\n"
+        "Return STRICT JSON array. Each KPI MUST have this shape:\n"
+        "{\n"
+        '  "stage": str,\n'
+        '  "metric": str,\n'
+        '  "target_range": {"low": number, "mid": number, "high": number},\n'
+        '  "unit": str,\n'
+        '  "timeframe_days": number,\n'
+        '  "measurement_method": str,\n'
+        '  "why": str,\n'
+        '  "channel": str,\n'
+        '  "confidence": "low" | "medium" | "high",\n'
+        '  "assumptions": [str, ...],\n'
+        '  "source_basis": str   // benchmark you anchored this to\n'
+        "}\n"
         "RULES:\n"
         " - If budget is $0, DO NOT set paid-CPM or CAC-from-ads KPIs — use organic reach / "
         "referrals / WA replies.\n"
         " - Targets must be ACHIEVABLE given the budget (use industry CPL benchmarks).\n"
         " - No vanity metrics like 'followers' unless clearly tied to revenue.\n"
+        " - NEVER use a single point estimate — always low/mid/high range.\n"
         "\nMANDATORY: regardless of budget, ALL plans MUST include these KPIs in the array:\n"
-        " 1. CAC (Customer Acquisition Cost) — target\n"
-        " 2. LTV (Lifetime Value) — target\n"
+        " 1. CAC (Customer Acquisition Cost)\n"
+        " 2. LTV (Lifetime Value)\n"
         " 3. LTV:CAC ratio — target 3:1 minimum\n"
         " 4. Payback period in months\n"
         " 5. Monthly new leads\n"
@@ -45,6 +59,7 @@ class KPISetter(BaseSubAgent):
         user = (
             lang_directive(lang) + "\n\n"
             + constraint_directive() + "\n\n"
+            + realism_directive() + "\n\n"
             f"{budget_context(state)}\n\n"
             f"Period: {period} days\nBusiness: {bp}\nChannels: {channels}\n"
             f"AARRR funnel context: {funnel}\n\n"

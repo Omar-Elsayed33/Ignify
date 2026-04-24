@@ -93,11 +93,29 @@ async def _persist_plan(
     plan_mode: str = "fast",
 ) -> MarketingPlan:
     """Persist a MarketingPlan and finalize the AgentRun. Shared by sync + stream endpoints."""
+    # Run realism validation on the full generated state. Warnings are
+    # attached to run.output so admins can see them in /admin/agent-runs
+    # and reviewers can spot-check the plan before approving. We do NOT
+    # block on warnings today — blocking would require human-in-the-loop
+    # for every plan, which is too aggressive for a first rollout.
+    from app.core.ai_guardrails import has_blocking_issues, validate_realism
+    realism_warnings = validate_realism(final_state)
+    if has_blocking_issues(realism_warnings):
+        import logging
+        logging.getLogger(__name__).warning(
+            "plan generation produced forbidden-claim output (tenant=%s): %s",
+            tenant_id,
+            [w for w in realism_warnings if w["severity"] == "error"][:5],
+        )
+
     if run is not None:
         run.status = "succeeded"
         output = {k: v for k, v in final_state.items() if k != "tenant_id"}
         if traces is not None:
             output["_traces"] = traces
+        # Surface realism warnings in the audit trail — reviewers see them,
+        # ops can aggregate them, automated alerting can trigger on `error` count.
+        output["_realism_warnings"] = realism_warnings
         run.output = output
         if model:
             run.model = model

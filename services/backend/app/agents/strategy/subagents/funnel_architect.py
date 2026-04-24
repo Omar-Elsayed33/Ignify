@@ -7,6 +7,7 @@ from app.agents.strategy.subagents._helpers import (
     parse_json_response,
     lang_directive,
     budget_context,
+    realism_directive,
 )
 
 
@@ -15,13 +16,15 @@ class FunnelArchitect(BaseSubAgent):
     model_tier = "smart"
     system_prompt = (
         "Design the full AARRR funnel (Awareness → Acquisition → Activation → Retention → Referral).\n"
-        "For EACH stage define: what_happens (specific actions), channel (powers it), "
-        "conversion_rate_pct (realistic), key_metric, common_leaks[], fixes[].\n"
-        "Multiply conversion rates to estimate final customer count given the budget — the math "
-        "MUST reconcile.\n"
-        "Return STRICT JSON: {reasoning, stages[{stage,what_happens,channel,conversion_rate_pct,"
-        "key_metric,common_leaks[],fixes[]}], expected_monthly_customers (number), "
-        "expected_monthly_revenue_usd (number), math_check (string showing the multiplication)}."
+        "For EACH stage use RANGES, not point estimates: low/mid/high conversion_rate_pct, "
+        "so downstream multiplication also yields a range. Real funnels vary 2-3× between good "
+        "and bad execution.\n"
+        "Return STRICT JSON: {reasoning, stages[{stage, what_happens, channel, "
+        "conversion_rate_range_pct: {low, mid, high}, key_metric, common_leaks[], fixes[], "
+        "confidence, assumptions[]}], "
+        "expected_monthly_customers_range: {low, mid, high}, "
+        "expected_monthly_revenue_range_usd: {low, mid, high}, "
+        "math_check: str   // show the low→low and high→high multiplication explicitly}"
     )
 
     async def execute(self, state):
@@ -31,6 +34,7 @@ class FunnelArchitect(BaseSubAgent):
         channels = state.get("channels", [])
         user = (
             lang_directive(lang) + "\n\n"
+            + realism_directive() + "\n\n"
             f"{budget_context(state)}\n\n"
             f"Business: {bp}\nOffer: {offer}\nChannels: {channels}\n\n"
             "Return AARRR funnel JSON with realistic conversion multiplication."

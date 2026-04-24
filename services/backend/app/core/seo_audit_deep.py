@@ -293,6 +293,39 @@ async def deep_audit(url: str, language: str = "ar") -> dict[str, Any]:
     if not site_files.get("sitemap_xml_found"):
         avg_score = max(0, avg_score - 5)
 
+    # Partition recommendations into the buckets the UI + customers expect.
+    # This is a VIEW over the flat list — no data loss; existing callers that
+    # read `recommendations` keep working.
+    def _bucket(cat: str) -> str:
+        c = (cat or "").lower()
+        if c in ("technical", "technical-seo"):
+            return "technical_issues"
+        if c in ("content",):
+            return "content_issues"
+        if c in ("conversion", "cta", "ux"):
+            return "conversion_issues"
+        if c in ("trust", "social-proof"):
+            return "trust_issues"
+        return "content_issues"
+
+    buckets: dict[str, list] = {
+        "technical_issues": [],
+        "content_issues": [],
+        "conversion_issues": [],
+        "trust_issues": [],
+    }
+    for rec in recommendations:
+        buckets[_bucket(rec.get("category", ""))].append(rec)
+
+    # `prioritized_recommendations` is the flat recommendations list, sorted
+    # with "high" priority first, then "medium", then "low". The LLM is told
+    # to order this way already; this is a safety net for drift.
+    _p_order = {"high": 0, "medium": 1, "low": 2}
+    prioritized = sorted(
+        recommendations,
+        key=lambda r: _p_order.get((r.get("priority") or "").lower(), 3),
+    )
+
     return {
         "url": url,
         "origin": origin,
@@ -312,5 +345,14 @@ async def deep_audit(url: str, language: str = "ar") -> dict[str, Any]:
             }
             for p in pages
         ],
+        # Flat list — backward-compatible.
         "recommendations": recommendations,
+        # Phase 2.5: structured view for the dashboard + structured downstream
+        # consumers (e.g. the strategy agent's market analyzer can read the
+        # buckets to understand site weaknesses).
+        "technical_issues": buckets["technical_issues"],
+        "content_issues": buckets["content_issues"],
+        "conversion_issues": buckets["conversion_issues"],
+        "trust_issues": buckets["trust_issues"],
+        "prioritized_recommendations": prioritized,
     }

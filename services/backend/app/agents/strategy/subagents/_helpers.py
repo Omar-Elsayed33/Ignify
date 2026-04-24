@@ -45,6 +45,18 @@ def constraint_directive() -> str:
     return CONSTRAINT_DIRECTIVE
 
 
+def realism_directive() -> str:
+    """Full realism + guardrails block for number-producing sub-agents.
+
+    Imported from `app.core.ai_guardrails` so the same rules apply wherever
+    we ask an LLM for numbers (strategy, ads, analytics, etc.). Prepend this
+    to the user message in sub-agents that output forecasts, KPIs, budgets,
+    or expected-outcome ranges.
+    """
+    from app.core.ai_guardrails import realism_block
+    return realism_block()
+
+
 def budget_context(state: dict) -> str:
     """Formatted budget/goal/urgency block to inject into every sub-agent prompt."""
     budget = state.get("budget_monthly_usd")

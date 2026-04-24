@@ -143,7 +143,36 @@ async def schedule_post(
       Celery worker will publish at ``scheduled_at``.
     - ``manual`` mode can schedule reminders even without a connected account
       (``social_account_id`` is nullable as of migration n4i5j6k7l8m9).
+
+    Approval workflow (Phase 3 P3-4):
+    If the tenant has `workflow.approval_required = true`, we refuse to
+    schedule posts whose ContentPost isn't explicitly approved. Prevents
+    unvetted AI-generated content from reaching customers' social accounts.
+    Raises ValueError("content_not_approved") for the router to translate
+    to HTTP 403.
     """
+    # Approval gate — runs FIRST so we don't partially insert then fail mid-loop.
+    if content_post_id is not None:
+        from app.db.models import ContentPost, ContentStatus
+        from app.modules.tenant_settings.service import get_workflow as _get_workflow
+
+        wf = await _get_workflow(db, tenant_id)
+        if wf.get("approval_required"):
+            cp_row = await db.execute(
+                select(ContentPost).where(
+                    ContentPost.id == content_post_id,
+                    ContentPost.tenant_id == tenant_id,
+                )
+            )
+            cp = cp_row.scalar_one_or_none()
+            if cp is None:
+                raise ValueError("content_post_not_found")
+            # Accept only APPROVED. Explicitly reject draft/review/rejected/scheduled
+            # — the workflow exists so unreviewed content can't sneak through.
+            approved_states = {ContentStatus.approved, ContentStatus.published}
+            if cp.status not in approved_states:
+                raise ValueError("content_not_approved")
+
     accs_result = await db.execute(
         select(SocialAccount).where(
             SocialAccount.tenant_id == tenant_id, SocialAccount.is_active == True  # noqa: E712

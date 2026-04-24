@@ -95,16 +95,35 @@ async def disconnect_account(account_id: uuid.UUID, user: CurrentUser, db: DbSes
 
 @router.post("/schedule", response_model=list[ScheduledPostResponse], status_code=status.HTTP_201_CREATED)
 async def schedule_post(data: SchedulePostRequest, user: CurrentUser, db: DbSession):
-    posts = await service.schedule_post(
-        db,
-        user.tenant_id,
-        platforms=data.platforms,
-        scheduled_at=data.scheduled_at,
-        caption=data.caption,
-        media_urls=data.media_urls,
-        content_post_id=data.content_post_id,
-        publish_mode=data.publish_mode,
-    )
+    try:
+        posts = await service.schedule_post(
+            db,
+            user.tenant_id,
+            platforms=data.platforms,
+            scheduled_at=data.scheduled_at,
+            caption=data.caption,
+            media_urls=data.media_urls,
+            content_post_id=data.content_post_id,
+            publish_mode=data.publish_mode,
+        )
+    except ValueError as e:
+        # Approval-workflow violations: surface as HTTP 403 with machine-readable
+        # codes so the frontend can render the right toast ("Get approval first").
+        code = str(e)
+        if code == "content_not_approved":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "content_not_approved",
+                    "message": (
+                        "This content must be approved before it can be scheduled. "
+                        "Your workspace has the approval workflow enabled."
+                    ),
+                },
+            ) from None
+        if code == "content_post_not_found":
+            raise HTTPException(status_code=404, detail="content_post_not_found") from None
+        raise
     if not posts:
         detail = (
             "Manual scheduling still requires at least one connected platform on your tenant — "

@@ -8,6 +8,7 @@ from app.agents.strategy.subagents._helpers import (
     lang_directive,
     budget_context,
     constraint_directive,
+    realism_directive,
 )
 
 
@@ -22,16 +23,22 @@ class ChannelPlanner(BaseSubAgent):
         "3. Realistic CPL per channel for MENA/target region?\n"
         "4. How much can the business spend before saturation on each?\n"
         "5. Organic vs paid split given the budget.\n"
-        "Return STRICT JSON: {reasoning, channels[{channel, tactic, budget_allocation_usd, "
-        "expected_cpl_usd, expected_leads_month, organic_vs_paid (e.g. '30/70'), rationale}], "
-        "total_budget_check (must sum to user's budget), channels_to_avoid[{channel, why}]}.\n"
+        "Return STRICT JSON. Each channel MUST use ranges, NOT point estimates:\n"
+        "{reasoning, channels[{\n"
+        "  channel, tactic, budget_allocation_usd,\n"
+        "  expected_cpl_range_usd: {low, mid, high},\n"
+        "  expected_leads_range_month: {low, mid, high},\n"
+        "  confidence: 'low'|'medium'|'high',\n"
+        "  assumptions: [str, ...],\n"
+        "  source_basis: str,\n"
+        "  organic_vs_paid, rationale,\n"
+        "  intent: 'high_intent'|'passive_discovery'|'warm_referral',\n"
+        "  conversion_rate_to_customer_range_pct: {low, mid, high},\n"
+        "  why_this_channel_for_this_intent\n"
+        "}], total_budget_check, channels_to_avoid[{channel, why}]}.\n"
         "HARD RULE: sum of budget_allocation_usd MUST equal the user's monthly budget. "
         "If budget is 0, all allocations are 0 and organic_vs_paid is '100/0'.\n"
-        "\nClassify each channel by intent:\n"
-        "- `intent: \"high_intent\" | \"passive_discovery\" | \"warm_referral\"`\n"
-        "- For each channel, also include: conversion_rate_to_customer_pct, "
-        "why_this_channel_for_this_intent.\n"
-        "Include at least 1 channel per intent bucket. If budget < $300, drop \"high_intent\" "
+        "Include at least 1 channel per intent bucket. If budget < $300, drop 'high_intent' "
         "(Google Ads) and go passive+warm only."
     )
 
@@ -42,6 +49,7 @@ class ChannelPlanner(BaseSubAgent):
         user = (
             lang_directive(lang) + "\n\n"
             + constraint_directive() + "\n\n"
+            + realism_directive() + "\n\n"
             f"{budget_context(state)}\n\n"
             f"Business: {bp}\nPersonas: {personas}\n\n"
             "Return the acquisition strategy JSON. Sum of channel budgets MUST equal user's monthly budget."

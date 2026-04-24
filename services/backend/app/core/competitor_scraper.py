@@ -104,6 +104,13 @@ async def scrape_public_page(url: str) -> dict[str, Any]:
 
     headings = [h.get_text(strip=True) for h in soup.find_all(["h1", "h2"])[:15]]
 
+    # Body text excerpt — downstream competitor analyzer reads this to find
+    # pricing tiers, offer copy, and differentiator language. Strip scripts /
+    # styles / nav / footer so we don't bury signal in boilerplate.
+    for tag in soup(["script", "style", "nav", "footer", "header", "noscript"]):
+        tag.decompose()
+    body_text = soup.get_text(" ", strip=True)[:5000]
+
     # Recent blog links (if any /blog/ href present)
     blog_links: list[dict[str, str]] = []
     seen: set[str] = set()
@@ -123,6 +130,7 @@ async def scrape_public_page(url: str) -> dict[str, Any]:
         "og_description": og_desc or meta_desc,
         "og_image": og_image,
         "headings": headings,
+        "body_text": body_text,
         "blog_links": blog_links,
         "fetched_at": datetime.now(timezone.utc).isoformat(),
     }

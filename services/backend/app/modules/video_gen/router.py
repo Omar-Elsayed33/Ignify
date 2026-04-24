@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -19,6 +20,20 @@ from app.modules.plans.context import fetch_plan_context
 router = APIRouter(prefix="/video-gen", tags=["video-gen"])
 
 
+def _video_gen_enabled() -> bool:
+    """Feature-flag video generation off by default.
+
+    Phase 3 P3-1: The VideoRenderer subagent is a stub that does not produce a
+    playable MP4. Charging customers for a feature that returns nothing is
+    fraudulent. Until we integrate a real renderer (Runway, Replicate video,
+    or an internal ffmpeg slideshow), the endpoint returns HTTP 503 with a
+    clear "coming soon" message.
+
+    To re-enable after integration, set VIDEO_GEN_ENABLED=1 in the environment.
+    """
+    return os.environ.get("VIDEO_GEN_ENABLED", "0") in ("1", "true", "True")
+
+
 @router.post(
     "/generate",
     response_model=VideoQueuedResponse,
@@ -31,6 +46,20 @@ router = APIRouter(prefix="/video-gen", tags=["video-gen"])
 async def generate(data: VideoGenerateRequest, user: CurrentUser, db: DbSession):
     if not user.tenant_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tenant")
+    if not _video_gen_enabled():
+        # Honest failure: no charging, no quota deduction, no fake status=queued.
+        # Frontend can show a "Coming soon" placeholder based on the 503 + code.
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "code": "video_generation_unavailable",
+                "message": (
+                    "Video generation is not available yet. Script + voice generation "
+                    "work, but the final MP4 renderer is not wired. No quota consumed."
+                ),
+                "eta": "Q3 2026",
+            },
+        )
     plan_ctx = await fetch_plan_context(db, user.tenant_id, data.plan_id, data.language)
     effective_idea = f"{plan_ctx}\n\nVideo brief: {data.idea}" if plan_ctx else data.idea
     try:

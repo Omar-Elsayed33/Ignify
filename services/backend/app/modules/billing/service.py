@@ -38,7 +38,11 @@ DEFAULT_PLANS: list[dict[str, Any]] = [
         "max_channels": 1,
         "max_credits": 100,
         "features": ["basic_content", "1_channel"],
-        "limits": {"articles": 5, "images": 10, "videos": 1, "ai_tokens": 50_000},
+        # `videos: 0` because video generation is feature-flagged off (Phase 3 P3-1);
+        # customers aren't charged for a feature that doesn't work. Will be bumped
+        # when VIDEO_GEN_ENABLED=1 and the renderer ships.
+        "limits": {"articles": 5, "images": 10, "videos": 0, "ai_tokens": 50_000},
+        "coming_soon": [],
         "popular": False,
     },
     {
@@ -53,7 +57,8 @@ DEFAULT_PLANS: list[dict[str, Any]] = [
         "max_channels": 3,
         "max_credits": 1000,
         "features": ["basic_content", "ai_creative", "social_scheduler", "3_channels"],
-        "limits": {"articles": 30, "images": 100, "videos": 10, "ai_tokens": 500_000},
+        "limits": {"articles": 30, "images": 100, "videos": 0, "ai_tokens": 500_000},
+        "coming_soon": [],
         "popular": False,
     },
     {
@@ -70,14 +75,16 @@ DEFAULT_PLANS: list[dict[str, Any]] = [
         "features": [
             "basic_content",
             "ai_creative",
-            "ai_video",
             "social_scheduler",
             "campaigns",
             "analytics",
             "seo",
             "10_channels",
         ],
-        "limits": {"articles": 150, "images": 500, "videos": 50, "ai_tokens": 3_000_000},
+        # `ai_video` removed from `features` until renderer ships. Listed in
+        # `coming_soon` so the pricing page can show it greyed with a "soon" tag.
+        "coming_soon": ["ai_video"],
+        "limits": {"articles": 150, "images": 500, "videos": 0, "ai_tokens": 3_000_000},
         "popular": True,
     },
     {
@@ -94,7 +101,6 @@ DEFAULT_PLANS: list[dict[str, Any]] = [
         "features": [
             "basic_content",
             "ai_creative",
-            "ai_video",
             "social_scheduler",
             "campaigns",
             "analytics",
@@ -103,10 +109,11 @@ DEFAULT_PLANS: list[dict[str, Any]] = [
             "priority_support",
             "unlimited_channels",
         ],
+        "coming_soon": ["ai_video"],
         "limits": {
             "articles": -1,
             "images": -1,
-            "videos": 500,
+            "videos": 0,
             "ai_tokens": 20_000_000,
         },
         "popular": False,
@@ -188,6 +195,10 @@ def _row_to_plan_item(plan: Plan, currency: Optional[str] = None) -> dict[str, A
         "price": localized,
         "currency": cur_code,
         "features": meta.get("features", []) or [],
+        # Features that appear on pricing pages but aren't shipped yet.
+        # Frontend should render these greyed out with a "Coming soon" tag
+        # rather than listing them as active capabilities.
+        "coming_soon": meta.get("coming_soon", []) or [],
         "limits": meta.get("limits", {}) or {},
         "popular": bool(meta.get("popular", False)),
         "is_active": bool(getattr(plan, "is_active", True)),
