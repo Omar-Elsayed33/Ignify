@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>يافا جلوبال — إعادة تصميم الموقع الكامل</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;900&display=swap');
+
+/* ══ RESET & BASE ══ */
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Cairo',sans-serif;background:#fff;color:#1a1a2e;font-size:15px;line-height:1.7;overflow-x:hidden;}
+
+/* ══ CSS VARIABLES ══ */
+:root{
+  --navy:#0d2137;
+  --blue:#1a56db;
+  --blue-light:#2563eb;
+  --blue-pale:#eff6ff;
+  --gold:#f59e0b;
+  --gold-light:#fef3c7;
+  --green:#059669;
+  --green-light:#ecfdf5;
+  --text:#1e293b;
+  --text2:#475569;
+  --text3:#94a3b8;
+  --border:#e2e8f0;
+  --bg:#f8fafc;
+  --surface:#fff;
+  --r:12px;
+  --r-lg:20px;
+  --sh:0 4px 24px rgba(0,0,0,.08);
+  --sh-lg:0 8px 48px rgba(0,0,0,.12);
+}
+
+/* ══ SITE NAV (tabs) ══ */
+.site-nav{
+  position:fixed; top:0; left:0; right:0; z-index:1000;
+  background:rgba(13,33,55,.97);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(255,255,255,.08);
+  padding:0 40px;
+  display:flex; align-items:center; justify-content:space-between;
+  height:64px;
+}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.nav-logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--blue),var(--gold));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;}
+.nav-logo-text{color:#fff;font-weight:800;font-size:16px;}
+.nav-links{display:flex;gap:4px;align-items:center;}
+.nav-link{
+  color:rgba(255,255,255,.7); text-decoration:none;
+  font-size:13px; font-weight:600; padding:8px 14px; border-radius:8px;
+  transition:.2s; cursor:pointer; border:none; background:none;
+}
+.nav-link:hover,.nav-link.active{color:#fff;background:rgba(255,255,255,.1);}
+.nav-cta{
+  background:var(--blue); color:#fff; border:none; border-radius:8px;
+  padding:9px 20px; font-size:13px; font-weight:700; cursor:pointer;
+  font-family:'Cairo',sans-serif; transition:.2s;
+}
+.nav-cta:hover{background:var(--blue-light);}
+
+/* ══ PAGES ══ */
+.page{display:none; padding-top:64px;}
+.page.active{display:block;}
+
+/* ══ HERO ══ */
+.hero{
+  background:linear-gradient(135deg,var(--navy) 0%,#1a3a5c 50%,#1e4a7c 100%);
+  min-height:100vh; display:flex; align-items:center;
+  position:relative; overflow:hidden;
+  padding:80px 40px;
+}
+.hero::before{
+  content:'';position:absolute;top:-20%;left:-10%;
+  width:600px;height:600px;border-radius:50%;
+  background:radial-gradient(circle,rgba(26,86,219,.3),transparent 70%);
+}
+.hero::after{
+  content:'';position:absolute;bottom:-20%;right:-10%;
+  width:500px;height:500px;border-radius:50%;
+  background:radial-gradient(circle,rgba(245,158,11,.15),transparent 70%);
+}
+.hero-inner{max-width:1100px;margin:0 auto;width:100%;display:grid;grid-template-columns:1.2fr 1fr;gap:60px;align-items:center;position:relative;z-index:1;}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);
+  border-radius:50px;padding:6px 18px;margin-bottom:22px;
+  font-size:12px;font-weight:700;color:#fcd34d;
+}
+.hero h1{font-size:52px;font-weight:900;color:#fff;line-height:1.15;margin-bottom:16px;}
+.hero h1 span{
+  background:linear-gradient(135deg,var(--gold),#fef08a);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero-sub{font-size:17px;color:rgba(255,255,255,.75);margin-bottom:36px;max-width:480px;}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap;}
+.btn-primary{
+  background:linear-gradient(135deg,var(--blue),#2563eb);
+  color:#fff;border:none;border-radius:12px;
+  padding:15px 32px;font-size:15px;font-weight:700;
+  cursor:pointer;font-family:'Cairo',sans-serif;
+  box-shadow:0 4px 20px rgba(26,86,219,.4);transition:.2s;
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(26,86,219,.5);}
+.btn-outline{
+  background:transparent;color:#fff;
+  border:2px solid rgba(255,255,255,.3);border-radius:12px;
+  padding:13px 28px;font-size:15px;font-weight:700;
+  cursor:pointer;font-family:'Cairo',sans-serif;transition:.2s;
+}
+.btn-outline:hover{border-color:rgba(255,255,255,.7);background:rgba(255,255,255,.05);}
+.hero-stats{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+  background:rgba(255,255,255,.1);border-radius:var(--r);overflow:hidden;
+  margin-top:40px;
+}
+.hero-stat{background:rgba(255,255,255,.05);padding:20px;text-align:center;backdrop-filter:blur(4px);}
+.hero-stat .num{font-size:32px;font-weight:900;color:var(--gold);margin-bottom:4px;}
+.hero-stat .lbl{font-size:12px;color:rgba(255,255,255,.6);}
+
+/* HERO RIGHT */
+.hero-visual{
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:20px;padding:32px;backdrop-filter:blur(8px);
+}
+.hero-visual-title{font-size:14px;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:16px;letter-spacing:.5px;}
+.service-chip{
+  display:flex;align-items:center;gap:12px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);
+  border-radius:10px;padding:14px 16px;margin-bottom:10px;
+  transition:.2s;cursor:default;
+}
+.service-chip:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.2);}
+.service-chip .icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.service-chip h4{font-size:13px;font-weight:700;color:#fff;margin-bottom:2px;}
+.service-chip p{font-size:11px;color:rgba(255,255,255,.5);}
+.service-chip .arrow{margin-right:auto;color:rgba(255,255,255,.3);font-size:18px;}
+
+/* ══ SECTION ══ */
+.sec{padding:80px 40px;}
+.sec-inner{max-width:1100px;margin:0 auto;}
+.sec-label{font-size:12px;font-weight:700;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
+.sec-title{font-size:38px;font-weight:900;color:var(--navy);line-height:1.25;margin-bottom:14px;}
+.sec-title span{color:var(--blue);}
+.sec-sub{font-size:16px;color:var(--text2);max-width:560px;}
+.sec-head-center{text-align:center;margin-bottom:52px;}
+.sec-head-center .sec-sub{margin:0 auto;}
+
+/* ══ GRID ══ */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+
+/* ══ CARD ══ */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:28px;box-shadow:var(--sh);transition:.2s;}
+.card:hover{transform:translateY(-3px);box-shadow:var(--sh-lg);}
+.card-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:18px;}
+.card h3{font-size:17px;font-weight:800;margin-bottom:8px;color:var(--navy);}
+.card p{font-size:14px;color:var(--text2);line-height:1.65;}
+.card-arrow{display:inline-flex;align-items:center;gap:6px;color:var(--blue);font-size:13px;font-weight:700;margin-top:14px;cursor:pointer;}
+
+/* ══ SERVICE DETAIL CARDS ══ */
+.service-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh);
+  transition:.2s;
+}
+.service-card:hover{transform:translateY(-4px);box-shadow:var(--sh-lg);}
+.service-card-head{padding:28px;display:flex;gap:16px;align-items:flex-start;}
+.service-card-head .icon{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+.service-card-head h3{font-size:19px;font-weight:900;margin-bottom:6px;color:var(--navy);}
+.service-card-head p{font-size:14px;color:var(--text2);}
+.service-card-body{padding:0 28px 28px;}
+.feature-list{list-style:none;}
+.feature-list li{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--text);}
+.feature-list li:last-child{border-bottom:none;}
+.feature-list li::before{content:'✓';width:20px;height:20px;border-radius:50%;background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;flex-shrink:0;margin-top:1px;}
+
+/* ══ WHY US ══ */
+.why-row{display:flex;align-items:flex-start;gap:20px;padding:20px 0;border-bottom:1px solid var(--border);}
+.why-row:last-child{border-bottom:none;}
+.why-num{width:44px;height:44px;border-radius:10px;background:var(--navy);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;flex-shrink:0;}
+.why-row h4{font-size:16px;font-weight:800;color:var(--navy);margin-bottom:5px;}
+.why-row p{font-size:14px;color:var(--text2);}
+
+/* ══ STATS STRIP ══ */
+.stats-strip{background:linear-gradient(135deg,var(--navy),#1a3a5c);padding:60px 40px;}
+.stats-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,255,255,.1);border-radius:var(--r);overflow:hidden;}
+.stat-item{background:rgba(255,255,255,.05);padding:36px 24px;text-align:center;}
+.stat-item .num{font-size:44px;font-weight:900;color:var(--gold);margin-bottom:6px;}
+.stat-item .lbl{font-size:14px;color:rgba(255,255,255,.7);}
+
+/* ══ TESTIMONIALS ══ */
+.testimonial{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:28px;position:relative;}
+.testimonial::before{content:'"';position:absolute;top:16px;left:24px;font-size:80px;color:var(--blue-pale);font-family:serif;line-height:1;}
+.testimonial p{font-size:15px;color:var(--text);line-height:1.75;margin-bottom:20px;padding-top:20px;}
+.testimonial-author{display:flex;align-items:center;gap:12px;}
+.testimonial-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0;}
+.testimonial-name{font-size:14px;font-weight:700;}
+.testimonial-role{font-size:12px;color:var(--text3);}
+
+/* ══ BLOG ══ */
+.blog-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh);transition:.2s;}
+.blog-card:hover{transform:translateY(-4px);box-shadow:var(--sh-lg);}
+.blog-card-img{height:180px;display:flex;align-items:center;justify-content:center;font-size:52px;}
+.blog-card-body{padding:22px;}
+.blog-tag{font-size:11px;font-weight:700;padding:3px 10px;border-radius:50px;display:inline-block;margin-bottom:10px;}
+.blog-card h3{font-size:16px;font-weight:800;color:var(--navy);margin-bottom:8px;line-height:1.4;}
+.blog-card p{font-size:13px;color:var(--text2);margin-bottom:14px;}
+.blog-meta{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--text3);}
+
+/* ══ ABOUT PAGE ══ */
+.about-hero{background:linear-gradient(135deg,var(--navy),#1a3a5c);padding:100px 40px 80px;color:#fff;text-align:center;}
+.about-hero h1{font-size:46px;font-weight:900;margin-bottom:14px;}
+.about-hero p{font-size:17px;opacity:.8;max-width:560px;margin:0 auto;}
+
+.value-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px;text-align:center;}
+.value-card .icon{font-size:36px;margin-bottom:12px;}
+.value-card h4{font-size:15px;font-weight:800;color:var(--navy);margin-bottom:6px;}
+.value-card p{font-size:13px;color:var(--text2);}
+
+.team-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:24px;text-align:center;}
+.team-avatar{width:80px;height:80px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900;color:#fff;}
+.team-card h4{font-size:15px;font-weight:800;color:var(--navy);}
+.team-card p{font-size:13px;color:var(--text2);}
+
+/* ══ CONTACT ══ */
+.contact-hero{background:linear-gradient(135deg,var(--navy),#1a3a5c);padding:80px 40px 60px;color:#fff;text-align:center;}
+.contact-hero h1{font-size:42px;font-weight:900;margin-bottom:10px;}
+.contact-info-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:28px;}
+.contact-row{display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);}
+.contact-row:last-child{border-bottom:none;}
+.contact-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.contact-row h4{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:2px;}
+.contact-row p{font-size:13px;color:var(--text2);}
+
+.form-group{margin-bottom:18px;}
+.form-group label{display:block;font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.form-input{
+  width:100%;border:1px solid var(--border);border-radius:10px;
+  padding:12px 16px;font-size:14px;font-family:'Cairo',sans-serif;
+  color:var(--text);background:var(--bg);outline:none;transition:.2s;
+}
+.form-input:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(26,86,219,.1);}
+.form-select{appearance:none;cursor:pointer;}
+textarea.form-input{resize:vertical;min-height:100px;}
+
+/* ══ CTA SECTION ══ */
+.cta-sec{background:linear-gradient(135deg,var(--navy),#1a3a5c);padding:80px 40px;text-align:center;}
+.cta-sec h2{font-size:38px;font-weight:900;color:#fff;margin-bottom:12px;}
+.cta-sec p{font-size:16px;color:rgba(255,255,255,.75);margin-bottom:32px;}
+.cta-sec .btn-primary{font-size:16px;padding:16px 40px;}
+
+/* ══ FOOTER ══ */
+.footer{background:#060d18;color:rgba(255,255,255,.6);padding:60px 40px 30px;}
+.footer-inner{max-width:1100px;margin:0 auto;}
+.footer-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:40px;margin-bottom:50px;}
+.footer-logo{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.footer-logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--blue),var(--gold));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;}
+.footer-logo-text{color:#fff;font-weight:800;font-size:18px;}
+.footer-desc{font-size:13px;line-height:1.7;margin-bottom:20px;}
+.footer-social{display:flex;gap:8px;}
+.social-btn{width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;transition:.2s;}
+.social-btn:hover{background:var(--blue);}
+.footer-col h4{font-size:14px;font-weight:800;color:#fff;margin-bottom:16px;}
+.footer-link{display:block;font-size:13px;color:rgba(255,255,255,.5);text-decoration:none;margin-bottom:10px;transition:.2s;}
+.footer-link:hover{color:#fff;}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.08);padding-top:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.footer-bottom p{font-size:12px;}
+
+/* ══ WHATSAPP FLOAT ══ */
+.wa-float{
+  position:fixed;bottom:28px;left:28px;z-index:999;
+  width:56px;height:56px;border-radius:50%;
+  background:#25d366;box-shadow:0 4px 20px rgba(37,211,102,.4);
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;cursor:pointer;transition:.2s;text-decoration:none;
+}
+.wa-float:hover{transform:scale(1.1);}
+
+/* ══ CASE STUDIES ══ */
+.case-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh);}
+.case-card-head{padding:24px;display:flex;gap:16px;align-items:flex-start;}
+.case-card-head .case-icon{font-size:36px;}
+.case-card-head h3{font-size:17px;font-weight:800;color:var(--navy);margin-bottom:4px;}
+.case-card-head p{font-size:13px;color:var(--text2);}
+.case-metrics{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--border);}
+.case-metric{padding:16px;text-align:center;border-left:1px solid var(--border);}
+.case-metric:first-child{border-left:none;}
+.case-metric .val{font-size:22px;font-weight:900;color:var(--blue);margin-bottom:3px;}
+.case-metric .lbl{font-size:11px;color:var(--text3);}
+
+/* ══ PRICING ══ */
+.pricing-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--r-lg);padding:32px;position:relative;transition:.2s;}
+.pricing-card.featured{border-color:var(--blue);box-shadow:0 0 0 4px rgba(26,86,219,.08);}
+.pricing-badge{position:absolute;top:-12px;right:50%;transform:translateX(50%);background:var(--blue);color:#fff;font-size:11px;font-weight:700;padding:4px 16px;border-radius:50px;}
+.pricing-name{font-size:14px;font-weight:700;color:var(--text2);margin-bottom:8px;}
+.pricing-desc{font-size:13px;color:var(--text3);margin-bottom:24px;}
+.pricing-features{list-style:none;margin-bottom:28px;}
+.pricing-features li{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--text);padding:7px 0;border-bottom:1px solid var(--border);}
+.pricing-features li:last-child{border-bottom:none;}
+.pricing-features li::before{content:'✓';color:var(--green);font-weight:900;flex-shrink:0;}
+
+/* ══ PROCESS ══ */
+.process-steps{display:flex;gap:0;position:relative;}
+.process-steps::before{content:'';position:absolute;top:24px;right:24px;left:24px;height:2px;background:var(--border);z-index:0;}
+.process-step{flex:1;text-align:center;position:relative;z-index:1;}
+.process-step .step-num{width:48px;height:48px;border-radius:50%;background:var(--navy);color:var(--gold);font-size:16px;font-weight:900;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;}
+.process-step h4{font-size:14px;font-weight:800;color:var(--navy);margin-bottom:6px;}
+.process-step p{font-size:12px;color:var(--text2);}
+
+/* ══ BADGE ══ */
+.badge{display:inline-block;padding:4px 12px;border-radius:50px;font-size:11px;font-weight:700;}
+
+/* ══ SECTION BG ══ */
+.sec-bg{background:var(--bg);}
+.sec-navy{background:linear-gradient(135deg,var(--navy),#1a3a5c);}
+
+/* ══ RESPONSIVE ══ */
+@media(max-width:768px){
+  .hero{padding:80px 20px 60px;}
+  .hero-inner{grid-template-columns:1fr;gap:40px;}
+  .hero h1{font-size:34px;}
+  .hero-visual{display:none;}
+  .sec{padding:60px 20px;}
+  .g2,.g3,.g4{grid-template-columns:1fr;}
+  .stats-inner{grid-template-columns:1fr 1fr;}
+  .footer-grid{grid-template-columns:1fr 1fr;}
+  .site-nav{padding:0 20px;}
+  .nav-links{gap:0;}
+  .nav-link{padding:8px 8px;font-size:11px;}
+  .process-steps{flex-direction:column;gap:20px;}
+  .process-steps::before{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ WHATSAPP FLOAT ══ -->
+<a class="wa-float" href="https://wa.me/966551403355" target="_blank">💬</a>
+
+<!-- ══ NAVIGATION ══ -->
+<nav class="site-nav">
+  <a class="nav-logo" href="#" onclick="showPage('home')">
+    <div class="nav-logo-icon">ي</div>
+    <span class="nav-logo-text">يافا جلوبال</span>
+  </a>
+  <div class="nav-links">
+    <button class="nav-link active" onclick="showPage('home')">الرئيسية</button>
+    <button class="nav-link" onclick="showPage('about')">من نحن</button>
+    <button class="nav-link" onclick="showPage('services')">خدماتنا</button>
+    <button class="nav-link" onclick="showPage('cases')">نتائجنا</button>
+    <button class="nav-link" onclick="showPage('blog')">المدونة</button>
+    <button class="nav-link" onclick="showPage('contact')">اتصل بنا</button>
+  </div>
+  <button class="nav-cta" onclick="showPage('contact')">استشارة مجانية</button>
+</nav>
+
+
+<!-- ═══════════════════════════════════════
+     PAGE: HOME
+═══════════════════════════════════════ -->
+<div class="page active" id="page-home">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div>
+        <div class="hero-badge">🏆 خبرة 13+ سنة في السوق السعودي</div>
+        <h1>الشريك الشامل<br>لإدارة <span>قوّتك البشرية</span></h1>
+        <p class="hero-sub">يافا جلوبال — الشركة الوحيدة التي تجمع الإسناد الوظيفي، مراكز الاتصال، التسويق، السكن، والنقل في عقد واحد. شريكك الاستراتيجي لتنمية عملك.</p>
+        <div class="hero-btns">
+          <button class="btn-primary" onclick="showPage('contact')">احصل على استشارة مجانية</button>
+          <button class="btn-outline" onclick="showPage('services')">استكشف خدماتنا</button>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat"><div class="num">500+</div><div class="lbl">شركة تثق بنا</div></div>
+          <div class="hero-stat"><div class="num">13</div><div class="lbl">سنة خبرة</div></div>
+          <div class="hero-stat"><div class="num">5</div><div class="lbl">خدمات متكاملة</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="hero-visual">
+          <div class="hero-visual-title">خدماتنا الخمس المتكاملة</div>
+          <div class="service-chip">
+            <div class="icon" style="background:rgba(26,86,219,.2)">👥</div>
+            <div><h4>الإسناد الوظيفي وحلول الموارد البشرية</h4><p>استقطاب + إدارة + رواتب + تأمين</p></div>
+            <div class="arrow">←</div>
+          </div>
+          <div class="service-chip">
+            <div class="icon" style="background:rgba(16,185,129,.2)">📞</div>
+            <div><h4>مراكز الاتصال المُدارة</h4><p>دعم عملاء 8-24 ساعة متخصص</p></div>
+            <div class="arrow">←</div>
+          </div>
+          <div class="service-chip">
+            <div class="icon" style="background:rgba(245,158,11,.2)">📣</div>
+            <div><h4>خدمات التسويق</h4><p>استراتيجية + تنفيذ + قياس</p></div>
+            <div class="arrow">←</div>
+          </div>
+          <div class="service-chip">
+            <div class="icon" style="background:rgba(139,92,246,.2)">🏠</div>
+            <div><h4>خدمات السكن والإيواء</h4><p>مساكن آمنة ومُجهّزة للعمال</p></div>
+            <div class="arrow">←</div>
+          </div>
+          <div class="service-chip">
+            <div class="icon" style="background:rgba(239,68,68,.2)">🚌</div>
+            <div><h4>خدمات النقل والمواصلات</h4><p>مواصلات منظّمة 24 ساعة</p></div>
+            <div class="arrow">←</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVICES OVERVIEW -->
+  <section class="sec sec-bg">
+    <div class="sec-inner">
+      <div class="sec-head-center">
+        <div class="sec-label">ما نقدمه</div>
+        <h2 class="sec-title">خدمات <span>متكاملة</span> تحت سقف واحد</h2>
+        <p class="sec-sub">بدلاً من التعامل مع 4-5 موردين مختلفين، يافا جلوبال تُدير كل احتياجاتك التشغيلية بعقد واحد وفريق واحد مخصص.</p>
+      </div>
+      <div class="g3">
+        <div class="card" onclick="showPage('services')" style="cursor:pointer">
+          <div class="card-icon" style="background:#eff6ff">👥</div>
+          <h3>الإسناد الوظيفي وحلول الموارد البشرية</h3>
+          <p>استقطاب الكوادر، إدارة الرواتب، التأمين الطبي، وضمانات الاستبدال — متوافق مع نطاقات 2026.</p>
+          <div class="card-arrow">اعرف أكثر ←</div>
+        </div>
+        <div class="card" onclick="showPage('services')" style="cursor:pointer">
+          <div class="card-icon" style="background:#ecfdf5">📞</div>
+          <h3>مراكز الاتصال المُدارة</h3>
+          <p>فريق متخصص يُدير تواصل عملائك من 8 إلى 24 ساعة يومياً مع تقارير أداء شهرية واضحة.</p>
+          <div class="card-arrow">اعرف أكثر ←</div>
+        </div>
+        <div class="card" onclick="showPage('services')" style="cursor:pointer">
+          <div class="card-icon" style="background:#fffbeb">📣</div>
+          <h3>خدمات التسويق</h3>
+          <p>تطوير استراتيجيات تسويقية فعّالة، تحليل المنافسين، وإشراف على التنفيذ لتحقيق نمو حقيقي.</p>
+          <div class="card-arrow">اعرف أكثر ←</div>
+        </div>
+        <div class="card" onclick="showPage('services')" style="cursor:pointer">
+          <div class="card-icon" style="background:#fdf4ff">🏠</div>
+          <h3>خدمات السكن والإيواء</h3>
+          <p>توفير مساكن آمنة وملائمة للعمال تلبي معايير السلامة والجودة، مع إدارة كاملة للصيانة.</p>
+          <div class="card-arrow">اعرف أكثر ←</div>
+        </div>
+        <div class="card" onclick="showPage('services')" style="cursor:pointer">
+          <div class="card-icon" style="background:#fef2f2">🚌</div>
+          <h3>خدمات النقل والمواصلات</h3>
+          <p>خدمة نقل منظّمة وآمنة لموظفيك على مدار 24 ساعة بأسطول حديث ومُؤمَّن.</p>
+          <div class="card-arrow">اعرف أكثر ←</div>
+        </div>
+        <div class="card" style="background:linear-gradient(135deg,var(--navy),#1a3a5c);border:none;cursor:pointer" onclick="showPage('contact')">
+          <div class="card-icon" style="background:rgba(255,255,255,.1)">🤝</div>
+          <h3 style="color:#fff">الحزمة الشاملة</h3>
+          <p style="color:rgba(255,255,255,.7)">احصل على كل الخدمات الخمس في عقد واحد بسعر تفضيلي ومدير حساب مخصص.</p>
+          <div class="card-arrow" style="color:var(--gold)">تواصل معنا ←</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHY YAFA -->
+  <section class="sec">
+    <div class="sec-inner">
+      <div class="g2" style="align-items:center;gap:60px;">
+        <div>
+          <div class="sec-label">لماذا يافا</div>
+          <h2 class="sec-title">ما يجعلنا <span>مختلفين</span> عن كل المنافسين</h2>
+          <p class="sec-sub" style="margin-bottom:32px">منذ 2008، بنينا ميزة تنافسية لا يمتلكها أي منافس آخر في السوق السعودي.</p>
+          <div>
+            <div class="why-row">
+              <div class="why-num">1</div>
+              <div><h4>التكامل الكامل — مورّد واحد للكل</h4><p>الشركة الوحيدة التي تجمع HR + كول سنتر + تسويق + سكن + نقل. توفير 30-40% من التكاليف الإدارية.</p></div>
+            </div>
+            <div class="why-row">
+              <div class="why-num">2</div>
+              <div><h4>امتثال كامل لنطاقات ووزارة الموارد البشرية</h4><p>فريق قانوني متخصص يضمن توافق كل عملياتك مع اللوائح السعودية دائماً.</p></div>
+            </div>
+            <div class="why-row">
+              <div class="why-num">3</div>
+              <div><h4>مدير حساب مخصص لكل عميل</h4><p>شخص واحد يعرف تفاصيل عملك ويكون متاحاً لك على مدار الساعة.</p></div>
+            </div>
+            <div class="why-row">
+              <div class="why-num">4</div>
+              <div><h4>ضمانات SLA واضحة مع تعويض</h4><p>عقودنا تتضمن بنوداً صريحة للأداء — إذا أخفقنا نُعوّض. لا كلام — عقد مكتوب.</p></div>
+            </div>
+            <div class="why-row">
+              <div class="why-num">5</div>
+              <div><h4>قدرة توسع سريعة</h4><p>نوظّف 10 أو 500 موظف في أسابيع — لدينا قاعدة بيانات من 10,000+ مرشح جاهز.</p></div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div style="background:var(--bg);border-radius:var(--r-lg);padding:32px;border:1px solid var(--border)">
+            <div style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:20px">مقارنة مع المنافسين</div>
+            <div style="overflow-x:auto;">
+              <table style="width:100%;border-collapse:collapse;font-size:13px">
+                <thead>
+                  <tr>
+                    <th style="text-align:right;padding:10px 12px;background:var(--navy);color:#fff;border-radius:8px 0 0 0">الميزة</th>
+                    <th style="padding:10px;background:var(--blue);color:#fff;text-align:center">يافا</th>
+                    <th style="padding:10px;background:#64748b;color:#fff;text-align:center;border-radius:0 8px 0 0">المنافسون</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td style="padding:10px 12px;border-bottom:1px solid var(--border)">خدمات متكاملة 5 في 1</td><td style="text-align:center;border-bottom:1px solid var(--border);color:var(--green);font-weight:700">✓</td><td style="text-align:center;border-bottom:1px solid var(--border);color:#dc2626">✗</td></tr>
+                  <tr><td style="padding:10px 12px;border-bottom:1px solid var(--border);background:var(--bg)">مدير حساب مخصص</td><td style="text-align:center;border-bottom:1px solid var(--border);background:var(--bg);color:var(--green);font-weight:700">✓</td><td style="text-align:center;border-bottom:1px solid var(--border);background:var(--bg);color:#d97706">جزئياً</td></tr>
+                  <tr><td style="padding:10px 12px;border-bottom:1px solid var(--border)">ضمانات SLA مكتوبة</td><td style="text-align:center;border-bottom:1px solid var(--border);color:var(--green);font-weight:700">✓</td><td style="text-align:center;border-bottom:1px solid var(--border);color:#dc2626">نادراً</td></tr>
+                  <tr><td style="padding:10px 12px;border-bottom:1px solid var(--border);background:var(--bg)">خبرة محلية 13+ سنة</td><td style="text-align:center;border-bottom:1px solid var(--border);background:var(--bg);color:var(--green);font-weight:700">✓</td><td style="text-align:center;border-bottom:1px solid var(--border);background:var(--bg);color:#d97706">جزئياً</td></tr>
+                  <tr><td style="padding:10px 12px">عقد مرن بدون قيود</td><td style="text-align:center;color:var(--green);font-weight:700">✓</td><td style="text-align:center;color:#dc2626">✗</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats-strip">
+    <div class="stats-inner">
+      <div class="stat-item"><div class="num">500+</div><div class="lbl">شركة عميلة نشطة</div></div>
+      <div class="stat-item"><div class="num">13</div><div class="lbl">سنة من الخبرة في السوق السعودي</div></div>
+      <div class="stat-item"><div class="num">98%</div><div class="lbl">معدل رضا العملاء</div></div>
+      <div class="stat-item"><div class="num">5,000+</div><div class="lbl">موظف تحت إدارتنا</div></div>
+    </div>
+  </div>
+
+  <!-- PROCESS -->
+  <section class="sec sec-bg">
+    <div class="sec-inner">
+      <div class="sec-head-center">
+        <div class="sec-label">كيف نعمل</div>
+        <h2 class="sec-title">من التواصل إلى <span>بدء التشغيل</span></h2>
+        <p class="sec-sub">4 خطوات بسيطة تفصلك عن فريق جاهز وخدمات تعمل بكامل كفاءتها.</p>
+      </div>
+      <div class="process-steps">
+        <div class="process-step"><div class="step-num">1</div><h4>استشارة مجانية</h4><p>نفهم احتياجاتك وأهدافك خلال مكالمة 30 دقيقة</p></div>
+        <div class="process-step"><div class="step-num">2</div><h4>عرض مخصص</h4><p>نُعدّ عرض سعر تفصيلي يناسب حجم عملك بالضبط</p></div>
+        <div class="process-step"><div class="step-num">3</div><h4>توقيع العقد</h4><p>عقد واضح بضمانات SLA ومدير حساب مخصص</p></div>
+        <div class="process-step"><div class="step-num">4</div><h4>بدء التشغيل</h4><p>نبدأ تقديم الخدمة خلال 7-14 يوماً من التوقيع</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section class="sec">
+    <div class="sec-inner">
+      <div class="sec-head-center">
+        <div class="sec-label">آراء عملاؤنا</div>
+        <h2 class="sec-title">ماذا يقول <span>شركاؤنا</span> عنّا</h2>
+      </div>
+      <div class="g3">
+        <div class="testimonial">
+          <p>"يافا جلوبال غيّرت طريقة عملنا كلياً. كنا نتعامل مع 3 شركات مختلفة — الآن شركة واحدة تُدير كل شيء بكفاءة أعلى وتكلفة أقل."</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" style="background:var(--blue)">م</div>
+            <div><div class="testimonial-name">محمد العتيبي</div><div class="testimonial-role">مدير الموارد البشرية — شركة مقاولات كبرى، الرياض</div></div>
+          </div>
+        </div>
+        <div class="testimonial">
+          <p>"وظّفوا لنا 120 موظفاً في 3 أسابيع مع توفير السكن والنقل. لم نتوقع هذه السرعة والاحترافية. مدير حساب ممتاز ومتابعة يومية."</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" style="background:var(--green)">ف</div>
+            <div><div class="testimonial-name">فهد القحطاني</div><div class="testimonial-role">المدير التنفيذي — مجمع صناعي، جدة</div></div>
+          </div>
+        </div>
+        <div class="testimonial">
+          <p>"الكول سنتر الذي أسسوه لنا رفع رضا عملائنا من 72% إلى 91% في 6 أشهر. التقارير الشهرية شفافة وتفصيلية جداً."</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" style="background:var(--gold)">س</div>
+            <div><div class="testimonial-name">سلمى المالكي</div><div class="testimonial-role">مديرة تجربة العملاء — شركة خدمات، الدمام</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <div class="cta-sec">
+    <div class="sec-inner">
+      <h2>هل أنت مستعد للشراكة الصحيحة؟</h2>
+      <p>استشارة مجانية مع خبرائنا — نفهم احتياجك ونقدم عرضاً مخصصاً خلال 48 ساعة.</p>
+      <button class="btn-primary" onclick="showPage('contact')">ابدأ الآن — استشارة مجانية</button>
+    </div>
+  </div>
+
+</div><!-- /page-home -->
+
+
+<!-- ═══════════════════════════════════════
+     PAGE: ABOUT
+═══════════════════════════════════════ -->
+<div class="page" id="page-about">
+  <div class="about-hero">
+    <div class="sec-label" style="color:#fcd34d;justify-content:center;display:flex">من نحن</div>
+    <h1>قصة يافا جلوبال</h1>
+    <p>منذ 2008 ونحن نبني الشريك الأمثل لإدارة الكوادر البشرية في المملكة العربية السعودية</p>
+  </div>
+
+  <!-- STORY -->
+  <section class="sec">
+    <div class="sec-inner">
+      <div class="g2" style="align-items:center;gap:60px">
+        <div>
+          <div class="sec-label">قصتنا</div>
+          <h2 class="sec-title">من شركة <span>ناشئة</span> إلى شريك استراتيجي لـ 500+ منشأة</h2>
+          <p style="color:var(--text2);margin-bottom:16px">تأسست يافا جلوبال عام 2008 في الرياض برؤية واحدة: أن تكون الشركة الأولى في المملكة التي تُقدّم حلولاً متكاملة لإدارة القوى البشرية تحت سقف واحد.</p>
+          <p style="color:var(--text2);margin-bottom:16px">بدأنا بفريق صغير وعميل واحد، اليوم نخدم أكثر من 500 شركة في مختلف القطاعات، ونُدير أكثر من 5,000 موظف يومياً عبر خدماتنا الخمس المتكاملة.</p>
+          <p style="color:var(--text2)">نفخر بأننا شريك استراتيجي لا مجرد مورّد — نفهم عملك، نشارك أهدافك، ونكون معك في كل مرحلة من مراحل النمو.</p>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div style="background:var(--navy);border-radius:var(--r-lg);padding:28px;text-align:center;color:#fff">
+            <div style="font-size:42px;font-weight:900;color:var(--gold);margin-bottom:6px">2008</div>
+            <div style="font-size:14px;opacity:.7">سنة التأسيس</div>
+          </div>
+          <div style="background:var(--blue-pale);border:1px solid #bfdbfe;border-radius:var(--r-lg);padding:28px;text-align:center">
+            <div style="font-size:42px;font-weight:900;color:var(--blue);margin-bottom:6px">500+</div>
+            <div style="font-size:14px;color:var(--text2)">شركة عميلة</div>
+          </div>
+          <div style="background:var(--green-light);border:1px solid #6ee7b7;border-radius:var(--r-lg);padding:28px;text-align:center">
+            <div style="font-size:42px;font-weight:900;color:var(--green);margin-bottom:6px">5</div>
+            <div style="font-size:14px;color:var(--text2)">خدمات متكاملة</div>
+          </div>
+          <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:var(--r-lg);padding:28px;text-align:center">
+            <div style="font-size:42px;font-weight:900;color:var(--gold);margin-bottom:6px">98%</div>
+            <div style="font-size:14px;color:var(--text2)">رضا العملاء</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VISION & MISSION -->
+  <section class="sec sec-bg">
+    <div class="sec-inner">
+      <div class="g2">
+        <div class="card" style="border-right:4px solid var(--blue)">
+          <div style="font-size:36px;margin-bottom:14px">🎯</div>
+          <h3>رؤيتنا</h3>
+          <p>أن نكون الخيار الأول في المملكة العربية السعودية وركيزة نجاح الشركات والعملاء الذين نعمل معهم — من خلال تقديم حلول شاملة ومتكاملة وفعّالة تُمكّن عملاءنا من التركيز على جوهر أعمالهم.</p>
+        </div>
+        <div class="card" style="border-right:4px solid var(--gold)">
+          <div style="font-size:36px;margin-bottom:14px">🌟</div>
+          <h3>رسالتنا</h3>
+          <p>تسخير كامل طاقات الشركة لتقديم خدمات بتميّز احترافي وجودة عالية لعملائنا الكرام — ننجز ما نعد به، ونقدّم ما يتجاوز التوقعات في كل شراكة.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VALUES -->
+  <section class="sec">
+    <div class="sec-inner">
+      <div class="sec-head-center">
+        <div class="sec-label">قيمنا</div>
+        <h2 class="sec-title">المبادئ التي <span>تحكم</span> كل ما نفعل</h2>
+      </div>
+      <div class="g3">
+        <div class="value-card">
+          <div class="icon">🤝</div>
+          <h4>الشفافية والأمانة</h4>
+          <p>نُفصح عن كل التفاصيل من أول يوم. لا رسوم مخفية، لا مفاجآت.</p>
+        </div>
+        <div class="value-card">
+          <div class="icon">⭐</div>
+          <h4>الجودة الاحترافية</h4>
+          <p>نلتزم بأعلى معايير الجودة في كل خدمة نُقدّمها لكل عميل.</p>
+        </div>
+        <div class="value-card">
+          <div class="icon">💡</div>
+          <h4>الإبداع والابتكار</h4>
+          <p>نبحث دائماً عن حلول أفضل وأكثر كفاءة لمشاكل عملائنا.</p>
+        </div>
+        <div class="value-card">
+          <div class="icon">👫</div>
+          <h4>العمل الجماعي المتكامل</h4>
+          <p>فريق واحد متناسق يعمل نحو هدف واحد — نجاح عميلنا.</p>
+        </div>
+        <div class="value-card">
+          <div class="icon">🔒</div>
+          <h4>السرية والخصوصية</h4>
+          <p>نحافظ على سرية بيانات عملائنا بأعلى المعايير الأمنية.</p>
+        </div>
+        <div class="value-card">
+          <div class="icon">⚖️</div>
+          <h4>حقوق الإنسان والعدالة</h4>
+          <p>نحترم حقوق جميع العمال ونضمن بيئة عمل عادلة وكريمة.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CLIENTS LOGOS -->
+  <section class="sec sec-bg">
+    <div class="sec-inner">
+      <div class="sec-head-center">
+        <div class="sec-label">شركاؤنا</div>
+        <h2 class="sec-title">يثق بنا <span>500+</span> شركة رائدة</h2>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 24px;font-size:13px;font-weight:700;color:var(--text2)">شركة إنشاءات ضخمة — الرياض</div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 24px;font-size:13px;font-weight:700;color:var(--text2)">مجمع تصنيعي — جدة</div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 24px;font-size:13px;font-weight:700;color:var(--text2)">شركة خدمات حكومية</div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 24px;font-size:13px;font-weight:700;color:var(--text2)">سلسلة متاجر تجزئة</div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 24px;font-size:13px;font-weight:700;color:var(--text2)">مستشفى خاص — الدمام</div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 24px;font-size:13px;font-weight:700;color:var(--text2)">شركة لوجستيات</div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 24px;font-size:13px;font-weight:700;color:var(--text2)">فندق 5 نجوم — مكة</div>
+        <div style="background:var(--navy);border-radius:10px;padding:16px 24px;font-size:13px;font-weight:700;color:#fff">500+ شركة أخرى</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="cta-sec">
+    <div class="sec-inner">
+      <h2>كن جزءاً من عائلة يافا</h2>
+      <p>انضم لأكثر من 500 شركة تثق بيافا جلوبال في إدارة كوادرها البشرية.</p>
+      <button class="btn-primary" onclick="showPage('contact')">ابدأ الشراكة اليوم</button>
+    </div>
+  </div>
+</div><!-- /page-about -->
+
+
+<!-- ═══════════════════════════════════════
+     PAGE: SERVICES
+═══════════════════════════════════════ -->
+<div class="page" id="page-services">
+  <div class="about-hero">
+    <div class="sec-label" style="color:#fcd34d;justify-content:center;display:flex">خدماتنا</div>
+    <h1>5 خدمات متكاملة في عقد واحد</h1>
+    <p>كل ما تحتاجه لتشغيل كوادرك البشرية باحترافية — تحت سقف واحد وفريق واحد مخصص لك.</p>
+  </div>
+
+  <section class="sec">
+    <div class="sec-inner">
+      <div style="display:flex;flex-direction:column;gap:24px">
+
+        <!-- SERVICE 1 -->
+        <div class="service-card">
+          <div class="service-card-head">
+            <div class="icon" style="background:#eff6ff;font-size:28px">👥</div>
+            <div>
+              <h3>الإسناد الوظيفي وحلول الموارد البشرية</h3>
+              <p>الحل الشامل لاستقطاب وإدارة الكوادر البشرية — من أول إعلان التوظيف حتى إدارة الراتب الشهري.</p>
+            </div>
+          </div>
+          <div class="service-card-body">
+            <div class="g2" style="gap:32px">
+              <div>
+                <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:12px">ما يشمله الإسناد الوظيفي</div>
+                <ul class="feature-list">
+                  <li>استقطاب وتوظيف الكوادر المناسبة لأهدافك</li>
+                  <li>تطوير الهيكل التنظيمي وتوصيف الوظائف</li>
+                  <li>إدارة الرواتب والتأمين الطبي بشكل كامل</li>
+                  <li>برامج تقييم الأداء وتحفيز الموظفين</li>
+                  <li>إدارة العلاقات الحكومية ومتطلبات التأشيرات</li>
+                  <li>ضمان الامتثال لنطاقات ووزارة الموارد البشرية</li>
+                  <li>برامج التدريب وبناء الكفاءات</li>
+                  <li>ضمان الاستبدال الفوري عند الحاجة</li>
+                </ul>
+              </div>
+              <div>
+                <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:12px">المميزات الحصرية</div>
+                <div style="background:var(--blue-pale);border-radius:var(--r);padding:20px;margin-bottom:12px">
+                  <div style="font-size:28px;font-weight:900;color:var(--blue)">10,000+</div>
+                  <div style="font-size:13px;color:var(--text2)">مرشح في قاعدة بياناتنا جاهز للتعيين</div>
+                </div>
+                <div style="background:var(--green-light);border-radius:var(--r);padding:20px">
+                  <div style="font-size:28px;font-weight:900;color:var(--green)">7-14 يوم</div>
+                  <div style="font-size:13px;color:var(--text2)">متوسط وقت توفير الكوادر المطلوبة</div>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:24px;padding-top:24px;border-top:1px solid var(--border)">
+              <button class="btn-primary" onclick="showPage('contact')">احصل على عرض سعر مجاني</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SERVICE 2 -->
+        <div class="service-card">
+          <div class="service-card-head">
+            <div class="icon" style="background:#ecfdf5;font-size:28px">📞</div>
+            <div>
+              <h3>مراكز الاتصال المُدارة (كول سنتر)</h3>
+              <p>فريق متخصص يُدير تواصل عملائك بأعلى مستوى من الاحترافية — متاح 8 إلى 24 ساعة يومياً حسب احتياجك.</p>
+            </div>
+          </div>
+          <div class="service-card-body">
+            <div class="g2" style="gap:32px">
+              <div>
+                <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:12px">ما يشمله الكول سنتر</div>
+                <ul class="feature-list">
+                  <li>دعم العملاء وحل المشكلات والشكاوى</li>
+                  <li>مبيعات هاتفية واستفسارات المنتجات</li>
+                  <li>الدعم التقني للعملاء (Tier 1 & 2)</li>
+                  <li>إدارة المواعيد والحجوزات</li>
+                  <li>استطلاعات رضا العملاء</li>
+                  <li>تقارير أداء شهرية مفصّلة</li>
+                  <li>تشغيل 8 أو 12 أو 24 ساعة حسب الاحتياج</li>
+                  <li>فريق ثنائي اللغة (عربي + إنجليزي)</li>
+                </ul>
+              </div>
+              <div>
+                <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:12px">ما يميّز كول سنتر يافا</div>
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:10px">
+                  <div style="font-weight:700;font-size:14px;margin-bottom:4px">⚡ تشغيل في 14 يوم</div>
+                  <div style="font-size:13px;color:var(--text2)">من توقيع العقد إلى بدء استقبال المكالمات</div>
+                </div>
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:10px">
+                  <div style="font-weight:700;font-size:14px;margin-bottom:4px">📊 تقارير حية</div>
+                  <div style="font-size:13px;color:var(--text2)">Dashboard يومي لمتابعة أداء الكول سنتر</div>
+                </div>
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:16px">
+                  <div style="font-weight:700;font-size:14px;margin-bottom:4px">🎯 SLA مضمون</div>
+                  <div style="font-size:13px;color:var(--text2)">نسبة الرد خلال 30 ثانية 90%+</div>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:24px;padding-top:24px;border-top:1px solid var(--border)">
+              <button class="btn-primary" onclick="showPage('contact')">احصل على عرض سعر مجاني</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SERVICE 3 -->
+        <div class="service-card">
+          <div class="service-card-head">
+            <div class="icon" style="background:#fffbeb;font-size:28px">📣</div>
+            <div>
+              <h3>خدمات التسويق</h3>
+              <p>نُطوّر استراتيجيتك التسويقية، نُحلّل المنافسين، ونُشرف على التنفيذ لتحقيق نمو حقيقي قابل للقياس.</p>
+            </div>
+          </div>
+          <div class="service-card-body">
+            <div class="g2" style="gap:32px">
+              <div>
+                <ul class="feature-list">
+                  <li>تطوير استراتيجية التسويق الشاملة</li>
+                  <li>تحليل المنافسين وتحديد الفرص</li>
+                  <li>إدارة التسويق الرقمي (SEO، SEM، Social)</li>
+                  <li>إنتاج المحتوى باللغتين العربية والإنجليزية</li>
+                  <li>إدارة حملات الإعلانات المدفوعة</li>
+                  <li>تقارير الأداء والتحليل الشهري</li>
+                </ul>
+              </div>
+              <div>
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:20px;text-align:center">
+                  <div style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:14px">نتائج حملاتنا التسويقية</div>
+                  <div style="display:flex;justify-content:space-around">
+                    <div><div style="font-size:26px;font-weight:900;color:var(--blue)">3x</div><div style="font-size:12px;color:var(--text3)">نمو متوسط في الـ leads</div></div>
+                    <div><div style="font-size:26px;font-weight:900;color:var(--green)">40%</div><div style="font-size:12px;color:var(--text3)">خفض تكلفة الاكتساب</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:24px;padding-top:24px;border-top:1px solid var(--border)">
+              <button class="btn-primary" onclick="showPage('contact')">احصل على استشارة تسويقية</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SERVICE 4 & 5 -->
+        <div class="g2">
+          <div class="service-card">
+            <div class="service-card-head">
+              <div class="icon" style="background:#fdf4ff;font-size:28px">🏠</div>
+              <div>
+                <h3>خدمات السكن والإيواء</h3>
+                <p>مساكن آمنة ومُجهّزة بالكامل لموظفيك — تلبي معايير وزارة الموارد البشرية.</p>
+              </div>
+            </div>
+            <div class="service-card-body">
+              <ul class="feature-list">
+                <li>مساكن مُجهّزة وآمنة ومُرخّصة</li>
+                <li>إدارة كاملة للصيانة والتشغيل</li>
+                <li>تغذية وخدمات نظافة</li>
+                <li>أنظمة أمن وحراسة 24 ساعة</li>
+                <li>امتثال كامل لمعايير السلامة</li>
+              </ul>
+              <div style="margin-top:20px">
+                <button class="btn-primary" onclick="showPage('contact')">احصل على عرض</button>
+              </div>
+            </div>
+          </div>
+          <div class="service-card">
+            <div class="service-card-head">
+              <div class="icon" style="background:#fef2f2;font-size:28px">🚌</div>
+              <div>
+                <h3>خدمات النقل والمواصلات</h3>
+                <p>أسطول حديث ومُؤمَّن لنقل موظفيك بأمان وفي الوقت المحدد على مدار الساعة.</p>
+              </div>
+            </div>
+            <div class="service-card-body">
+              <ul class="feature-list">
+                <li>أسطول سيارات حديث ومُرخّص</li>
+                <li>سائقون مُدرَّبون ومُؤمَّن عليهم</li>
+                <li>تتبع GPS للمركبات لحظة بلحظة</li>
+                <li>جدول نقل منظّم ومنتظم</li>
+                <li>تغطية 24 ساعة 7 أيام أسبوعياً</li>
+              </ul>
+              <div style="margin-top:20px">
+                <button class="btn-primary" onclick="showPage('contact')">احصل على عرض</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="sec sec-bg">
+    <div class="sec-inner">
+      <div class="sec-head-center">
+        <div class="sec-label">الباقات</div>
+        <h2 class="sec-title">اختر <span>الباقة</span> المناسبة لعملك</h2>
+        <p class="sec-sub">أسعار تنافسية مع مرونة كاملة — تواصل معنا لعرض سعر مخصص.</p>
+      </div>
+      <div class="g3">
+        <div class="pricing-card">
+          <div class="pricing-name">🌱 باقة البداية</div>
+          <div class="pricing-desc">للشركات الناشئة والمتوسطة 20-100 موظف</div>
+          <ul class="pricing-features">
+            <li>إسناد وظيفي حتى 50 موظف</li>
+            <li>كول سنتر 8 ساعات يومياً</li>
+            <li>إدارة رواتب وتأمين</li>
+            <li>تقارير شهرية</li>
+            <li>مدير حساب مشترك</li>
+          </ul>
+          <button style="width:100%;padding:13px;border-radius:10px;border:2px solid var(--border);background:transparent;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer" onclick="showPage('contact')">تواصل للحصول على السعر</button>
+        </div>
+        <div class="pricing-card featured">
+          <div class="pricing-badge">الأكثر طلباً</div>
+          <div class="pricing-name">🚀 الباقة الشاملة</div>
+          <div class="pricing-desc">للمنشآت المتوسطة والكبيرة 100-500 موظف</div>
+          <ul class="pricing-features">
+            <li>إسناد وظيفي حتى 300 موظف</li>
+            <li>كول سنتر 16 ساعة يومياً</li>
+            <li>خدمات نقل منظّمة</li>
+            <li>سكن مُدار + صيانة</li>
+            <li>خدمات تسويقية أساسية</li>
+            <li>مدير حساب مخصص</li>
+          </ul>
+          <button class="btn-primary" style="width:100%;font-size:14px;padding:13px;" onclick="showPage('contact')">تواصل للحصول على السعر</button>
+        </div>
+        <div class="pricing-card">
+          <div class="pricing-name">🏢 الباقة المؤسسية</div>
+          <div class="pricing-desc">للمشاريع الكبرى ومشاريع رؤية 2030</div>
+          <ul class="pricing-features">
+            <li>إسناد وظيفي بلا حدود</li>
+            <li>كول سنتر 24/7</li>
+            <li>خدمات لوجستية كاملة</li>
+            <li>خطة تسويق سنوية</li>
+            <li>SLA مضمون + عقوبات تأخير</li>
+            <li>فريق ميداني مخصص</li>
+          </ul>
+          <button style="width:100%;padding:13px;border-radius:10px;border:2px solid var(--border);background:transparent;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer" onclick="showPage('contact')">تواصل للحصول على السعر</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div><!-- /page-services -->
+
+
+<!-- ═══════════════════════════════════════
+     PAGE: CASE STUDIES
+═══════════════════════════════════════ -->
+<div class="page" id="page-cases">
+  <div class="about-hero">
+    <div class="sec-label" style="color:#fcd34d;justify-content:center;display:flex">نتائجنا</div>
+    <h1>أرقام حقيقية من عملاء حقيقيين</h1>
+    <p>لا وعود — فقط نتائج موثّقة من شراكات ناجحة في السوق السعودي</p>
+  </div>
+
+  <section class="sec">
+    <div class="sec-inner">
+      <div style="display:flex;flex-direction:column;gap:20px">
+
+        <div class="case-card">
+          <div class="case-card-head">
+            <div class="case-icon">🏗️</div>
+            <div>
+              <h3>شركة إنشاءات كبرى — الرياض</h3>
+              <p>احتاجت الشركة 120 موظفاً ميدانياً خلال 3 أسابيع فقط لمشروع عاجل، مع توفير السكن والنقل من اليوم الأول.</p>
+            </div>
+          </div>
+          <div style="padding:0 24px 20px">
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;font-size:14px;color:var(--text2)">
+              <strong style="color:var(--text)">التحدي:</strong> موسم العطلات والنقص في العمالة الماهرة جعل التوظيف التقليدي مستحيلاً بهذا الإطار الزمني.
+            </div>
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;font-size:14px;color:var(--text2)">
+              <strong style="color:var(--text)">الحل:</strong> يافا جلوبال استقطبت 118 موظفاً من قاعدة بياناتها في 18 يوماً، جهّزت السكن مسبقاً، ونظّمت خط نقل يومي.
+            </div>
+          </div>
+          <div class="case-metrics">
+            <div class="case-metric"><div class="val">18 يوم</div><div class="lbl">بدلاً من 6 أسابيع</div></div>
+            <div class="case-metric"><div class="val">98%</div><div class="lbl">نسبة الوصول في الموعد</div></div>
+            <div class="case-metric"><div class="val">94%</div><div class="lbl">رضا العمال</div></div>
+          </div>
+        </div>
+
+        <div class="case-card">
+          <div class="case-card-head">
+            <div class="case-icon">🏪</div>
+            <div>
+              <h3>سلسلة متاجر تجزئة — جدة والرياض</h3>
+              <p>أرادت الشركة تحسين تجربة عملائها عبر كول سنتر متخصص يعمل 12 ساعة يومياً بفريق ثنائي اللغة.</p>
+            </div>
+          </div>
+          <div style="padding:0 24px 20px">
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;font-size:14px;color:var(--text2)">
+              <strong style="color:var(--text)">الحل:</strong> فريق من 15 موظف مُدرَّب على منتجات الشركة، مع نظام تتبع لحظي للمكالمات وتقارير أسبوعية.
+            </div>
+          </div>
+          <div class="case-metrics">
+            <div class="case-metric"><div class="val">+28%</div><div class="lbl">ارتفاع رضا العملاء</div></div>
+            <div class="case-metric"><div class="val">-40%</div><div class="lbl">انخفاض وقت الانتظار</div></div>
+            <div class="case-metric"><div class="val">14 يوم</div><div class="lbl">من التوقيع للتشغيل</div></div>
+          </div>
+        </div>
+
+        <div class="case-card">
+          <div class="case-card-head">
+            <div class="case-icon">🏭</div>
+            <div>
+              <h3>مجمع صناعي — المنطقة الشرقية</h3>
+              <p>مجمع يحتاج إدارة متكاملة لـ 300 عامل: HR + سكن + نقل + كول سنتر داخلي — كلها في عقد واحد.</p>
+            </div>
+          </div>
+          <div style="padding:0 24px 20px">
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;font-size:14px;color:var(--text2)">
+              <strong style="color:var(--text)">النتيجة:</strong> توفير 35% من التكاليف الإدارية مقارنة بالتعامل مع 4 موردين منفصلين، مع ارتفاع معدل الاحتفاظ بالعمال من 68% إلى 91%.
+            </div>
+          </div>
+          <div class="case-metrics">
+            <div class="case-metric"><div class="val">-35%</div><div class="lbl">تخفيض التكاليف الإدارية</div></div>
+            <div class="case-metric"><div class="val">91%</div><div class="lbl">معدل الاحتفاظ بالعمال</div></div>
+            <div class="case-metric"><div class="val">1 عقد</div><div class="lbl">بدلاً من 4 موردين</div></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="cta-sec">
+    <div class="sec-inner">
+      <h2>ما نتيجتك القادمة معنا؟</h2>
+      <p>تواصل معنا وسنُعدّ لك دراسة حالة افتراضية تُظهر ما يمكن تحقيقه لعملك تحديداً.</p>
+      <button class="btn-primary" onclick="showPage('contact')">احصل على استشارة مجانية</button>
+    </div>
+  </div>
+</div><!-- /page-cases -->
+
+
+<!-- ═══════════════════════════════════════
+     PAGE: BLOG
+═══════════════════════════════════════ -->
+<div class="page" id="page-blog">
+  <div class="about-hero">
+    <div class="sec-label" style="color:#fcd34d;justify-content:center;display:flex">المدونة</div>
+    <h1>رؤى ومعرفة متخصصة</h1>
+    <p>مقالات من خبراء يافا جلوبال حول الموارد البشرية والسوق السعودي</p>
+  </div>
+
+  <section class="sec">
+    <div class="sec-inner">
+      <div class="g3" style="margin-bottom:40px">
+
+        <div class="blog-card">
+          <div class="blog-card-img" style="background:linear-gradient(135deg,#eff6ff,#dbeafe)">📋</div>
+          <div class="blog-card-body">
+            <span class="blog-tag" style="background:#eff6ff;color:#1d4ed8">الموارد البشرية</span>
+            <h3>كيف تختار شركة إسناد وظيفي في الرياض؟ 7 معايير لا تتنازل عنها</h3>
+            <p>دليل شامل لصانعي القرار في المنشآت السعودية لاختيار المورّد المناسب — بدءاً من الترخيص حتى ضمانات SLA.</p>
+            <div class="blog-meta"><span>📅 أبريل 2026</span><span>⏱️ 6 دقائق</span></div>
+          </div>
+        </div>
+
+        <div class="blog-card">
+          <div class="blog-card-img" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7)">📊</div>
+          <div class="blog-card-body">
+            <span class="blog-tag" style="background:#ecfdf5;color:#16a34a">نطاقات ورؤية 2030</span>
+            <h3>نطاقات 2026 — ما كل شركة يجب أن تعرفه وكيف تستعد الآن</h3>
+            <p>شرح تفصيلي لمتطلبات التوطين الجديدة، نسب القطاعات المختلفة، وكيف تحقق الامتثال دون التأثير على الإنتاجية.</p>
+            <div class="blog-meta"><span>📅 مارس 2026</span><span>⏱️ 8 دقائق</span></div>
+          </div>
+        </div>
+
+        <div class="blog-card">
+          <div class="blog-card-img" style="background:linear-gradient(135deg,#fffbeb,#fef3c7)">📞</div>
+          <div class="blog-card-body">
+            <span class="blog-tag" style="background:#fffbeb;color:#d97706">مراكز الاتصال</span>
+            <h3>كيف يرفع الكول سنتر المُدار رضا عملائك بنسبة 30%؟</h3>
+            <p>تحليل لأثر مراكز الاتصال المحترفة على تجربة العملاء وعائد الاستثمار — مع أرقام حقيقية من السوق السعودي.</p>
+            <div class="blog-meta"><span>📅 فبراير 2026</span><span>⏱️ 5 دقائق</span></div>
+          </div>
+        </div>
+
+        <div class="blog-card">
+          <div class="blog-card-img" style="background:linear-gradient(135deg,#fdf4ff,#ede9fe)">🏗️</div>
+          <div class="blog-card-body">
+            <span class="blog-tag" style="background:#fdf4ff;color:#7c3aed">مشاريع رؤية 2030</span>
+            <h3>نيوم والقدية — كيف تستعد قوّتك البشرية لمشاريع الميغا بروجكت؟</h3>
+            <p>استراتيجيات عملية للشركات التي تريد الاستفادة من فرص مشاريع رؤية 2030 الضخمة وبناء فريق جاهز للتوسع.</p>
+            <div class="blog-meta"><span>📅 يناير 2026</span><span>⏱️ 7 دقائق</span></div>
+          </div>
+        </div>
+
+        <div class="blog-card">
+          <div class="blog-card-img" style="background:linear-gradient(135deg,#fef2f2,#fee2e2)">💰</div>
+          <div class="blog-card-body">
+            <span class="blog-tag" style="background:#fef2f2;color:#dc2626">تحليل التكاليف</span>
+            <h3>المقارنة الحقيقية: إسناد وظيفي vs توظيف مباشر — أيهما أوفر؟</h3>
+            <p>حساب دقيق لجميع التكاليف المباشرة والخفية للتوظيف المباشر مقارنة بالإسناد — النتائج قد تفاجئك.</p>
+            <div class="blog-meta"><span>📅 ديسمبر 2025</span><span>⏱️ 10 دقائق</span></div>
+          </div>
+        </div>
+
+        <div class="blog-card">
+          <div class="blog-card-img" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7)">🤝</div>
+          <div class="blog-card-body">
+            <span class="blog-tag" style="background:#ecfdf5;color:#16a34a">إدارة العمالة</span>
+            <h3>7 أسرار الاحتفاظ بالعمالة الوافدة في المنشآت الصناعية السعودية</h3>
+            <p>دراسة تشمل 50 منشأة سعودية كشفت عن العوامل الحاسمة التي تُحدّد بقاء العمال أو مغادرتهم.</p>
+            <div class="blog-meta"><span>📅 نوفمبر 2025</span><span>⏱️ 6 دقائق</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+</div><!-- /page-blog -->
+
+
+<!-- ═══════════════════════════════════════
+     PAGE: CONTACT
+═══════════════════════════════════════ -->
+<div class="page" id="page-contact">
+  <div class="contact-hero">
+    <div class="sec-label" style="color:#fcd34d;justify-content:center;display:flex">تواصل معنا</div>
+    <h1>ابدأ شراكتك مع يافا اليوم</h1>
+    <p>استشارة مجانية مع خبرائنا — نُعدّ عرضاً مخصصاً لعملك خلال 48 ساعة.</p>
+  </div>
+
+  <section class="sec">
+    <div class="sec-inner">
+      <div class="g2" style="gap:40px;align-items:start">
+
+        <!-- FORM -->
+        <div class="card" style="padding:36px">
+          <div style="font-size:18px;font-weight:800;color:var(--navy);margin-bottom:24px">📋 نموذج طلب الاستشارة المجانية</div>
+
+          <div class="g2" style="gap:16px">
+            <div class="form-group">
+              <label>الاسم الكريم *</label>
+              <input type="text" class="form-input" placeholder="اسمك الكامل">
+            </div>
+            <div class="form-group">
+              <label>اسم الشركة *</label>
+              <input type="text" class="form-input" placeholder="اسم منشأتك">
+            </div>
+          </div>
+          <div class="g2" style="gap:16px">
+            <div class="form-group">
+              <label>رقم الجوال *</label>
+              <input type="tel" class="form-input" placeholder="05XXXXXXXX">
+            </div>
+            <div class="form-group">
+              <label>البريد الإلكتروني</label>
+              <input type="email" class="form-input" placeholder="email@company.com">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>الخدمة المطلوبة *</label>
+            <select class="form-input form-select">
+              <option value="">اختر الخدمة</option>
+              <option>الإسناد الوظيفي وحلول الموارد البشرية</option>
+              <option>مراكز الاتصال المُدارة</option>
+              <option>خدمات التسويق</option>
+              <option>خدمات السكن والإيواء</option>
+              <option>خدمات النقل والمواصلات</option>
+              <option>الحزمة الشاملة (كل الخدمات)</option>
+            </select>
+          </div>
+          <div class="g2" style="gap:16px">
+            <div class="form-group">
+              <label>عدد الموظفين المطلوبين</label>
+              <select class="form-input form-select">
+                <option>أقل من 20</option>
+                <option>20-50</option>
+                <option>50-100</option>
+                <option>100-300</option>
+                <option>300-500</option>
+                <option>أكثر من 500</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>المدينة</label>
+              <select class="form-input form-select">
+                <option>الرياض</option>
+                <option>جدة</option>
+                <option>الدمام / الخبر</option>
+                <option>مكة المكرمة</option>
+                <option>المدينة المنورة</option>
+                <option>أخرى</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>تفاصيل إضافية (اختياري)</label>
+            <textarea class="form-input" placeholder="أخبرنا أكثر عن احتياجاتك وتحدياتك..."></textarea>
+          </div>
+          <button class="btn-primary" style="width:100%;font-size:16px;padding:16px">
+            📤 إرسال طلب الاستشارة المجانية
+          </button>
+          <p style="font-size:12px;color:var(--text3);text-align:center;margin-top:12px">سيتواصل معك أحد خبرائنا خلال 24 ساعة عمل</p>
+        </div>
+
+        <!-- CONTACT INFO -->
+        <div>
+          <div class="contact-info-card" style="margin-bottom:16px">
+            <div style="font-size:15px;font-weight:800;color:var(--navy);margin-bottom:16px">معلومات التواصل المباشر</div>
+            <div class="contact-row">
+              <div class="contact-icon" style="background:#ecfdf5">📞</div>
+              <div><h4>الهاتف الموحّد</h4><p>00966551403355</p></div>
+            </div>
+            <div class="contact-row">
+              <div class="contact-icon" style="background:#ecfdf5">💬</div>
+              <div><h4>واتساب</h4><p>+966551403355</p></div>
+            </div>
+            <div class="contact-row">
+              <div class="contact-icon" style="background:#eff6ff">📧</div>
+              <div><h4>البريد الإلكتروني</h4><p>info@yafaglobal.sa</p></div>
+            </div>
+            <div class="contact-row">
+              <div class="contact-icon" style="background:#fffbeb">📍</div>
+              <div><h4>العنوان</h4><p>الرياض، السليمانية، شارع الأمير ممدوح بن عبدالعزيز، مركز الصفوة، المدخل 1، الطابق الأول، مكتب 1101</p></div>
+            </div>
+            <div class="contact-row">
+              <div class="contact-icon" style="background:#fdf4ff">🕐</div>
+              <div><h4>ساعات العمل</h4><p>الأحد - الخميس: 8:00 صباحاً — 6:00 مساءً</p></div>
+            </div>
+          </div>
+
+          <!-- PROMISE CARDS -->
+          <div style="background:var(--navy);border-radius:var(--r-lg);padding:24px;color:#fff;margin-bottom:16px">
+            <div style="font-size:14px;font-weight:700;margin-bottom:16px;opacity:.7">وعدنا لك بعد التواصل</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:14px"><span>⚡</span><span>رد في 24 ساعة عمل</span></div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:14px"><span>📋</span><span>عرض مخصص لاحتياجك في 48 ساعة</span></div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:14px"><span>🤝</span><span>استشارة مجانية بدون أي التزام</span></div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:14px"><span>🔒</span><span>سرية تامة لمعلوماتك</span></div>
+          </div>
+
+          <!-- SOCIAL -->
+          <div class="card">
+            <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:14px">تابعنا على منصات التواصل</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <a href="#" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;background:#0a66c2;color:#fff;text-decoration:none;font-size:13px;font-weight:700">💼 LinkedIn</a>
+              <a href="#" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;background:#1d9bf0;color:#fff;text-decoration:none;font-size:13px;font-weight:700">🐦 Twitter/X</a>
+              <a href="#" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;background:#e1306c;color:#fff;text-decoration:none;font-size:13px;font-weight:700">📸 Instagram</a>
+              <a href="#" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;background:#1877f2;color:#fff;text-decoration:none;font-size:13px;font-weight:700">👥 Facebook</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div><!-- /page-contact -->
+
+
+<!-- ══ FOOTER (shown on all pages) ══ -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-logo">
+          <div class="footer-logo-icon">ي</div>
+          <span class="footer-logo-text">يافا جلوبال</span>
+        </div>
+        <p class="footer-desc">الشريك الاستراتيجي الأول في المملكة لإدارة القوى البشرية — خبرة 13 سنة، 500+ عميل، خدمات متكاملة تحت سقف واحد.</p>
+        <div class="footer-social">
+          <div class="social-btn">💼</div>
+          <div class="social-btn">🐦</div>
+          <div class="social-btn">📸</div>
+          <div class="social-btn">👥</div>
+        </div>
+      </div>
+      <div>
+        <h4>خدماتنا</h4>
+        <a class="footer-link" onclick="showPage('services')">الإسناد الوظيفي</a>
+        <a class="footer-link" onclick="showPage('services')">مراكز الاتصال</a>
+        <a class="footer-link" onclick="showPage('services')">خدمات التسويق</a>
+        <a class="footer-link" onclick="showPage('services')">خدمات السكن</a>
+        <a class="footer-link" onclick="showPage('services')">خدمات النقل</a>
+      </div>
+      <div>
+        <h4>الشركة</h4>
+        <a class="footer-link" onclick="showPage('about')">من نحن</a>
+        <a class="footer-link" onclick="showPage('cases')">نتائجنا</a>
+        <a class="footer-link" onclick="showPage('blog')">المدونة</a>
+        <a class="footer-link" onclick="showPage('contact')">اتصل بنا</a>
+        <a class="footer-link" href="#">وظائف</a>
+      </div>
+      <div>
+        <h4>تواصل معنا</h4>
+        <a class="footer-link" href="tel:00966551403355">📞 00966551403355</a>
+        <a class="footer-link" href="mailto:info@yafaglobal.sa">📧 info@yafaglobal.sa</a>
+        <a class="footer-link" href="https://wa.me/966551403355">💬 واتساب مباشر</a>
+        <a class="footer-link" href="#">📍 الرياض، السليمانية</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 يافا جلوبال. جميع الحقوق محفوظة.</p>
+      <div style="display:flex;gap:20px">
+        <a class="footer-link" href="#" style="margin:0">سياسة الخصوصية</a>
+        <a class="footer-link" href="#" style="margin:0">الشروط والأحكام</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ══ JS NAVIGATION ══ -->
+<script>
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const links = document.querySelectorAll('.nav-link');
+  const map = {home:0, about:1, services:2, cases:3, blog:4, contact:5};
+  if(map[id] !== undefined) links[map[id]].classList.add('active');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+</script>
+
+</body>
+</html>

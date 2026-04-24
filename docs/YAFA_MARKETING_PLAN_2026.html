@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>استراتيجية التسويق الرقمي 2026 — يافا جلوبال</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold:    #C9A84C;
+    --gold-lt: #E8C87A;
+    --gold-dk: #9A7A2E;
+    --black:   #0D0D0D;
+    --surface: #111111;
+    --card:    #1A1A1A;
+    --card2:   #222222;
+    --border:  #2E2E2E;
+    --text:    #F0EDE6;
+    --muted:   #9A9488;
+    --green:   #4CAF7A;
+    --red:     #E05252;
+    --blue:    #4A90D9;
+    --page-w:  900px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: var(--black);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  /* ── COVER ── */
+  .cover {
+    width: var(--page-w);
+    min-height: 100vh;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    page-break-after: always;
+  }
+  .cover-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 70% 50% at 50% 20%, rgba(201,168,76,.18) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 80% 80%, rgba(201,168,76,.08) 0%, transparent 50%);
+  }
+  .cover-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(201,168,76,.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,168,76,.06) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+  .cover-logo {
+    position: relative;
+    width: 90px; height: 90px;
+    border-radius: 22px;
+    border: 2px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 32px;
+    background: rgba(201,168,76,.08);
+  }
+  .cover-logo svg { width: 50px; height: 50px; }
+  .cover-tag {
+    position: relative;
+    display: inline-block;
+    border: 1px solid rgba(201,168,76,.4);
+    border-radius: 50px;
+    padding: 6px 20px;
+    font-size: 13px;
+    color: var(--gold-lt);
+    letter-spacing: .08em;
+    margin-bottom: 24px;
+    background: rgba(201,168,76,.05);
+  }
+  .cover h1 {
+    position: relative;
+    font-size: 52px;
+    font-weight: 900;
+    line-height: 1.15;
+    background: linear-gradient(135deg, #fff 30%, var(--gold-lt) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 16px;
+  }
+  .cover-sub {
+    position: relative;
+    font-size: 20px;
+    color: var(--gold-lt);
+    font-weight: 600;
+    margin-bottom: 40px;
+  }
+  .cover-meta {
+    position: relative;
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+  }
+  .cover-meta-item { text-align: center; }
+  .cover-meta-item .val { font-size: 28px; font-weight: 800; color: var(--gold); }
+  .cover-meta-item .lbl { font-size: 12px; color: var(--muted); }
+  .cover-divider {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  /* ── LAYOUT ── */
+  .page { width: var(--page-w); margin: 0 auto; padding: 60px 48px; page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+
+  /* ── SECTION HEADER ── */
+  .sec-header { display: flex; align-items: center; gap: 14px; margin-bottom: 36px; }
+  .sec-num {
+    min-width: 44px; height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--gold-dk), var(--gold));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 800; color: var(--black);
+  }
+  .sec-title { font-size: 26px; font-weight: 800; }
+  .sec-title span { color: var(--gold); }
+
+  /* ── CARDS ── */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+  .card-gold { border-color: rgba(201,168,76,.35); background: rgba(201,168,76,.06); }
+
+  /* ── GRID ── */
+  .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .g4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; }
+
+  /* ── STAT BLOCK ── */
+  .stat { text-align: center; padding: 24px 16px; }
+  .stat .num { font-size: 36px; font-weight: 900; color: var(--gold); display: block; }
+  .stat .lbl { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  /* ── BADGE ── */
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .badge-gold  { background: rgba(201,168,76,.15); color: var(--gold); }
+  .badge-green { background: rgba(76,175,122,.15); color: var(--green); }
+  .badge-red   { background: rgba(224, 82, 82,.15); color: var(--red); }
+  .badge-blue  { background: rgba(74,144,217,.15);  color: var(--blue); }
+
+  /* ── SWOT ── */
+  .swot { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); }
+  .swot-q { padding: 28px; }
+  .swot-q:nth-child(1) { background: rgba(76,175,122,.08); border-left: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .swot-q:nth-child(2) { background: rgba(224,82,82,.08);  border-bottom: 1px solid var(--border); }
+  .swot-q:nth-child(3) { background: rgba(74,144,217,.08); border-left: 1px solid var(--border); }
+  .swot-q:nth-child(4) { background: rgba(201,168,76,.08); }
+  .swot-q h4 { font-size: 15px; font-weight: 800; margin-bottom: 14px; }
+  .swot-q li  { font-size: 13px; color: var(--muted); margin-bottom: 8px; padding-right: 16px; position: relative; }
+  .swot-q li::before { content: '•'; position: absolute; right: 0; color: var(--gold); }
+  .swot-q.s h4 { color: var(--green); }
+  .swot-q.w h4 { color: var(--red); }
+  .swot-q.o h4 { color: var(--blue); }
+  .swot-q.t h4 { color: var(--gold); }
+
+  /* ── TABLE ── */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    background: linear-gradient(135deg, var(--gold-dk), var(--gold));
+    color: var(--black);
+    padding: 12px 16px;
+    font-weight: 800;
+    text-align: right;
+  }
+  td { padding: 11px 16px; border-bottom: 1px solid var(--border); color: var(--muted); }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+  .comp-high   { color: var(--red);   font-weight: 700; }
+  .comp-med    { color: var(--gold);  font-weight: 700; }
+  .comp-low    { color: var(--green); font-weight: 700; }
+
+  /* ── TIMELINE ── */
+  .timeline { position: relative; padding-right: 28px; }
+  .timeline::before {
+    content: '';
+    position: absolute; right: 8px; top: 8px; bottom: 8px;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--gold), transparent);
+  }
+  .tl-item { position: relative; margin-bottom: 28px; }
+  .tl-dot {
+    position: absolute; right: -28px; top: 4px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--gold);
+    border: 3px solid var(--black);
+  }
+  .tl-item h4 { font-size: 15px; font-weight: 800; color: var(--gold); margin-bottom: 8px; }
+  .tl-item p  { font-size: 13px; color: var(--muted); }
+  .tl-tag { display: inline-block; font-size: 11px; color: var(--black); background: var(--gold); border-radius: 6px; padding: 2px 8px; margin-bottom: 8px; font-weight: 700; }
+
+  /* ── PLATFORM ROW ── */
+  .plat { display: flex; align-items: center; gap: 14px; padding: 18px 20px; border-radius: 12px; background: var(--card2); border: 1px solid var(--border); margin-bottom: 12px; }
+  .plat-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .plat-body { flex: 1; }
+  .plat-body h4 { font-size: 14px; font-weight: 800; margin-bottom: 4px; }
+  .plat-body p  { font-size: 12px; color: var(--muted); }
+  .plat-meta { text-align: center; min-width: 90px; }
+  .plat-meta .freq { font-size: 18px; font-weight: 800; color: var(--gold); }
+  .plat-meta .lbl  { font-size: 11px; color: var(--muted); }
+
+  /* ── KPI TABLE ── */
+  .kpi-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 10px; background: var(--card2); border: 1px solid var(--border); margin-bottom: 8px; }
+  .kpi-name { flex: 1; font-size: 13px; font-weight: 700; }
+  .kpi-now  { font-size: 12px; color: var(--muted); min-width: 100px; text-align: center; }
+  .kpi-arr  { color: var(--gold); font-size: 16px; }
+  .kpi-goal { font-size: 13px; font-weight: 800; color: var(--green); min-width: 120px; text-align: center; }
+
+  /* ── BUDGET PIE (CSS) ── */
+  .budget-bar { height: 14px; border-radius: 8px; overflow: hidden; display: flex; margin-bottom: 16px; }
+  .budget-bar div { height: 100%; }
+  .budget-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 13px; }
+  .budget-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+
+  /* ── CONTENT PILLAR ── */
+  .pillar { padding: 20px; border-radius: 14px; background: var(--card2); border-top: 3px solid var(--gold); text-align: center; }
+  .pillar .icon { font-size: 28px; margin-bottom: 12px; }
+  .pillar h4 { font-size: 14px; font-weight: 800; margin-bottom: 8px; }
+  .pillar p  { font-size: 12px; color: var(--muted); }
+
+  /* ── QUICK WINS ── */
+  .win { display: flex; align-items: flex-start; gap: 14px; padding: 16px; border-radius: 12px; background: var(--card2); border: 1px solid var(--border); margin-bottom: 10px; }
+  .win-num { min-width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, var(--gold-dk), var(--gold)); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: var(--black); }
+  .win-body h4 { font-size: 14px; font-weight: 800; margin-bottom: 4px; }
+  .win-body p  { font-size: 12px; color: var(--muted); }
+
+  /* ── POSITIONING BOX ── */
+  .pos-box { border: 2px solid var(--gold); border-radius: 16px; padding: 32px; text-align: center; background: rgba(201,168,76,.04); }
+  .pos-box .quote { font-size: 24px; font-weight: 800; color: var(--gold); line-height: 1.4; margin-bottom: 16px; }
+  .pos-box .sub { font-size: 14px; color: var(--muted); }
+
+  /* ── PERSONA CARD ── */
+  .persona { border-radius: 16px; overflow: hidden; background: var(--card2); border: 1px solid var(--border); }
+  .persona-head { padding: 18px 20px; display: flex; align-items: center; gap: 12px; }
+  .persona-avatar { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+  .persona-head h4 { font-size: 14px; font-weight: 800; }
+  .persona-head p  { font-size: 12px; color: var(--muted); }
+  .persona-body { padding: 0 20px 20px; }
+  .persona-row { margin-bottom: 12px; }
+  .persona-row .lbl { font-size: 11px; color: var(--gold); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 3px; }
+  .persona-row .val { font-size: 13px; color: var(--muted); }
+  .persona-msg { margin-top: 14px; padding: 12px; border-radius: 8px; background: rgba(201,168,76,.08); border-right: 3px solid var(--gold); font-size: 13px; font-style: italic; color: var(--text); }
+
+  /* ── SEO TABLE ── */
+  .kw-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; background: var(--card2); border: 1px solid var(--border); margin-bottom: 8px; font-size: 13px; }
+  .kw-item .kw { flex: 1; font-weight: 700; }
+  .kw-intent { font-size: 11px; }
+  .kw-diff { font-size: 11px; }
+
+  /* ── PHASE CARDS ── */
+  .phase { border-radius: 16px; overflow: hidden; border: 1px solid var(--border); }
+  .phase-head { padding: 18px 22px; background: linear-gradient(135deg, var(--gold-dk), var(--gold)); color: var(--black); }
+  .phase-head h4 { font-size: 16px; font-weight: 800; }
+  .phase-head p  { font-size: 12px; opacity: .7; }
+  .phase-body { padding: 18px 22px; background: var(--card2); }
+  .phase-item { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; font-size: 13px; color: var(--muted); }
+  .phase-item::before { content: '✓'; color: var(--gold); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+  /* ── SEPARATOR ── */
+  .sep { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 32px 0; }
+
+  /* ── PRINT ── */
+  @media print {
+    body { background: #fff; color: #111; }
+    .cover, .page { page-break-after: always; }
+    :root { --text: #111; --muted: #555; --card: #f5f5f5; --card2: #eeeeee; --border: #ddd; --black: #fff; --surface: #fff; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ COVER ═══════════════════════════════ -->
+<div class="cover">
+  <div class="cover-bg"></div>
+  <div class="cover-grid"></div>
+
+  <div class="cover-logo">
+    <svg viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M25 8C15.06 8 7 16.06 7 26c0 5.3 2.35 10.05 6.1 13.3L25 28l11.9 11.3A18.92 18.92 0 0 0 43 26C43 16.06 34.94 8 25 8z" fill="rgba(201,168,76,.3)" stroke="#C9A84C" stroke-width="1.5"/>
+      <circle cx="25" cy="26" r="6" fill="#C9A84C"/>
+    </svg>
+  </div>
+
+  <div class="cover-tag">استراتيجية التسويق الرقمي</div>
+  <h1>يافا جلوبال</h1>
+  <div class="cover-sub">خطة تسويقية شاملة · 2026</div>
+
+  <div class="cover-meta">
+    <div class="cover-meta-item">
+      <div class="val">12+</div>
+      <div class="lbl">سنة خبرة</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="val">6</div>
+      <div class="lbl">خدمات متكاملة</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="val">4</div>
+      <div class="lbl">مراحل تنفيذية</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="val">12</div>
+      <div class="lbl">شهراً خطة العمل</div>
+    </div>
+  </div>
+
+  <div class="cover-divider"></div>
+</div>
+
+<!-- ═══════════════════════════════ PAGE 1: OVERVIEW ═══════════════════════════════ -->
+<div class="page">
+  <div class="sec-header">
+    <div class="sec-num">01</div>
+    <div class="sec-title">نظرة عامة على <span>يافا جلوبال</span></div>
+  </div>
+
+  <!-- Stats row -->
+  <div class="g4" style="margin-bottom:24px;">
+    <div class="card stat">
+      <span class="num">2012</span>
+      <span class="lbl">سنة التأسيس</span>
+    </div>
+    <div class="card stat">
+      <span class="num">12+</span>
+      <span class="lbl">سنة خبرة</span>
+    </div>
+    <div class="card stat">
+      <span class="num">6</span>
+      <span class="lbl">خدمات متكاملة</span>
+    </div>
+    <div class="card stat">
+      <span class="num">KSA</span>
+      <span class="lbl">المملكة العربية السعودية</span>
+    </div>
+  </div>
+
+  <!-- Positioning -->
+  <div class="pos-box" style="margin-bottom:28px;">
+    <div class="quote">«من التعيين إلى الاستقرار — شريكك المتكامل للعمالة»</div>
+    <div class="sub">الموقف التسويقي الذي يميّز يافا: الحل الوحيد في قطاع الإنشاءات الذي يجمع التوظيف + السكن + النقل + الوجبات تحت سقف واحد</div>
+  </div>
+
+  <!-- Services -->
+  <div class="g3">
+    <div class="card" style="border-top:3px solid var(--green);">
+      <div style="font-size:24px;margin-bottom:10px;">🏗️</div>
+      <div style="font-weight:800;margin-bottom:6px;">الإسناد وحلول الموارد البشرية</div>
+      <div style="font-size:13px;color:var(--muted);">توظيف، استقطاب، هياكل تنظيمية، إدارة الكفاءات</div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--blue);">
+      <div style="font-size:24px;margin-bottom:10px;">📞</div>
+      <div style="font-weight:800;margin-bottom:6px;">مراكز الاتصال</div>
+      <div style="font-size:13px;color:var(--muted);">دعم العملاء، المبيعات، الاستفسارات، الخدمة متعددة اللغات</div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--gold);">
+      <div style="font-size:24px;margin-bottom:10px;">📣</div>
+      <div style="font-weight:800;margin-bottom:6px;">خدمات التسويق</div>
+      <div style="font-size:13px;color:var(--muted);">استراتيجيات، خطط تسويقية، تنفيذ وقياس</div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--gold-dk);">
+      <div style="font-size:24px;margin-bottom:10px;">🏠</div>
+      <div style="font-weight:800;margin-bottom:6px;">خدمات السكن</div>
+      <div style="font-size:13px;color:var(--muted);">وحدات سكنية جماعية وفردية بمعايير عالية للعمالة</div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--red);">
+      <div style="font-size:24px;margin-bottom:10px;">🚌</div>
+      <div style="font-weight:800;margin-bottom:6px;">خدمات النقل</div>
+      <div style="font-size:13px;color:var(--muted);">مواصلات على مدار الساعة من السكن للعمل وبالعكس</div>
+    </div>
+    <div class="card" style="border-top:3px solid #9B59B6;">
+      <div style="font-size:24px;margin-bottom:10px;">💼</div>
+      <div style="font-weight:800;margin-bottom:6px;">التوظيف والتوجيه</div>
+      <div style="font-size:13px;color:var(--muted);">برامج توظيف، استشارات وظيفية، تأهيل وتدريب</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ PAGE 2: SWOT ═══════════════════════════════ -->
+<div class="page">
+  <div class="sec-header">
+    <div class="sec-num">02</div>
+    <div class="sec-title">تحليل <span>SWOT</span> المعزَّز</div>
+  </div>
+
+  <div class="swot" style="margin-bottom:28px;">
+    <div class="swot-q s">
+      <h4>✅ نقاط القوة — Strengths</h4>
+      <ul>
+        <li>خبرة 12+ سنة في قطاع الإنشاءات السعودي تبني ثقة لا يمكن تقليدها</li>
+        <li>الحل الشامل الوحيد: توظيف + سكن + نقل + وجبات في باقة واحدة</li>
+        <li>تخصص عميق في البناء والتشييد يجعلنا الخيار الأول للمقاولين</li>
+        <li>قاعدة عملاء حالية يمكن تحويلها إلى سفراء للعلامة</li>
+        <li>خدمة الإعاشة الكاملة — ميزة نادرة لا يقدمها أي منافس رئيسي</li>
+        <li>حضور رقمي متعدد المنصات يمكن تطويره بسرعة</li>
+      </ul>
+    </div>
+    <div class="swot-q w">
+      <h4>⚠️ نقاط الضعف — Weaknesses</h4>
+      <ul>
+        <li>موقع إلكتروني قديم لا يعكس احترافية الشركة ولا يُحوّل الزوار</li>
+        <li>غياب كامل لدراسات الحالة والشهادات الموثقة من العملاء</li>
+        <li>ضعف SEO يجعل الشركة غير مرئية لمن يبحث عن خدماتها</li>
+        <li>محتوى رقمي منخفض الجودة وغير منتظم</li>
+        <li>لا يوجد نظام CRM لمتابعة العملاء المحتملين</li>
+        <li>غياب استراتيجية محتوى بالإنجليزية للوصول لشركات متعددة الجنسيات</li>
+      </ul>
+    </div>
+    <div class="swot-q o">
+      <h4>🚀 الفرص — Opportunities</h4>
+      <ul>
+        <li>رؤية 2030 ومشاريع إنشاءات بمئات المليارات تحتاج عمالة ضخمة</li>
+        <li>نيوم، مشاريع الترفيه، البنية التحتية — طلب غير مسبوق</li>
+        <li>نمو الاستعانة بمصادر خارجية في قطاع البناء (+23% سنوياً)</li>
+        <li>ضعف المنافسين في خدمات السكن والنقل يفتح فجوة واضحة</li>
+        <li>LinkedIn ينمو بسرعة في السعودية بين متخذي القرار في الإنشاءات</li>
+        <li>إمكانية بناء شبكة شراكات مع كبرى مكاتب الاستقدام الدولية</li>
+      </ul>
+    </div>
+    <div class="swot-q t">
+      <h4>🔴 التهديدات — Threats</h4>
+      <ul>
+        <li>منافسون ضخام: مهارة، سماسكو، موارد — بميزانيات تسويق أعلى</li>
+        <li>تقلبات أنظمة العمل والتأشيرات تؤثر على تكاليف الاستقدام</li>
+        <li>دخول شركات دولية للسوق السعودي ببراندات عالمية</li>
+        <li>ضغط الأسعار المتزايد في السوق</li>
+        <li>اعتماد العملاء على المنافسين التقليديين بعلاقات طويلة</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card-gold card" style="text-align:center;padding:20px;">
+    <div style="font-size:14px;color:var(--gold);font-weight:800;margin-bottom:8px;">الاستنتاج الاستراتيجي</div>
+    <div style="font-size:13px;color:var(--muted);">يافا تملك ميزة تنافسية فريدة ومثبتة لكنها غير مرئية رقمياً. الفرصة الآن هي قبل أن يكتشفها المنافسون ويقلدوها. الإجراء الأول: <strong style="color:var(--text);">الظهور بقوة في المكان الذي يبحث فيه متخذو القرار.</strong></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ PAGE 3: PERSONAS ═══════════════════════════════ -->
+<div class="page">
+  <div class="sec-header">
+    <div class="sec-num">03</div>
+    <div class="sec-title">شخصيات <span>الجمهور المستهدف</span></div>
+  </div>
+
+  <div class="g3" style="margin-bottom:20px;">
+    <!-- Persona 1 -->
+    <div class="persona">
+      <div class="persona-head" style="background:rgba(76,175,122,.08);">
+        <div class="persona-avatar" style="background:rgba(76,175,122,.15);">👷</div>
+        <div>
+          <h4>مدير المشروع</h4>
+          <p>الشريحة الأولى · أعلى أولوية</p>
+        </div>
+      </div>
+      <div class="persona-body">
+        <div class="persona-row">
+          <div class="lbl">من هو</div>
+          <div class="val">مدير مشاريع في شركة مقاولات كبرى، 35-50 سنة، يدير 50-500 عامل</div>
+        </div>
+        <div class="persona-row">
+          <div class="lbl">أكبر تحدياته</div>
+          <div class="val">تأمين عمالة موثوقة بسرعة في مواقع بعيدة، وتوفير سكن ونقل دون تعقيدات</div>
+        </div>
+        <div class="persona-row">
+          <div class="lbl">أين يتواجد</div>
+          <div class="val">LinkedIn، فعاليات الإنشاءات، Google عند البحث</div>
+        </div>
+        <div class="persona-msg">«أحتاج شريكاً يتكفل بكل شيء من أول يوم — لا وقت لدي لحل مشاكل السكن والنقل»</div>
+      </div>
+    </div>
+
+    <!-- Persona 2 -->
+    <div class="persona">
+      <div class="persona-head" style="background:rgba(74,144,217,.08);">
+        <div class="persona-avatar" style="background:rgba(74,144,217,.15);">💼</div>
+        <div>
+          <h4>مدير الموارد البشرية</h4>
+          <p>الشريحة الثانية · أولوية عالية</p>
+        </div>
+      </div>
+      <div class="persona-body">
+        <div class="persona-row">
+          <div class="lbl">من هو</div>
+          <div class="val">مدير HR في شركة متوسطة-كبيرة، 30-45 سنة، مسؤول عن الاستقدام</div>
+        </div>
+        <div class="persona-row">
+          <div class="lbl">أكبر تحدياته</div>
+          <div class="val">حلول HR متكاملة بدون تعقيدات إدارية، والامتثال لأنظمة العمل</div>
+        </div>
+        <div class="persona-row">
+          <div class="lbl">أين يتواجد</div>
+          <div class="val">LinkedIn، النشرات البريدية، Google، مؤتمرات HR</div>
+        </div>
+        <div class="persona-msg">«ركّز على أعمالك الأساسية، ويافا تتولى كل ما يتعلق بعمالتك»</div>
+      </div>
+    </div>
+
+    <!-- Persona 3 -->
+    <div class="persona">
+      <div class="persona-head" style="background:rgba(201,168,76,.08);">
+        <div class="persona-avatar" style="background:rgba(201,168,76,.15);">🏢</div>
+        <div>
+          <h4>صاحب المقاولة الصغيرة</h4>
+          <p>الشريحة الثالثة · أولوية متوسطة</p>
+        </div>
+      </div>
+      <div class="persona-body">
+        <div class="persona-row">
+          <div class="lbl">من هو</div>
+          <div class="val">صاحب شركة مقاولات صغيرة، 28-45 سنة، يحتاج عمالة موسمية</div>
+        </div>
+        <div class="persona-row">
+          <div class="lbl">أكبر تحدياته</div>
+          <div class="val">تكلفة الاستقدام المرتفعة وصعوبة الالتزام بعقود طويلة</div>
+        </div>
+        <div class="persona-row">
+          <div class="lbl">أين يتواجد</div>
+          <div class="val">Facebook، Instagram، التسويق الشفهي</div>
+        </div>
+        <div class="persona-msg">«اعمل معنا متى تحتاج — حلول مرنة بأسعار تنافسية بدون التزامات ضخمة»</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ PAGE 4: COMPETITORS ═══════════════════════════════ -->
+<div class="page">
+  <div class="sec-header">
+    <div class="sec-num">04</div>
+    <div class="sec-title">تحليل <span>المنافسين</span> والفجوات</div>
+  </div>
+
+  <div class="card" style="margin-bottom:24px;overflow:hidden;padding:0;">
+    <table>
+      <thead>
+        <tr>
+          <th>الشركة</th>
+          <th>الحجم</th>
+          <th>التخصص</th>
+          <th>نقطة القوة</th>
+          <th>السكن والنقل</th>
+          <th>تهديد يافا</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>مهارة</strong></td>
+          <td>كبير جداً</td>
+          <td>توظيف وHR</td>
+          <td>برنامج رقمي متقدم</td>
+          <td style="color:var(--red);text-align:center;">✗</td>
+          <td><span class="badge badge-red">عالٍ جداً</span></td>
+        </tr>
+        <tr>
+          <td><strong>سماسكو</strong></td>
+          <td>كبير</td>
+          <td>تأجير عمالة مهنية</td>
+          <td>خبرة 10+ سنوات</td>
+          <td style="color:var(--red);text-align:center;">✗</td>
+          <td><span class="badge badge-red">عالٍ</span></td>
+        </tr>
+        <tr>
+          <td><strong>موارد</strong></td>
+          <td>كبير-متوسط</td>
+          <td>موارد بشرية متكاملة</td>
+          <td>تنوع القطاعات</td>
+          <td style="color:var(--red);text-align:center;">✗</td>
+          <td><span class="badge badge-gold">متوسط</span></td>
+        </tr>
+        <tr>
+          <td><strong>تاسك</strong></td>
+          <td>متوسط</td>
+          <td>Outsourcing شامل</td>
+          <td>خدمات متكاملة</td>
+          <td style="color:var(--red);text-align:center;">✗</td>
+          <td><span class="badge badge-gold">متوسط</span></td>
+        </tr>
+        <tr>
+          <td><strong>ياش</strong></td>
+          <td>متوسط</td>
+          <td>مقاولات وعمالة</td>
+          <td>نفس القطاع</td>
+          <td style="color:var(--red);text-align:center;">✗</td>
+          <td><span class="badge badge-gold">متوسط-عالٍ</span></td>
+        </tr>
+        <tr style="background:rgba(201,168,76,.05);">
+          <td><strong style="color:var(--gold);">يافا جلوبال ✓</strong></td>
+          <td>متوسط</td>
+          <td>إنشاءات متكاملة</td>
+          <td>الحل الكامل</td>
+          <td style="color:var(--green);text-align:center;font-weight:800;">✓✓</td>
+          <td><span class="badge badge-green">— هي الخطر</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-gold card" style="margin-bottom:20px;">
+    <div style="font-weight:800;color:var(--gold);margin-bottom:12px;font-size:15px;">🎯 الفجوة التنافسية التي يجب ملؤها</div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.8;">
+      لا يوجد منافس رئيسي يقدم <strong style="color:var(--text);">الحل المتكامل (سكن + نقل + وجبات)</strong> مع التخصص في الإنشاءات. هذه الفجوة يجب أن تكون <strong style="color:var(--gold);">محور كل رسائل يافا التسويقية</strong>. الخطاب يجب أن يتحول من "شركة توظيف عمالة" إلى <strong style="color:var(--text);">"الشريك الكامل للعمالة — من التعيين إلى نهاية المشروع"</strong>.
+    </div>
+  </div>
+
+  <div class="g3">
+    <div class="card" style="text-align:center;padding:20px;">
+      <div style="font-size:28px;margin-bottom:8px;">🏆</div>
+      <div style="font-weight:800;margin-bottom:6px;font-size:13px;">التمايز الأول</div>
+      <div style="font-size:12px;color:var(--muted);">الوحيد الذي يجمع التوظيف + السكن + النقل + الوجبات</div>
+    </div>
+    <div class="card" style="text-align:center;padding:20px;">
+      <div style="font-size:28px;margin-bottom:8px;">🏗️</div>
+      <div style="font-weight:800;margin-bottom:6px;font-size:13px;">التمايز الثاني</div>
+      <div style="font-size:12px;color:var(--muted);">تخصص عميق في الإنشاءات — لسنا شركة HR عامة</div>
+    </div>
+    <div class="card" style="text-align:center;padding:20px;">
+      <div style="font-size:28px;margin-bottom:8px;">⏱️</div>
+      <div style="font-weight:800;margin-bottom:6px;font-size:13px;">التمايز الثالث</div>
+      <div style="font-size:12px;color:var(--muted);">سرعة الاستجابة والتسليم — عامل جاهز في 72 ساعة</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ PAGE 5: PLATFORMS ═══════════════════════════════ -->
+<div class="page">
+  <div class="sec-header">
+    <div class="sec-num">05</div>
+    <div class="sec-title">استراتيجية <span>المنصات الرقمية</span></div>
+  </div>
+
+  <div class="plat">
+    <div class="plat-icon" style="background:#0A66C2;">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="white"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2" fill="white"/></svg>
+    </div>
+    <div class="plat-body">
+      <h4>LinkedIn <span class="badge badge-red" style="margin-right:8px;">أولوية عليا</span></h4>
+      <p>استهداف B2B لمديري المشاريع وشركات الإنشاءات. مقالات متخصصة HR، نجاحات العملاء، تقارير سوق العمل السعودي، إعلانات موجهة لصناعة البناء والتشييد.</p>
+    </div>
+    <div class="plat-meta">
+      <div class="freq">5</div>
+      <div class="lbl">منشورات/أسبوع</div>
+    </div>
+  </div>
+
+  <div class="plat">
+    <div class="plat-icon" style="background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="white"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="white" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.5" fill="white"/></svg>
+    </div>
+    <div class="plat-body">
+      <h4>Instagram <span class="badge badge-gold" style="margin-right:8px;">أولوية عالية</span></h4>
+      <p>بناء الثقة البصرية. صور مرافق السكن، فيديوهات العمليات، Reels تثقيفية، قصص نجاح العمالة، عرض الباقة الكاملة بصرياً.</p>
+    </div>
+    <div class="plat-meta">
+      <div class="freq">7</div>
+      <div class="lbl">منشورات/أسبوع</div>
+    </div>
+  </div>
+
+  <div class="plat">
+    <div class="plat-icon" style="background:#1877F2;">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="white"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+    </div>
+    <div class="plat-body">
+      <h4>Facebook <span class="badge badge-gold" style="margin-right:8px;">أولوية متوسطة</span></h4>
+      <p>الوصول للشركات الصغيرة والباحثين عن عمل. إعلانات توظيف، فيديوهات مطولة، مجموعات متخصصة في قطاع الإنشاءات، تفاعل مع المجتمع.</p>
+    </div>
+    <div class="plat-meta">
+      <div class="freq">4-5</div>
+      <div class="lbl">منشورات/أسبوع</div>
+    </div>
+  </div>
+
+  <div class="plat">
+    <div class="plat-icon" style="background:#000;">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+    </div>
+    <div class="plat-body">
+      <h4>X (تويتر) <span class="badge badge-green" style="margin-right:8px;">أولوية إضافية</span></h4>
+      <p>الظهور في المحادثات المهنية. تغريدات سريعة عن سوق العمل، تعليقات على أخبار رؤية 2030 والمشاريع العملاقة.</p>
+    </div>
+    <div class="plat-meta">
+      <div class="freq">3-4</div>
+      <div class="lbl">تغريدات/أسبوع</div>
+    </div>
+  </div>
+
+  <div class="plat">
+    <div class="plat-icon" style="background:#FFFC00;border:1px solid var(--border);">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="#000"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+    </div>
+    <div class="plat-body">
+      <h4>Snapchat <span class="badge badge-blue" style="margin-right:8px;">أولوية مستقبلية</span></h4>
+      <p>الوصول للباحثين عن عمل الشباب في السعودية. محتوى خفيف عن بيئة العمل، يوم في حياة العامل، المرافق السكنية.</p>
+    </div>
+    <div class="plat-meta">
+      <div class="freq">2-3</div>
+      <div class="lbl">snaps/أسبوع</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ PAGE 6: CONTENT ═══════════════════════════════ -->
+<div class="page">
+  <div class="sec-header">
+    <div class="sec-num">06</div>
+    <div class="sec-title">استراتيجية <span>المحتوى</span> المتكاملة</div>
+  </div>
+
+  <div style="margin-bottom:24px;">
+    <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:14px;">أعمدة المحتوى الخمسة</div>
+    <div class="g3" style="gap:12px;">
+      <div class="pillar">
+        <div class="icon">📚</div>
+        <h4>التوعية والتثقيف</h4>
+        <p>قوانين العمل السعودية، رؤية 2030، إدارة العمالة، نصائح المقاولين</p>
+      </div>
+      <div class="pillar">
+        <div class="icon">🏆</div>
+        <h4>قصص النجاح</h4>
+        <p>كيف وفّرت يافا 200 عامل لمشروع في 5 أيام، حالات حقيقية موثقة</p>
+      </div>
+      <div class="pillar">
+        <div class="icon">🏗️</div>
+        <h4>خبرة القطاع</h4>
+        <p>مقالات متخصصة في الإنشاءات، اتجاهات السوق، تحليلات العمالة</p>
+      </div>
+      <div class="pillar">
+        <div class="icon">✨</div>
+        <h4>باقة يافا</h4>
+        <p>إنفوجرافيك، فيديوهات، صور المرافق، عرض الميزات التنافسية</p>
+      </div>
+      <div class="pillar">
+        <div class="icon">❤️</div>
+        <h4>رحلة العامل</h4>
+        <p>محتوى إنساني، بيئة عمل آمنة، شهادات العمال، يوم في حياتهم</p>
+      </div>
+      <div class="pillar">
+        <div class="icon">📊</div>
+        <h4>البيانات والأرقام</h4>
+        <p>إحصاءات سوق العمل، تقارير القطاع، أرقام رؤية 2030</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:14px;">تقويم المحتوى الأسبوعي (نموذج)</div>
+  <div class="card" style="overflow:hidden;padding:0;">
+    <table>
+      <thead>
+        <tr>
+          <th>اليوم</th>
+          <th>LinkedIn</th>
+          <th>Instagram</th>
+          <th>Facebook</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>الأحد</strong></td>
+          <td>مقال تثقيفي (سوق العمل)</td>
+          <td>Reel — يوم في حياة العامل</td>
+          <td>مشاركة مقال LinkedIn</td>
+        </tr>
+        <tr>
+          <td><strong>الاثنين</strong></td>
+          <td>إحصائية + رأي</td>
+          <td>Story — نصيحة مقاول</td>
+          <td>إعلان توظيف</td>
+        </tr>
+        <tr>
+          <td><strong>الثلاثاء</strong></td>
+          <td>قصة نجاح عميل</td>
+          <td>صورة مرافق السكن</td>
+          <td>فيديو تعريفي بالخدمة</td>
+        </tr>
+        <tr>
+          <td><strong>الأربعاء</strong></td>
+          <td>نصائح إدارة العمالة</td>
+          <td>Carousel — الباقة الكاملة</td>
+          <td>تفاعل مع التعليقات</td>
+        </tr>
+        <tr>
+          <td><strong>الخميس</strong></td>
+          <td>تقرير/بيانات القطاع</td>
+          <td>Reel — شهادة عميل</td>
+          <td>محتوى ترفيهي قطاعي</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ PAGE 7: SEO & ADS ═══════════════════════════════ -->
+<div class="page">
+  <div class="sec-header">
+    <div class="sec-num">07</div>
+    <div class="sec-title">استراتيجية <span>SEO والإعلانات</span> المدفوعة</div>
+  </div>
+
+  <div class="g2" style="margin-bottom:24px;">
+    <div>
+      <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:12px;">🔍 الكلمات المفتاحية المستهدفة</div>
+
+      <div class="kw-item">
+        <div class="kw">شركة توريد عمالة إنشاءات السعودية</div>
+        <span class="badge badge-red kw-diff">صعوبة عالية</span>
+        <span class="badge badge-green kw-intent">نية شراء</span>
+      </div>
+      <div class="kw-item">
+        <div class="kw">استقدام عمالة بناء ومقاولات</div>
+        <span class="badge badge-gold kw-diff">صعوبة متوسطة</span>
+        <span class="badge badge-green kw-intent">نية شراء</span>
+      </div>
+      <div class="kw-item">
+        <div class="kw">شركة outsourcing عمالة الرياض</div>
+        <span class="badge badge-gold kw-diff">صعوبة متوسطة</span>
+        <span class="badge badge-green kw-intent">نية شراء</span>
+      </div>
+      <div class="kw-item">
+        <div class="kw">توظيف عمال مقاولات نيوم</div>
+        <span class="badge badge-green kw-diff">صعوبة منخفضة</span>
+        <span class="badge badge-blue kw-intent">بحث</span>
+      </div>
+      <div class="kw-item">
+        <div class="kw">شركة سكن عمالة إنشاءات</div>
+        <span class="badge badge-green kw-diff">صعوبة منخفضة</span>
+        <span class="badge badge-green kw-intent">نية شراء</span>
+      </div>
+      <div class="kw-item">
+        <div class="kw">خدمات نقل عمالة مشاريع</div>
+        <span class="badge badge-green kw-diff">صعوبة منخفضة</span>
+        <span class="badge badge-green kw-intent">نية شراء</span>
+      </div>
+      <div class="kw-item">
+        <div class="kw">كيف أختار شركة توريد عمالة</div>
+        <span class="badge badge-gold kw-diff">صعوبة متوسطة</span>
+        <span class="badge badge-blue kw-intent">معلومات</span>
+      </div>
+    </div>
+
+    <div>
+      <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:12px;">💰 توزيع الإعلانات المدفوعة</div>
+
+      <div class="win" style="margin-bottom:8px;">
+        <div class="win-num" style="background:linear-gradient(135deg,#0A66C2,#1a77d2);">in</div>
+        <div class="win-body">
+          <h4>LinkedIn Ads <span class="badge badge-red" style="margin-right:6px;">أولوية عليا</span></h4>
+          <p>استهداف مديري المشاريع والمشتريات في شركات البناء. CPC 15-30 ريال. ROI أعلى.</p>
+        </div>
+      </div>
+      <div class="win" style="margin-bottom:8px;">
+        <div class="win-num" style="background:linear-gradient(135deg,#EA4335,#FBBC04);">G</div>
+        <div class="win-body">
+          <h4>Google Search Ads <span class="badge badge-red" style="margin-right:6px;">أولوية عليا</span></h4>
+          <p>اصطياد نية الشراء. شركات تبحث الآن عن عمالة إنشاءات.</p>
+        </div>
+      </div>
+      <div class="win" style="margin-bottom:8px;">
+        <div class="win-num" style="background:linear-gradient(135deg,#E1306C,#F77737);">ig</div>
+        <div class="win-body">
+          <h4>Meta Ads <span class="badge badge-gold" style="margin-right:6px;">متوسطة</span></h4>
+          <p>حملات Awareness للباقة المتكاملة. Retargeting لزوار الموقع.</p>
+        </div>
+      </div>
+      <div class="win">
+        <div class="win-num" style="background:var(--card2);">📺</div>
+        <div class="win-body">
+          <h4>Google Display <span class="badge badge-blue" style="margin-right:6px;">تكميلية</span></h4>
+          <p>إعادة استهداف زوار الموقع غير المحوّلين بمحتوى بصري قوي.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:12px;">⚙️ SEO التقني والمحلي</div>
+  <div class="g4">
+    <div class="card" style="text-align:center;padding:18px;">
+      <div style="font-size:22px;margin-bottom:8px;">📍</div>
+      <div style="font-weight:800;font-size:13px;margin-bottom:4px;">Local SEO</div>
+      <div style="font-size:12px;color:var(--muted);">Google My Business محسّن للرياض وجدة ومكة</div>
+    </div>
+    <div class="card" style="text-align:center;padding:18px;">
+      <div style="font-size:22px;margin-bottom:8px;">⚡</div>
+      <div style="font-weight:800;font-size:13px;margin-bottom:4px;">Technical SEO</div>
+      <div style="font-size:12px;color:var(--muted);">سرعة الموقع، Schema Markup، Sitemap محدّث</div>
+    </div>
+    <div class="card" style="text-align:center;padding:18px;">
+      <div style="font-size:22px;margin-bottom:8px;">✍️</div>
+      <div style="font-weight:800;font-size:13px;margin-bottom:4px;">Content SEO</div>
+      <div style="font-size:12px;color:var(--muted);">مدونة متخصصة، صفحات خدمات محسّنة، FAQ</div>
+    </div>
+    <div class="card" style="text-align:center;padding:18px;">
+      <div style="font-size:22px;margin-bottom:8px;">🔗</div>
+      <div style="font-weight:800;font-size:13px;margin-bottom:4px;">Link Building</div>
+      <div style="font-size:12px;color:var(--muted);">شراكات مع مواقع قطاع الإنشاءات السعودي</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ PAGE 8: WEBSITE ═══════════════════════════════ -->
+<div class="page">
+  <div class="sec-header">
+    <div class="sec-num">08</div>
+    <div class="sec-title">تطوير <span>الموقع الإلكتروني</span></div>
+  </div>
+
+  <div class="g2" style="margin-bottom:24px;">
+    <div>
+      <div style="font-size:14px;font-weight:700;color:var(--red);margin-bottom:14px;">✗ المشاكل الحالية الحرجة</div>
+      <div style="background:rgba(224,82,82,.06);border:1px solid rgba(224,82,82,.2);border-radius:12px;padding:20px;">
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;font-size:13px;">
+          <span style="color:var(--red);flex-shrink:0;">✗</span>
+          <span style="color:var(--muted);">تصميم قديم لا يعكس احترافية 12 سنة من الخبرة</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;font-size:13px;">
+          <span style="color:var(--red);flex-shrink:0;">✗</span>
+          <span style="color:var(--muted);">بطء في التحميل يرفع معدل الارتداد ويضر بـ SEO</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;font-size:13px;">
+          <span style="color:var(--red);flex-shrink:0;">✗</span>
+          <span style="color:var(--muted);">غياب شهادات العملاء ودراسات الحالة الموثقة</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;font-size:13px;">
+          <span style="color:var(--red);flex-shrink:0;">✗</span>
+          <span style="color:var(--muted);">لا يوجد نموذج طلب عرض سعر ولا نظام حجز أونلاين</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;font-size:13px;">
+          <span style="color:var(--red);flex-shrink:0;">✗</span>
+          <span style="color:var(--muted);">ضعف تجربة الجوال رغم أن 70%+ من الزوار موبايل</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;">
+          <span style="color:var(--red);flex-shrink:0;">✗</span>
+          <span style="color:var(--muted);">غياب مدونة أو محتوى تثقيفي يجذب عمليات البحث</span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div style="font-size:14px;font-weight:700;color:var(--green);margin-bottom:14px;">✓ التحسينات المطلوبة بالأولوية</div>
+      <div style="background:rgba(76,175,122,.06);border:1px solid rgba(76,175,122,.2);border-radius:12px;padding:20px;">
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;font-size:13px;">
+          <span style="color:var(--green);flex-shrink:0;">✓</span>
+          <span style="color:var(--muted);">إعادة تصميم كاملة بهوية بصرية قوية وسريعة (Core Web Vitals)</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;font-size:13px;">
+          <span style="color:var(--green);flex-shrink:0;">✓</span>
+          <span style="color:var(--muted);">صفحات خدمات منفصلة لكل خدمة مع محتوى SEO محسّن</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;font-size:13px;">
+          <span style="color:var(--green);flex-shrink:0;">✓</span>
+          <span style="color:var(--muted);">قسم Case Studies مع شركات الإنشاءات وأرقام حقيقية</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;font-size:13px;">
+          <span style="color:var(--green);flex-shrink:0;">✓</span>
+          <span style="color:var(--muted);">نموذج Quick Quote بارز في كل صفحة مع CTA واضح</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;font-size:13px;">
+          <span style="color:var(--green);flex-shrink:0;">✓</span>
+          <span style="color:var(--muted);">Trust Indicators: عدد العملاء، سنوات الخبرة، العمالة الموردة</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;">
+          <span style="color:var(--green);flex-shrink:0;">✓</span>
+          <span style="color:var(--muted);">مدونة متخصصة في سوق العمل السعودي والإنشاءات</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-gold card">
+    <div style="font-weight:800;color:var(--gold);margin-bottom:10px;">🎯 بنية الصفحة الرئيسية المقترحة</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <span class="badge badge-gold">Hero + CTA واضح</span>
+      <span class="badge badge-gold">أرقام Trust</span>
+      <span class="badge badge-gold">الباقة الكاملة بصرياً</span>
+      <span class="badge badge-gold">قصص نجاح</span>
+      <span class="badge badge-gold">شهادات العملاء</span>
+      <span class="badge badge-gold">نموذج طلب سريع</span>
+      <span class="badge badge-gold">الخدمات التفصيلية</span>
+      <span class="badge badge-gold">FAQ</span>
+      <span class="badge badge-gold">خريطة المشاريع</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ PAGE 9: PLAN 12M ═══════════════════════════════ -->
+<div class="page">
+  <div class="sec-header">
+    <div class="sec-num">09</div>
+    <div class="sec-title">خطة العمل <span>12 شهراً</span> التفصيلية</div>
+  </div>
+
+  <div class="g2" style="margin-bottom:16px;">
+    <div class="phase">
+      <div class="phase-head">
+        <h4>المرحلة الأولى: التأسيس</h4>
+        <p>الشهر 1-3 · البنية التحتية الرقمية</p>
+      </div>
+      <div class="phase-body">
+        <div class="phase-item">إعادة تصميم الموقع الإلكتروني بالكامل بهوية بصرية قوية</div>
+        <div class="phase-item">إعداد استراتيجية المحتوى وتقويم النشر لـ 12 شهراً</div>
+        <div class="phase-item">تحسين حسابات السوشيال ميديا وتوحيد الهوية</div>
+        <div class="phase-item">إعداد Google My Business وحملات Local SEO</div>
+        <div class="phase-item">إنتاج مجموعة المحتوى الأولى (فيديو تعريفي + 20 صورة)</div>
+        <div class="phase-item">جمع وتوثيق 3+ شهادات عملاء حقيقية بالفيديو</div>
+        <div class="phase-item">إعداد نظام CRM لمتابعة العملاء المحتملين</div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-head">
+        <h4>المرحلة الثانية: الإطلاق</h4>
+        <p>الشهر 4-6 · التفعيل والاكتساب</p>
+      </div>
+      <div class="phase-body">
+        <div class="phase-item">إطلاق حملات LinkedIn Ads وGoogle Ads الأولى</div>
+        <div class="phase-item">تفعيل مدونة الموقع بمحتوى SEO متخصص (4 مقالات/شهر)</div>
+        <div class="phase-item">إنتاج Case Studies مفصلة مع شركات إنشاءات</div>
+        <div class="phase-item">بناء شراكات مع كبرى شركات الإنشاءات للإحالات</div>
+        <div class="phase-item">إطلاق حملة Email Marketing للعملاء الحاليين</div>
+        <div class="phase-item">بدء تتبع KPIs وضبط الحملات أسبوعياً</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="phase">
+      <div class="phase-head">
+        <h4>المرحلة الثالثة: النمو</h4>
+        <p>الشهر 7-9 · التوسع والتحسين</p>
+      </div>
+      <div class="phase-body">
+        <div class="phase-item">تحليل البيانات وتوسيع الحملات الناجحة</div>
+        <div class="phase-item">إنتاج تقرير سوق العمل السعودي السنوي (PR محتوى)</div>
+        <div class="phase-item">حضور فعاليات قطاع الإنشاءات كراعٍ أو متحدث</div>
+        <div class="phase-item">إطلاق برنامج Referral للعملاء الحاليين</div>
+        <div class="phase-item">Webinar متخصص لمديري المشاريع (Lead Generation)</div>
+        <div class="phase-item">توسيع فريق المحتوى بناءً على الأداء</div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-head">
+        <h4>المرحلة الرابعة: التحسين</h4>
+        <p>الشهر 10-12 · القياس والتخطيط</p>
+      </div>
+      <div class="phase-body">
+        <div class="phase-item">مراجعة شاملة لجميع مؤشرات الأداء والعائد</div>
+        <div class="phase-item">تقرير ROI تفصيلي لكل قناة وحملة</div>
+        <div class="phase-item">تحديث استراتيجية العام القادم بناءً على البيانات</div>
+        <div class="phase-item">تطوير وتحديث الموقع بناءً على بيانات التفاعل</div>
+        <div class="phase-item">رصد الفرص الجديدة في السوق (نيوم، ROSHN، إلخ)</div>
+        <div class="phase-item">التخطيط للتوسع الجغرافي إن وُجد</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ PAGE 10: KPIs & BUDGET ═══════════════════════════════ -->
+<div class="page">
+  <div class="sec-header">
+    <div class="sec-num">10</div>
+    <div class="sec-title">مؤشرات الأداء <span>والميزانية</span></div>
+  </div>
+
+  <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:14px;">📊 KPIs الرئيسية — قبل وبعد</div>
+
+  <div style="margin-bottom:24px;">
+    <div class="kpi-row">
+      <div class="kpi-name">🌐 زيارات الموقع الشهرية</div>
+      <div class="kpi-now">500 زيارة/شهر</div>
+      <div class="kpi-arr">←</div>
+      <div class="kpi-goal">+3,000 زيارة/شهر</div>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi-name">💼 متابعو LinkedIn</div>
+      <div class="kpi-now">الوضع الحالي</div>
+      <div class="kpi-arr">←</div>
+      <div class="kpi-goal">+2,000 متابع</div>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi-name">📩 عملاء محتملون (Leads) شهرياً</div>
+      <div class="kpi-now">غير محدد</div>
+      <div class="kpi-arr">←</div>
+      <div class="kpi-goal">30-50 lead/شهر</div>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi-name">🔄 معدل تحويل الموقع</div>
+      <div class="kpi-now">غير محدد</div>
+      <div class="kpi-arr">←</div>
+      <div class="kpi-goal">3-5% من الزيارات</div>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi-name">❤️ تفاعل السوشيال ميديا</div>
+      <div class="kpi-now">منخفض</div>
+      <div class="kpi-arr">←</div>
+      <div class="kpi-goal">+300% تفاعل</div>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi-name">🔍 ترتيب Google (كلمات مفتاحية)</div>
+      <div class="kpi-now">خارج الصفحة الأولى</div>
+      <div class="kpi-arr">←</div>
+      <div class="kpi-goal">صفحة أولى لـ 15+ كلمة</div>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi-name">📧 معدل فتح البريد الإلكتروني</div>
+      <div class="kpi-now">لا يوجد</div>
+      <div class="kpi-arr">←</div>
+      <div class="kpi-goal">25-35% open rate</div>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi-name">💰 تكلفة الاكتساب (CAC)</div>
+      <div class="kpi-now">غير محدد</div>
+      <div class="kpi-arr">←</div>
+      <div class="kpi-goal">&lt; 2,000 ريال/عميل</div>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:14px;">💳 توزيع الميزانية الشهرية المقترحة</div>
+
+  <div class="budget-bar">
+    <div style="width:35%;background:var(--gold);"></div>
+    <div style="width:30%;background:var(--blue);"></div>
+    <div style="width:20%;background:var(--green);"></div>
+    <div style="width:10%;background:var(--red);"></div>
+    <div style="width:5%;background:#9B59B6;"></div>
+  </div>
+
+  <div class="g2">
+    <div>
+      <div class="budget-item"><div class="budget-dot" style="background:var(--gold);"></div><strong>35%</strong> — إعلانات مدفوعة (LinkedIn + Google)</div>
+      <div class="budget-item"><div class="budget-dot" style="background:var(--blue);"></div><strong>30%</strong> — إنتاج المحتوى (فيديو، تصوير، كتابة)</div>
+      <div class="budget-item"><div class="budget-dot" style="background:var(--green);"></div><strong>20%</strong> — SEO والموقع الإلكتروني</div>
+      <div class="budget-item"><div class="budget-dot" style="background:var(--red);"></div><strong>10%</strong> — أدوات وتحليلات (CRM، Analytics)</div>
+      <div class="budget-item"><div class="budget-dot" style="background:#9B59B6;"></div><strong>5%</strong> — فعاليات وشراكات</div>
+    </div>
+
+    <div class="card-gold card" style="text-align:center;">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">الميزانية الشهرية الموصى بها</div>
+      <div style="font-size:32px;font-weight:900;color:var(--gold);">8,000 — 15,000</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">ريال سعودي شهرياً</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.7;">تبدأ بـ 8,000 في المرحلة الأولى وتزداد تدريجياً مع نمو النتائج. الاستثمار يُعوَّض من أول 2-3 عملاء جدد شهرياً.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ PAGE 11: QUICK WINS ═══════════════════════════════ -->
+<div class="page">
+  <div class="sec-header">
+    <div class="sec-num">11</div>
+    <div class="sec-title">أسرع <span>10 إجراءات</span> تبدأ بها الآن</div>
+  </div>
+
+  <div class="g2">
+    <div>
+      <div class="win">
+        <div class="win-num">01</div>
+        <div class="win-body">
+          <h4>تحسين Google My Business فوراً</h4>
+          <p>أضف صوراً احترافية، ساعات العمل، وصف الخدمات الكاملة، والرد على كل التقييمات. يظهر في النتائج خلال أسبوع.</p>
+        </div>
+      </div>
+      <div class="win">
+        <div class="win-num">02</div>
+        <div class="win-body">
+          <h4>تحديث LinkedIn Company Page</h4>
+          <p>أعد كتابة About Section بلغة تسويقية مقنعة تُبرز الباقة الكاملة. أضف شعاراً احترافياً وبانر يوضح الخدمات الستة.</p>
+        </div>
+      </div>
+      <div class="win">
+        <div class="win-num">03</div>
+        <div class="win-body">
+          <h4>فيديو تعريفي 60 ثانية</h4>
+          <p>فيديو يعرض الباقة الكاملة (توظيف → سكن → نقل → وجبات) بشكل بصري. يُستخدم في كل القنوات. الأكثر تأثيراً.</p>
+        </div>
+      </div>
+      <div class="win">
+        <div class="win-num">04</div>
+        <div class="win-body">
+          <h4>نموذج Quick Quote في الصفحة الرئيسية</h4>
+          <p>3 حقول فقط: نوع المشروع، عدد العمال المطلوب، رقم الجوال. CTA: "احصل على عرض سعر في 24 ساعة".</p>
+        </div>
+      </div>
+      <div class="win">
+        <div class="win-num">05</div>
+        <div class="win-body">
+          <h4>3 شهادات عملاء موثقة بالفيديو</h4>
+          <p>شركات إنشاءات حقيقية تتحدث عن تجربتها مع يافا. الفيديو أقوى من النص بـ 10 أضعاف في بناء الثقة.</p>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="win">
+        <div class="win-num">06</div>
+        <div class="win-body">
+          <h4>إنفوجرافيك "باقة يافا الكاملة"</h4>
+          <p>تصميم بصري يوضح: توظيف + سكن + نقل + وجبات في صورة واحدة قوية. يُنشر في كل المنصات ويُستخدم في الإعلانات.</p>
+        </div>
+      </div>
+      <div class="win">
+        <div class="win-num">07</div>
+        <div class="win-body">
+          <h4>أول حملة LinkedIn مدفوعة</h4>
+          <p>استهداف مديري المشاريع في شركات الإنشاءات في الرياض وجدة. ميزانية 1,000-2,000 ريال للاختبار الأول.</p>
+        </div>
+      </div>
+      <div class="win">
+        <div class="win-num">08</div>
+        <div class="win-body">
+          <h4>مقال SEO: "كيف تختار شركة عمالة إنشاءات"</h4>
+          <p>مقال 1,500+ كلمة يستهدف قرار الشراء. يستقطب شركات تبحث جدياً عن الخدمة ويبني سلطة يافا الرقمية.</p>
+        </div>
+      </div>
+      <div class="win">
+        <div class="win-num">09</div>
+        <div class="win-body">
+          <h4>أرقام Trust في الصفحة الرئيسية</h4>
+          <p>12+ سنة خبرة · 500+ عميل · 5,000+ عامل تم توريده · 50+ مشروع إنشاءات. الأرقام تُغلق الصفقات.</p>
+        </div>
+      </div>
+      <div class="win">
+        <div class="win-num">10</div>
+        <div class="win-body">
+          <h4>Dashboard أداء شهري</h4>
+          <p>لوحة تحكم بسيطة تجمع Google Analytics + LinkedIn + Meta. تراجعها كل أسبوع لاتخاذ قرارات بالبيانات.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ CLOSING ═══════════════════════════════ -->
+<div class="page" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;text-align:center;">
+  <div style="width:80px;height:80px;border-radius:20px;border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;margin-bottom:28px;background:rgba(201,168,76,.08);">
+    <svg viewBox="0 0 50 50" width="46" height="46" fill="none"><path d="M25 8C15.06 8 7 16.06 7 26c0 5.3 2.35 10.05 6.1 13.3L25 28l11.9 11.3A18.92 18.92 0 0 0 43 26C43 16.06 34.94 8 25 8z" fill="rgba(201,168,76,.3)" stroke="#C9A84C" stroke-width="1.5"/><circle cx="25" cy="26" r="6" fill="#C9A84C"/></svg>
+  </div>
+
+  <div style="font-size:13px;color:var(--gold);font-weight:700;letter-spacing:.1em;margin-bottom:16px;">يافا جلوبال</div>
+
+  <h2 style="font-size:36px;font-weight:900;background:linear-gradient(135deg,#fff 30%,var(--gold-lt) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px;">جاهزون للانطلاق</h2>
+
+  <p style="font-size:16px;color:var(--muted);max-width:500px;line-height:1.8;margin-bottom:40px;">يافا تملك كل مقومات النجاح — الخبرة، الخدمة المتكاملة، والتخصص الفريد. المطلوب الآن هو <strong style="color:var(--text);">الظهور الرقمي القوي</strong> الذي يُوصل هذه الميزات لمن يحتاجها.</p>
+
+  <div class="g3" style="width:100%;max-width:560px;">
+    <div class="card" style="text-align:center;padding:20px;">
+      <div style="font-size:28px;font-weight:900;color:var(--gold);">12</div>
+      <div style="font-size:12px;color:var(--muted);">شهراً للتحول الرقمي</div>
+    </div>
+    <div class="card" style="text-align:center;padding:20px;">
+      <div style="font-size:28px;font-weight:900;color:var(--gold);">10</div>
+      <div style="font-size:12px;color:var(--muted);">إجراءات فورية</div>
+    </div>
+    <div class="card" style="text-align:center;padding:20px;">
+      <div style="font-size:28px;font-weight:900;color:var(--gold);">∞</div>
+      <div style="font-size:12px;color:var(--muted);">إمكانات النمو</div>
+    </div>
+  </div>
+
+  <div style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);width:100%;font-size:12px;color:var(--muted);">
+    يافا جلوبال · المملكة العربية السعودية · 2026
+  </div>
+</div>
+
+</body>
+</html>

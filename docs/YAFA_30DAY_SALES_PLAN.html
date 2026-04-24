@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>خطة 30 يوماً لزيادة مبيعات يافا — Ignify AI</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+
+:root {
+  --red: #dc2626;
+  --orange: #ea580c;
+  --yellow: #d97706;
+  --green: #16a34a;
+  --blue: #1d4ed8;
+  --purple: #7c3aed;
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface2: #273549;
+  --border: #334155;
+  --text: #f1f5f9;
+  --text2: #94a3b8;
+  --text3: #64748b;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Cairo', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+/* HERO */
+.hero {
+  background: linear-gradient(135deg, #dc2626 0%, #ea580c 50%, #d97706 100%);
+  padding: 52px 40px 44px;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -100px; right: -100px;
+  width: 400px; height: 400px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.06);
+}
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(0,0,0,.25);
+  border-radius: 50px;
+  padding: 5px 14px;
+  font-size: 12px; font-weight: 700; letter-spacing: .5px;
+  margin-bottom: 18px;
+}
+.hero h1 { font-size: 44px; font-weight: 900; line-height: 1.15; margin-bottom: 10px; }
+.hero h1 span { color: #fef08a; }
+.hero p { font-size: 15px; opacity: .85; margin-bottom: 28px; max-width: 540px; }
+.hero-stats {
+  display: flex; gap: 28px; flex-wrap: wrap;
+}
+.hero-stat { text-align: center; }
+.hero-stat .num { font-size: 30px; font-weight: 900; color: #fef08a; }
+.hero-stat .lbl { font-size: 11px; opacity: .7; }
+
+/* CONTAINER */
+.container { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+
+/* SECTION */
+.section { padding: 44px 0 20px; }
+.sec-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
+}
+.sec-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.sec-header h2 { font-size: 20px; font-weight: 900; }
+.sec-header p { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+/* WEEK BLOCK */
+.week {
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+}
+.week-header {
+  padding: 16px 22px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 10px;
+}
+.week-header .week-title {
+  font-size: 16px; font-weight: 900;
+}
+.week-header .week-goal {
+  font-size: 12px; font-weight: 600;
+  padding: 4px 14px; border-radius: 50px;
+  background: rgba(0,0,0,.25);
+}
+.week-body {
+  background: var(--surface);
+  padding: 20px 22px;
+}
+
+/* DAY ROW */
+.day-row {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: start;
+}
+.day-row:last-child { border-bottom: none; padding-bottom: 0; }
+.day-label {
+  font-size: 12px; font-weight: 700;
+  color: var(--text2);
+  padding-top: 2px;
+}
+.day-tasks { display: flex; flex-direction: column; gap: 6px; }
+.task {
+  display: flex; align-items: flex-start; gap: 8px;
+  font-size: 13px;
+}
+.task-tag {
+  font-size: 10px; font-weight: 700; padding: 2px 8px;
+  border-radius: 4px; flex-shrink: 0; margin-top: 1px;
+  white-space: nowrap;
+}
+.tag-call  { background: #fef2f2; color: #dc2626; }
+.tag-msg   { background: #ecfdf5; color: #16a34a; }
+.tag-post  { background: #eff6ff; color: #1d4ed8; }
+.tag-email { background: #fdf4ff; color: #7c3aed; }
+.tag-meet  { background: #fff7ed; color: #ea580c; }
+.tag-ads   { background: #fefce8; color: #ca8a04; }
+.tag-close { background: #f0fdf4; color: #15803d; }
+.task-text { line-height: 1.5; }
+.task-text strong { color: #fef08a; }
+
+/* ACTION CARD */
+.action-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+.action-card h4 { font-size: 14px; font-weight: 800; margin-bottom: 10px; }
+
+/* SCRIPT BOX */
+.script-box {
+  background: #0f172a;
+  border: 1px solid var(--border);
+  border-right: 3px solid var(--yellow);
+  border-radius: 10px;
+  padding: 16px 18px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: #e2e8f0;
+  margin-bottom: 12px;
+}
+.script-box .script-label {
+  font-size: 10px; font-weight: 700; color: #d97706;
+  letter-spacing: .5px; margin-bottom: 8px;
+}
+
+/* GRID */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+/* TARGET LIST */
+.target-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex; align-items: flex-start; gap: 12px;
+}
+.target-num {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 900; flex-shrink: 0;
+}
+.target-item h4 { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+.target-item p { font-size: 12px; color: var(--text2); }
+
+/* KPI ROW */
+.kpi-row {
+  display: flex; align-items: center; gap: 16px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 8px;
+}
+.kpi-row .kpi-icon { font-size: 22px; flex-shrink: 0; }
+.kpi-row .kpi-info { flex: 1; }
+.kpi-row .kpi-info .kpi-name { font-size: 12px; color: var(--text2); }
+.kpi-row .kpi-info .kpi-val { font-size: 18px; font-weight: 900; }
+.kpi-row .kpi-bar-wrap { width: 120px; }
+.kpi-row .kpi-bar-track { height: 6px; background: var(--border); border-radius: 50px; }
+.kpi-row .kpi-bar-fill  { height: 6px; border-radius: 50px; }
+.kpi-row .kpi-target { font-size: 11px; color: var(--text3); text-align: center; margin-top: 3px; }
+
+/* CONTENT TEMPLATES */
+.template-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.template-header {
+  padding: 10px 16px;
+  font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; gap: 8px;
+}
+.template-body {
+  padding: 14px 16px;
+  font-size: 13px;
+  line-height: 1.75;
+  color: #cbd5e1;
+  border-top: 1px solid var(--border);
+  white-space: pre-wrap;
+}
+
+/* BUDGET TABLE */
+table { width: 100%; border-collapse: collapse; }
+th {
+  background: var(--surface2);
+  color: var(--text2);
+  padding: 10px 14px;
+  text-align: right;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border);
+}
+td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+tr:last-child td { border-bottom: none; }
+.table-wrap { background: var(--surface); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 14px; }
+
+/* ALERT */
+.alert {
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+.alert-red    { background: #450a0a; border: 1px solid #991b1b; color: #fca5a5; }
+.alert-green  { background: #052e16; border: 1px solid #166534; color: #86efac; }
+.alert-yellow { background: #422006; border: 1px solid #92400e; color: #fcd34d; }
+
+/* DIVIDER */
+hr { border: none; border-top: 1px solid var(--border); margin: 36px 0; }
+
+/* FOOTER */
+footer {
+  background: #020617;
+  text-align: center;
+  padding: 28px;
+  color: var(--text3);
+  font-size: 12px;
+  margin-top: 60px;
+  border-top: 1px solid var(--border);
+}
+footer strong { color: var(--text2); }
+
+@media (max-width: 700px) {
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 28px; }
+  .day-row { grid-template-columns: 1fr; gap: 4px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">⚡ مُولَّد بواسطة Ignify AI — خطة مبيعات مكثّفة</div>
+    <h1>30 يوماً لزيادة<br><span>مبيعات يافا</span></h1>
+    <p>خطة تنفيذية يومية مفصّلة تبدأ غداً. لا نظريات — فقط إجراءات محددة بأوقاتها وأدواتها لتوليد عقود جديدة خلال شهر واحد.</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="num">30</div><div class="lbl">يوم تنفيذ</div></div>
+      <div class="hero-stat"><div class="num">4</div><div class="lbl">أسابيع مكثّفة</div></div>
+      <div class="hero-stat"><div class="num">2,000</div><div class="lbl">ريال ميزانية</div></div>
+      <div class="hero-stat"><div class="num">3-5</div><div class="lbl">عقود مستهدفة</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ══ STRATEGY OVERVIEW ══ -->
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-icon" style="background:#1e293b">🎯</div>
+    <div><h2>المنطق الأساسي للخطة</h2><p>لماذا هذا المسار وليس غيره؟</p></div>
+  </div>
+
+  <div class="alert alert-yellow">
+    <strong>الحقيقة:</strong> مبيعات B2B الكبيرة لا تُغلق في أسبوع. لكن يمكن خلال 30 يوماً: إعادة تفعيل 3-5 leads قديمة كانت "باردة" + إدخال 5-8 leads جديدة في pipeline + إغلاق 1-2 عقد من leads موجودة. هذا هو الهدف الواقعي.
+  </div>
+
+  <div class="grid-3" style="margin-bottom:14px">
+    <div class="action-card" style="border-right:3px solid #dc2626">
+      <h4>🔥 الأسبوع 1 — الاتصال المباشر</h4>
+      <p style="font-size:12px;color:var(--text2)">اتصل بكل من تعرفهم. عمّل نظام للـ leads. لا تبيع — استكشف وأيقظ.</p>
+    </div>
+    <div class="action-card" style="border-right:3px solid #ea580c">
+      <h4>📣 الأسبوع 2 — الحضور الرقمي السريع</h4>
+      <p style="font-size:12px;color:var(--text2)">اظهر أمام صانعي القرار على LinkedIn وواتساب. ابنِ مصداقية سريعة بمحتوى مدروس.</p>
+    </div>
+    <div class="action-card" style="border-right:3px solid #16a34a">
+      <h4>💼 الأسبوع 3 — العروض والمتابعة</h4>
+      <p style="font-size:12px;color:var(--text2)">قدّم عروضاً، تابع بشكل منهجي، أزل العقبات التي تمنع الإغلاق.</p>
+    </div>
+  </div>
+
+  <div class="action-card" style="border-right:3px solid #7c3aed">
+    <h4>🔐 الأسبوع 4 — الإغلاق والبذور المستقبلية</h4>
+    <p style="font-size:12px;color:var(--text2)">ادفع نحو قرار نهائي في كل deal مفتوح. ازرع بذور الشهر القادم بالتزامن.</p>
+  </div>
+</div>
+
+<!-- ══ TARGETS ══ -->
+<hr>
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-icon" style="background:#1e293b">🏹</div>
+    <div><h2>من تستهدف؟ — قائمة الأولويات</h2><p>رتّب وقتك حسب هذا الترتيب بالضبط</p></div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+    <div class="target-item">
+      <div class="target-num" style="background:#dc2626;color:#fff">1</div>
+      <div>
+        <h4>العملاء الحاليون — عروض التوسعة</h4>
+        <p>من لديه عقد HR فقط → اعرض عليه الكول سنتر أو النقل. من لديه كول سنتر → اعرض الإسناد. هذه الصفقات تُغلق بـ 70% أقل جهداً.</p>
+      </div>
+    </div>
+    <div class="target-item">
+      <div class="target-num" style="background:#ea580c;color:#fff">2</div>
+      <div>
+        <h4>Leads قديمة لم تُغلق — "الفائزون النائمون"</h4>
+        <p>كل شركة تقدّمت لها بعرض قبل 3-12 شهراً وقالت "ليس الآن". ظروفهم تغيّرت — تواصل معهم فوراً.</p>
+      </div>
+    </div>
+    <div class="target-item">
+      <div class="target-num" style="background:#d97706;color:#fff">3</div>
+      <div>
+        <h4>شبكة الإحالات — الشركاء والمعارف</h4>
+        <p>اتصل بـ 10 شخص من شبكتك واطلب إحالة واحدة فقط. "هل تعرف شركة تبحث عن خدمات إسناد؟" سؤال واحد يكفي.</p>
+      </div>
+    </div>
+    <div class="target-item">
+      <div class="target-num" style="background:#1d4ed8;color:#fff">4</div>
+      <div>
+        <h4>المنشآت الصناعية في الرياض — البحث المباشر</h4>
+        <p>ابحث في LinkedIn عن "HR Manager" أو "مدير موارد بشرية" في شركات 100+ موظف في الرياض. أرسل رسالة شخصية مباشرة — لا كوبي-بيست.</p>
+      </div>
+    </div>
+    <div class="target-item">
+      <div class="target-num" style="background:#7c3aed;color:#fff">5</div>
+      <div>
+        <h4>شركات الاستشارات وMSPs — شركاء الإحالة</h4>
+        <p>مستشارو HR ومكاتب المحاسبة يتحدثون مع عملائك كل يوم. قدّم لهم عمولة 5-8% على أي عقد تُحيله.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ WEEK 1 ══ -->
+<hr>
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-icon" style="background:#450a0a">🔥</div>
+    <div><h2>الأسبوع الأول — الاتصال المباشر وإيقاظ النائمين</h2><p>الأيام 1-7 · هدف: 15 محادثة حقيقية</p></div>
+  </div>
+
+  <div class="alert alert-red" style="margin-bottom:16px">
+    <strong>قاعدة الأسبوع الأول:</strong> لا تبيع في أول تواصل. اطرح سؤالاً واستمع. هدفك = معرفة مشكلتهم الحالية، ليس شرح خدماتك.
+  </div>
+
+  <div class="week">
+    <div class="week-header" style="background:linear-gradient(135deg,#7f1d1d,#dc2626)">
+      <span class="week-title">📅 اليوم 1-2 — الجرد والتحضير</span>
+      <span class="week-goal">لا اتصالات بعد — فقط تجهيز</span>
+    </div>
+    <div class="week-body">
+      <div class="day-row">
+        <div class="day-label">اليوم 1<br><span style="font-size:10px;color:var(--text3)">صباحاً</span></div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-meet">📋 تجهيز</span>
+            <div class="task-text">اكتب قائمة بكل العملاء الحاليين (5-20 شركة). بجانب كل اسم: ما الخدمة التي يأخذها؟ ما الخدمة التي لا يأخذها؟</div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-meet">📋 تجهيز</span>
+            <div class="task-text">اكتب قائمة بكل الـ leads الذين تحدثت معهم في آخر 12 شهراً ولم يوقّعوا. <strong>لا تحذف أحداً</strong> — حتى من قال "لا".</div>
+          </div>
+        </div>
+      </div>
+      <div class="day-row">
+        <div class="day-label">اليوم 1<br><span style="font-size:10px;color:var(--text3)">مساءً</span></div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-meet">📋 تجهيز</span>
+            <div class="task-text">اكتب قائمة بـ 10-15 شخص في شبكتك (أصدقاء، عملاء سابقون، معارف تجاريون) يمكنهم الإحالة.</div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-post">💼 LinkedIn</span>
+            <div class="task-text">أكمل ملف شركة يافا على LinkedIn: صورة الغلاف + وصف الخدمات + معلومات التواصل. إذا لم يكن موجوداً — أنشئه الآن.</div>
+          </div>
+        </div>
+      </div>
+      <div class="day-row">
+        <div class="day-label">اليوم 2<br><span style="font-size:10px;color:var(--text3)">كامل اليوم</span></div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-meet">📋 تجهيز</span>
+            <div class="task-text">جهّز عرض تقديمي واحد (PDF أو PPT) يشرح خدمات يافا الخمس في 10 شرائح. هذا سيُرسَل للـ leads خلال الأسبوع. <strong>لا تبالغ في الجماليات — المحتوى أهم.</strong></div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-ads">💰 ميزانية</span>
+            <div class="task-text">خصص 500 ريال للإعلانات في الأسبوع الأول: 300 ريال LinkedIn (ترقية منشور واحد قوي) + 200 ريال Google Ads (كلمات: شركة إسناد الرياض).</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="week">
+    <div class="week-header" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c)">
+      <span class="week-title">📅 اليوم 3-5 — العملاء الحاليون + الإحالات</span>
+      <span class="week-goal">هدف: 8-10 محادثة</span>
+    </div>
+    <div class="week-body">
+      <div class="day-row">
+        <div class="day-label">اليوم 3</div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-call">📞 اتصال</span>
+            <div class="task-text">اتصل بـ <strong>3 عملاء حاليين</strong>. لا تبيع — اسأل: <em>"كيف سير الأمور؟ هل واجهتم أي تحديات مؤخراً؟"</em> استمع جيداً. إذا ذكر تحدياً = فرصة.</div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-post">💼 LinkedIn</span>
+            <div class="task-text">انشر أول منشور: <strong>"أكثر 3 أخطاء تقع فيها الشركات عند تعيين عمالة خارجية"</strong> — رأي شخصي بصوت الخبير. لا إعلان عن خدماتك.</div>
+          </div>
+        </div>
+      </div>
+      <div class="day-row">
+        <div class="day-label">اليوم 4</div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-msg">💬 واتساب</span>
+            <div class="task-text">أرسل رسالة واتساب لـ <strong>5 أشخاص من شبكة الإحالات</strong>. الرسالة أدناه — استخدمها حرفياً أو كيّفها.</div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-call">📞 اتصال</span>
+            <div class="task-text">اتصل بـ 2 عملاء حاليين إضافيين. ركّز على من يمكن توسعة خدماتهم.</div>
+          </div>
+        </div>
+      </div>
+      <div class="day-row">
+        <div class="day-label">اليوم 5</div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-email">📧 إيميل</span>
+            <div class="task-text">أرسل إيميل احترافي لـ <strong>5 leads قديمة</strong>. الإيميل أدناه — شخصي وقصير.</div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-post">💼 LinkedIn</span>
+            <div class="task-text">علّق على 5 منشورات لـ HR Managers سعوديين — تعليق ذكي، ليس مجرد "جميل". ابنِ علاقة قبل أن تطلب شيئاً.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="week">
+    <div class="week-header" style="background:linear-gradient(135deg,#431407,#ea580c)">
+      <span class="week-title">📅 اليوم 6-7 — تفعيل الـ Leads القديمة</span>
+      <span class="week-goal">هدف: 5 ردود إيجابية</span>
+    </div>
+    <div class="week-body">
+      <div class="day-row">
+        <div class="day-label">اليوم 6</div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-call">📞 اتصال</span>
+            <div class="task-text">اتصل بـ <strong>3 leads قديمة</strong> لم يردوا على الإيميل. الجملة الافتتاحية: <em>"مرحباً، أنا [الاسم] من يافا. تواصلنا قبل فترة — أردت أعرف إذا تغيّرت احتياجاتكم."</em></div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-post">💼 LinkedIn</span>
+            <div class="task-text">ابحث عن 10 HR Managers في الرياض على LinkedIn وأرسل طلب تواصل مع رسالة شخصية قصيرة — لا تبع، فقط تعارف.</div>
+          </div>
+        </div>
+      </div>
+      <div class="day-row">
+        <div class="day-label">اليوم 7</div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-meet">📊 مراجعة</span>
+            <div class="task-text">راجع الأسبوع: كم محادثة حقيقية أجريت؟ كم رد إيجابي؟ من يحتاج متابعة هذا الأسبوع؟ سجّل كل شيء في جدول بسيط.</div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-post">💼 LinkedIn</span>
+            <div class="task-text">انشر منشور ثاني: <strong>قصة نجاح من مشروع حقيقي</strong> (بدون ذكر اسم العميل إن أردت). الأرقام = مصداقية. مثال: "ساعدنا شركة إنشائية على توظيف 80 موظف في 3 أسابيع وتوفير X% من تكاليف التشغيل."</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCRIPTS WEEK 1 -->
+<div style="margin-bottom:30px">
+  <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:12px">📝 النصوص الجاهزة — الأسبوع الأول</div>
+
+  <div class="script-box">
+    <div class="script-label">رسالة واتساب — طلب إحالة (اليوم 4)</div>
+السلام عليكم [الاسم]،
+
+أتمنى أن تكون بخير 🙏
+
+يافا جلوبال توسّع خدماتها هذا الشهر — إسناد وظيفي + كول سنتر + نقل وسكن للموظفين.
+
+هل تعرف شركة تحتاج لأي من هذه الخدمات؟ لو أحلتني لأي شخص مناسب سأكون ممتناً جداً.
+
+شكراً 🤝
+[اسمك]
+  </div>
+
+  <div class="script-box">
+    <div class="script-label">إيميل إعادة التفعيل — Leads القديمة (اليوم 5)</div>
+الموضوع: تواصل سريع — يافا جلوبال
+
+السلام عليكم [الاسم]،
+
+أتمنى أن تكون الأمور سائرة بشكل جيد في [اسم الشركة].
+
+تواصلنا قبل فترة حول خدمات يافا، وأردت أعرف: هل تغيّر شيء في احتياجاتكم للموارد البشرية أو الإسناد؟
+
+لدينا الآن حزمة جديدة تجمع [الخدمة الأنسب لهم] في عقد واحد — كثير من العملاء وجدوها مفيدة جداً في ظل متطلبات نطاقات 2026.
+
+هل يناسبك مكالمة 15 دقيقة هذا الأسبوع؟
+
+مع التحية،
+[اسمك]
+يافا جلوبال | [رقم الجوال]
+  </div>
+
+  <div class="script-box">
+    <div class="script-label">رسالة LinkedIn — تواصل مع HR Manager جديد (اليوم 6)</div>
+السلام عليكم [الاسم]،
+
+لاحظت خبرتك في [القطاع/الشركة] — يبدو أنك تدير فريقاً كبيراً.
+
+أنا [اسمك] من يافا جلوبال، متخصصون في الإسناد الوظيفي والخدمات المساندة للمنشآت الكبيرة في السعودية.
+
+أودّ التعرف عليك وتبادل الخبرات في مجال الموارد البشرية. هل أنت متاح لمحادثة قصيرة؟
+
+شكراً 🙏
+  </div>
+</div>
+
+<!-- ══ WEEK 2 ══ -->
+<hr>
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-icon" style="background:#1c1917">📣</div>
+    <div><h2>الأسبوع الثاني — الحضور الرقمي المكثّف</h2><p>الأيام 8-14 · هدف: 20 طلب تواصل جديد + 3 مواعيد</p></div>
+  </div>
+
+  <div class="week">
+    <div class="week-header" style="background:linear-gradient(135deg,#1e3a5f,#1d4ed8)">
+      <span class="week-title">📅 اليوم 8-10 — LinkedIn المكثّف</span>
+      <span class="week-goal">هدف: 15 طلب تواصل مقبول</span>
+    </div>
+    <div class="week-body">
+      <div class="day-row">
+        <div class="day-label">اليوم 8</div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-post">💼 LinkedIn</span>
+            <div class="task-text">انشر: <strong>"ما الفرق بين شركة إسناد عادية وشركة إسناد شاملة؟"</strong> — محتوى تعليمي يُظهر الفرق الذي تُقدمه يافا دون الادعاء المباشر.</div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-post">💼 LinkedIn</span>
+            <div class="task-text">أرسل <strong>10 طلبات تواصل جديدة</strong> لـ CEOs وHR Directors في شركات صناعية وإنشائية بالرياض. لكل شخص رسالة مختلفة بسيطة.</div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-ads">💰 إعلان</span>
+            <div class="task-text">فعّل إعلان LinkedIn: استهداف "HR Manager + Director + CEO" في السعودية، قطاع Manufacturing + Construction. ميزانية 150 ريال/3 أيام.</div>
+          </div>
+        </div>
+      </div>
+      <div class="day-row">
+        <div class="day-label">اليوم 9</div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-msg">💬 واتساب</span>
+            <div class="task-text">أرسل لـ <strong>5 leads رادّوا إيجاباً</strong> في الأسبوع الأول: "أرفق لكم عرضنا التقديمي — هل تحدد موعداً للاطلاع عليه معاً؟"</div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-post">🐦 تويتر</span>
+            <div class="task-text">انشر thread: <strong>"5 أسئلة اطرحها قبل التعاقد مع شركة إسناد"</strong> — محتوى ينشره مدراء HR ويجذب تعليقات.</div>
+          </div>
+        </div>
+      </div>
+      <div class="day-row">
+        <div class="day-label">اليوم 10</div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-call">📞 اتصال</span>
+            <div class="task-text">اتصل بمن قبلوا طلب التواصل على LinkedIn ولم يردوا على رسائلك. <strong>اتصال هاتفي مباشر أقوى بـ 5x من رسالة نصية.</strong></div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-ads">💰 Google Ads</span>
+            <div class="task-text">تحقق من أداء Google Ads: أي الكلمات حققت نقرات؟ علّق الكلمات الباهظة (CPC أعلى من 15 ريال بدون conversions).</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="week">
+    <div class="week-header" style="background:linear-gradient(135deg,#1e3a5f,#0369a1)">
+      <span class="week-title">📅 اليوم 11-14 — تحويل المتابعين إلى مواعيد</span>
+      <span class="week-goal">هدف: 3-5 مواعيد مؤكدة</span>
+    </div>
+    <div class="week-body">
+      <div class="day-row">
+        <div class="day-label">اليوم 11</div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-post">💼 LinkedIn</span>
+            <div class="task-text">انشر <strong>شهادة عميل</strong> (اكتبها أنت بعد موافقته أو اطلب منه كتابتها): "ما الذي تغيّر بعد عملكم مع يافا؟"</div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-meet">📅 موعد</span>
+            <div class="task-text">حدّد <strong>وقتين ثابتين أسبوعياً للـ demos</strong> (مثلاً: الاثنين والأربعاء 10-12 صباحاً). أرسل هذه الأوقات لكل lead مهتم.</div>
+          </div>
+        </div>
+      </div>
+      <div class="day-row">
+        <div class="day-label">اليوم 12-13</div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-meet">🤝 لقاء</span>
+            <div class="task-text"><strong>أجرِ أول اجتماع فعلي أو مكالمة Zoom</strong> مع أول lead مهتم. ركّز على: فهم مشكلتهم → عرض الحل المناسب لهم تحديداً → لا تعرض كل الخدمات.</div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-email">📧 إيميل</span>
+            <div class="task-text">بعد كل اجتماع أرسل <strong>ملخص ما اتُفق عليه + الخطوات التالية</strong> في إيميل خلال ساعة. هذا يُعطي انطباعاً احترافياً ويُبقي الزخم.</div>
+          </div>
+        </div>
+      </div>
+      <div class="day-row">
+        <div class="day-label">اليوم 14</div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-meet">📊 مراجعة</span>
+            <div class="task-text">مراجعة الأسبوع: كم موعداً حجزت؟ كم proposal ترسله الأسبوع القادم؟ حدّث قائمة الـ leads بالحالة الجديدة.</div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-post">💼 LinkedIn</span>
+            <div class="task-text">انشر: <strong>إحصائية أو سؤال</strong> يثير النقاش — مثال: "هل تعلم أن 60% من شركات الإنشاء في السعودية تدفع أكثر من اللازم في الإسناد الوظيفي؟ لماذا؟"</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ WEEK 3 ══ -->
+<hr>
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-icon" style="background:#052e16">💼</div>
+    <div><h2>الأسبوع الثالث — العروض والمتابعة المنهجية</h2><p>الأيام 15-21 · هدف: 3-5 عروض مُرسلة</p></div>
+  </div>
+
+  <div class="week">
+    <div class="week-header" style="background:linear-gradient(135deg,#14532d,#16a34a)">
+      <span class="week-title">📅 اليوم 15-17 — إعداد وإرسال العروض</span>
+      <span class="week-goal">هدف: 3 proposals مُرسلة</span>
+    </div>
+    <div class="week-body">
+      <div class="day-row">
+        <div class="day-label">اليوم 15</div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-meet">📄 عرض</span>
+            <div class="task-text">جهّز <strong>قالب عرض سعر احترافي</strong> يتضمن: ملخص احتياج العميل → الحل المقترح → الخدمات المشمولة → السعر الإجمالي → السعر الشهري → مدة العقد → ضمانات SLA → كيفية البدء.</div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-meet">📄 عرض</span>
+            <div class="task-text">أرسل أول عرض سعر مخصص لأكثر lead مهتم. <strong>خصصه بالكامل لاحتياجهم</strong> — لا ترسل عرضاً جاهزاً غير مخصص.</div>
+          </div>
+        </div>
+      </div>
+      <div class="day-row">
+        <div class="day-label">اليوم 16</div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-call">📞 متابعة</span>
+            <div class="task-text">اتصل بكل من أرسلت لهم عروضاً في الأسبوعين الأول والثاني: <em>"هل اطلعتم على العرض؟ هل لديكم أي أسئلة؟"</em> لا تنتظر ردهم — بادر أنت.</div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-post">💼 LinkedIn</span>
+            <div class="task-text">انشر: <strong>"كيف نختار شركة الإسناد المناسبة؟ 7 معايير لا تتنازل عنها"</strong> — ستجد أن معايير يافا تطابق القائمة 😉</div>
+          </div>
+        </div>
+      </div>
+      <div class="day-row">
+        <div class="day-label">اليوم 17</div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-meet">🤝 اجتماع</span>
+            <div class="task-text">اجتماع ثاني مع lead في مرحلة التفاوض. هدف هذا الاجتماع = <strong>إزالة آخر عقبة</strong>. اسأل مباشرة: "ما الذي يمنعكم من البدء الآن؟"</div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-msg">💬 واتساب</span>
+            <div class="task-text">تابع مع <strong>5 leads إضافية</strong> لم تُجرِ معهم اجتماعاً بعد. ذكّرهم بالعرض أو اقترح موعد مكالمة.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="week">
+    <div class="week-header" style="background:linear-gradient(135deg,#14532d,#15803d)">
+      <span class="week-title">📅 اليوم 18-21 — التفاوض وإزالة العقبات</span>
+      <span class="week-goal">هدف: عقد موقّع أول</span>
+    </div>
+    <div class="week-body">
+      <div class="day-row">
+        <div class="day-label">اليوم 18-19</div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-close">✅ إغلاق</span>
+            <div class="task-text">للـ lead الأقرب للإغلاق: اعرض <strong>حافزاً محدوداً بوقت</strong>: "إذا وقّعنا قبل نهاية الشهر نقدم لكم شهر أول بتخفيض 10%." ضع تاريخ انتهاء حقيقي.</div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-meet">📄 عرض</span>
+            <div class="task-text">أرسل عروض سعر للـ leads الجديدة التي دخلت هذا الأسبوع.</div>
+          </div>
+        </div>
+      </div>
+      <div class="day-row">
+        <div class="day-label">اليوم 20</div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-post">💼 LinkedIn</span>
+            <div class="task-text">انشر: <strong>محتوى عن رؤية 2030 ومتطلبات الإسناد في المشاريع الكبرى</strong>. هذا يجذب مدراء مشاريع نيوم والقدية.</div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-call">📞 متابعة</span>
+            <div class="task-text">اتصل بكل lead في pipeline — حدّث الحالة: ساخن / فاتر / بارد. ركّز 80% وقتك على الساخنين فقط.</div>
+          </div>
+        </div>
+      </div>
+      <div class="day-row">
+        <div class="day-label">اليوم 21</div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-meet">📊 مراجعة</span>
+            <div class="task-text">مراجعة الأسبوع 3: كم عرضاً أُرسل؟ كم في مرحلة التفاوض؟ ماذا تحتاج لإغلاق كل deal؟ الأسبوع الأخير = إغلاق كل ما يمكن إغلاقه.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ WEEK 4 ══ -->
+<hr>
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-icon" style="background:#1e1b4b">🏆</div>
+    <div><h2>الأسبوع الرابع — الإغلاق وزرع بذور الشهر القادم</h2><p>الأيام 22-30 · هدف: 2-3 عقود موقّعة</p></div>
+  </div>
+
+  <div class="week">
+    <div class="week-header" style="background:linear-gradient(135deg,#3b0764,#7c3aed)">
+      <span class="week-title">📅 اليوم 22-26 — دفع الإغلاق</span>
+      <span class="week-goal">هدف: 2+ عقود موقّعة</span>
+    </div>
+    <div class="week-body">
+      <div class="day-row">
+        <div class="day-label">اليوم 22-23</div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-close">✅ إغلاق</span>
+            <div class="task-text">كل deal في مرحلة "التفكير" أو "سنرد": <strong>حدد موعداً للقرار النهائي</strong>. قل: "أحتاج ردكم قبل الخميس لأحجز لكم المصادر البشرية المناسبة."</div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-meet">📄 عقد</span>
+            <div class="task-text">جهّز عقداً جاهزاً للتوقيع لأقرب lead. كلما كان العقد جاهزاً قبل موافقتهم — كلما تسارع الإغلاق.</div>
+          </div>
+        </div>
+      </div>
+      <div class="day-row">
+        <div class="day-label">اليوم 24-25</div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-post">💼 LinkedIn</span>
+            <div class="task-text">انشر: <strong>"إعلان شراكة جديدة أو خدمة جديدة"</strong> — حتى لو صغيرة. يُظهر أن يافا تنمو وتتوسع = يُحفّز المترددين على الانضمام.</div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-call">📞 اتصال</span>
+            <div class="task-text">اتصل بكل lead "فاتر" للمرة الأخيرة: <em>"هل ما زلتم مهتمين؟ يمكنني تمديد العرض أسبوعاً إضافياً فقط."</em> إذا لا = انقل وقتك للساخنين.</div>
+          </div>
+        </div>
+      </div>
+      <div class="day-row">
+        <div class="day-label">اليوم 26</div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-close">✅ إغلاق</span>
+            <div class="task-text">المتابعة المكثّفة الأخيرة: <strong>كل lead ساخن</strong> يتلقى اتصالاً شخصياً مع سؤال مباشر: "ما الذي نحتاج لحله لتوقيع العقد هذا الأسبوع؟"</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="week">
+    <div class="week-header" style="background:linear-gradient(135deg,#164e63,#0e7490)">
+      <span class="week-title">📅 اليوم 27-30 — الإغلاق النهائي + بذور الشهر 2</span>
+      <span class="week-goal">الختام القوي</span>
+    </div>
+    <div class="week-body">
+      <div class="day-row">
+        <div class="day-label">اليوم 27-28</div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-close">✅ إغلاق</span>
+            <div class="task-text">وقّع ما يمكن توقيعه. <strong>لا تسحب عروضاً لم تُغلق</strong> — أجّلها للشهر القادم.</div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-post">💼 LinkedIn</span>
+            <div class="task-text">انشر محتوى الشهر الأخير: <strong>تلخيص ما تعلمته من السوق هذا الشهر</strong> — يُظهرك كخبير لا كبائع.</div>
+          </div>
+        </div>
+      </div>
+      <div class="day-row">
+        <div class="day-label">اليوم 29</div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-msg">💬 واتساب</span>
+            <div class="task-text"><strong>ابنِ leads الشهر القادم:</strong> أرسل لـ 10 أشخاص جدد من شبكتك لم تتواصل معهم هذا الشهر. نفس رسالة الإحالة من اليوم 4.</div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-post">💼 LinkedIn</span>
+            <div class="task-text">أضف <strong>20 طلب تواصل جديد</strong> — بناء الشبكة استثمار مستمر.</div>
+          </div>
+        </div>
+      </div>
+      <div class="day-row">
+        <div class="day-label">اليوم 30</div>
+        <div class="day-tasks">
+          <div class="task">
+            <span class="task-tag tag-meet">📊 تقييم</span>
+            <div class="task-text"><strong>مراجعة شاملة للشهر:</strong> كم محادثة؟ كم proposal؟ كم عقد؟ ما الذي نجح؟ ما الذي يحتاج تحسين في الشهر القادم؟</div>
+          </div>
+          <div class="task">
+            <span class="task-tag tag-meet">📋 تخطيط</span>
+            <div class="task-text"><strong>ضع هدف الشهر 2</strong> بناءً على نتائج هذا الشهر. الزخم المبني هنا يجعل الشهر التالي أسهل بكثير.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CONTENT TEMPLATES ══ -->
+<hr>
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-icon" style="background:#1e293b">✍️</div>
+    <div><h2>محتوى LinkedIn الجاهز — 4 أسابيع</h2><p>انسخ وعدّل — لا تنشر دون تخصيص</p></div>
+  </div>
+
+  <div class="template-card">
+    <div class="template-header" style="background:#1e3a5f;color:#93c5fd">💼 الأسبوع 1 — منشور الخبرة</div>
+    <div class="template-body">أكثر 3 أخطاء تقع فيها الشركات عند التعاقد مع شركة إسناد:
+
+1️⃣ الاهتمام بالسعر فقط — بعض الشركات تقدم سعراً منخفضاً لكن تخفي تكاليف إضافية لاحقاً.
+
+2️⃣ عدم وضوح SLA — إذا لم يُحدد العقد ما يحدث عند التأخير أو الإخفاق، أنت في خطر.
+
+3️⃣ تجاهل الامتثال النظامي — شركات كثيرة تكتشف لاحقاً أن مزودها لا يلتزم بمتطلبات وزارة الموارد البشرية.
+
+في يافا جلوبال، نبدأ كل عقد بتوضيح هذه النقاط بالتفصيل.
+
+ما التحديات التي واجهتموها مع شركات الإسناد؟ 👇
+    </div>
+  </div>
+
+  <div class="template-card">
+    <div class="template-header" style="background:#052e16;color:#86efac">📊 الأسبوع 2 — منشور الإحصائية</div>
+    <div class="template-body">هل تعلم؟
+
+70% من شركات الإنشاء في السعودية تدير عمالتها الخارجية عبر 3 جهات مختلفة أو أكثر.
+
+نتيجة؟
+❌ تضارب في العقود
+❌ فجوات في الامتثال
+❌ تكاليف إدارية مضاعفة
+
+الحل الأذكى = مورّد واحد يُدير الكل:
+✅ إسناد وظيفي
+✅ سكن وإقامة
+✅ مواصلات يومية
+✅ كول سنتر للدعم
+
+هذا بالضبط ما نقدمه في يافا جلوبال منذ 2012.
+
+هل تواجه نفس التحدي؟ أخبرني في التعليقات 👇
+    </div>
+  </div>
+
+  <div class="template-card">
+    <div class="template-header" style="background:#1c1917;color:#fcd34d">🌟 الأسبوع 3 — منشور قصة نجاح</div>
+    <div class="template-body">قبل 4 أشهر، اتصل بنا مدير موارد بشرية من شركة إنشاءات كبرى:
+
+"نحتاج 120 موظفاً خلال 6 أسابيع وليس لدينا وقت للإجراءات."
+
+ما فعلناه:
+📋 أنهينا كل الوثائق في 5 أيام
+🏠 جهّزنا السكن قبل وصول العمال
+🚌 نظّمنا خط نقل يومي
+☎️ فعّلنا كول سنتر لمتابعة الشكاوى
+
+النتيجة:
+✅ 118 من أصل 120 وصلوا في الموعد
+✅ معدل رضا العمال: 94%
+✅ العميل جدّد العقد وأضاف خدمة تسويق
+
+هذا ما يعنيه "الشريك الشامل".
+
+للاستفسار: [رقم الجوال] | info@yafaglobal.sa
+    </div>
+  </div>
+
+  <div class="template-card">
+    <div class="template-header" style="background:#1e1b4b;color:#a5b4fc">🚀 الأسبوع 4 — منشور رؤية 2030</div>
+    <div class="template-body">رؤية 2030 تعني فرصة ضخمة — لكنها تعني أيضاً ضغطاً متزايداً.
+
+مشاريع نيوم، القدية، البحر الأحمر، تطوير المدن...
+
+كل هذا يتطلب آلاف الموظفين خلال سنوات قليلة.
+
+السؤال: هل مزود الموارد البشرية الحالي لديك مستعد لهذا الحجم؟
+
+في يافا جلوبال، لدينا البنية التحتية والخبرة للتعامل مع مشاريع كبيرة:
+🏗️ توظيف جماعي سريع
+🏠 حلول سكن مرنة
+🚌 نقل منظّم للعمال
+📞 كول سنتر متعدد اللغات
+
+هل تخطط لتوسعة فريقك هذا العام؟ نتحدث 👇
+    </div>
+  </div>
+</div>
+
+<!-- ══ BUDGET ══ -->
+<hr>
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-icon" style="background:#1e293b">💰</div>
+    <div><h2>توزيع الـ 2,000 ريال — أسبوع بأسبوع</h2><p>كل ريال له هدف محدد</p></div>
+  </div>
+
+  <div class="table-wrap" style="margin-bottom:14px">
+    <table>
+      <thead>
+        <tr><th>الأسبوع</th><th>البند</th><th>المبلغ</th><th>الهدف</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td rowspan="3"><strong>الأسبوع 1</strong><br><small style="color:var(--text3)">التأسيس</small></td>
+          <td>تصميم: عرض تقديمي احترافي (Canva Pro أو مصمم)</td>
+          <td>200 ريال</td>
+          <td>مواد البيع</td>
+        </tr>
+        <tr>
+          <td>LinkedIn: ترقية منشور قصة النجاح</td>
+          <td>150 ريال</td>
+          <td>وصول لـ HR Managers</td>
+        </tr>
+        <tr>
+          <td>Google Ads: كلمات محلية (إسناد وظيفي الرياض)</td>
+          <td>200 ريال</td>
+          <td>الظهور عند البحث</td>
+        </tr>
+        <tr>
+          <td rowspan="3"><strong>الأسبوع 2</strong><br><small style="color:var(--text3)">الانتشار</small></td>
+          <td>LinkedIn Ads: حملة استهداف HR Directors</td>
+          <td>300 ريال</td>
+          <td>leads جديدة</td>
+        </tr>
+        <tr>
+          <td>Google Ads: توسيع الكلمات + retargeting</td>
+          <td>200 ريال</td>
+          <td>تحويل زوار الموقع</td>
+        </tr>
+        <tr>
+          <td>أداة إيميل (Mailchimp مجاني أو بديل)</td>
+          <td>0-50 ريال</td>
+          <td>متابعة leads</td>
+        </tr>
+        <tr>
+          <td rowspan="2"><strong>الأسبوع 3</strong><br><small style="color:var(--text3)">التحويل</small></td>
+          <td>LinkedIn: تعزيز شهادة العميل</td>
+          <td>200 ريال</td>
+          <td>بناء مصداقية</td>
+        </tr>
+        <tr>
+          <td>Google Ads: استمرار</td>
+          <td>200 ريال</td>
+          <td>leads مستمرة</td>
+        </tr>
+        <tr>
+          <td rowspan="2"><strong>الأسبوع 4</strong><br><small style="color:var(--text3)">الإغلاق</small></td>
+          <td>LinkedIn: منشور إعلان شراكة/نجاح</td>
+          <td>150 ريال</td>
+          <td>إثارة المترددين</td>
+        </tr>
+        <tr>
+          <td>احتياطي (طباعة، تنقل، هدايا رمزية للعملاء)</td>
+          <td>150 ريال</td>
+          <td>مرونة</td>
+        </tr>
+        <tr style="background:var(--surface2)">
+          <td colspan="2"><strong>الإجمالي</strong></td>
+          <td><strong>1,800-2,000 ريال</strong></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="alert alert-green">
+    <strong>قاعدة مهمة:</strong> إذا حصلت على عقد واحد بمتوسط 50,000 ريال من هذه الـ 2,000 ريال = <strong>ROI = 25x</strong>. لا تنظر للميزانية كتكلفة — انظر لها كاستثمار.
+  </div>
+</div>
+
+<!-- ══ KPIs ══ -->
+<hr>
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-icon" style="background:#1e293b">📊</div>
+    <div><h2>مؤشرات تتبع الأداء — أسبوع بأسبوع</h2><p>قس هذه الأرقام كل جمعة</p></div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>المؤشر</th>
+          <th style="text-align:center">الأسبوع 1</th>
+          <th style="text-align:center">الأسبوع 2</th>
+          <th style="text-align:center">الأسبوع 3</th>
+          <th style="text-align:center">الأسبوع 4</th>
+          <th>أداة القياس</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>📞 محادثات حقيقية أُجريت</strong></td>
+          <td style="text-align:center;color:#fcd34d">10-15</td>
+          <td style="text-align:center;color:#fcd34d">8-12</td>
+          <td style="text-align:center;color:#fcd34d">6-10</td>
+          <td style="text-align:center;color:#fcd34d">5-8</td>
+          <td>تسجيل يدوي</td>
+        </tr>
+        <tr>
+          <td><strong>📧 ردود إيجابية على الإيميل/واتساب</strong></td>
+          <td style="text-align:center;color:#86efac">3-5</td>
+          <td style="text-align:center;color:#86efac">5-8</td>
+          <td style="text-align:center;color:#86efac">4-6</td>
+          <td style="text-align:center;color:#86efac">3-5</td>
+          <td>بريد + واتساب</td>
+        </tr>
+        <tr>
+          <td><strong>📅 مواعيد اجتماعات مؤكدة</strong></td>
+          <td style="text-align:center;color:#93c5fd">1-2</td>
+          <td style="text-align:center;color:#93c5fd">3-5</td>
+          <td style="text-align:center;color:#93c5fd">3-4</td>
+          <td style="text-align:center;color:#93c5fd">2-3</td>
+          <td>تقويمك</td>
+        </tr>
+        <tr>
+          <td><strong>📄 عروض أسعار مُرسلة</strong></td>
+          <td style="text-align:center;color:#c4b5fd">0-1</td>
+          <td style="text-align:center;color:#c4b5fd">1-2</td>
+          <td style="text-align:center;color:#c4b5fd">2-4</td>
+          <td style="text-align:center;color:#c4b5fd">1-2</td>
+          <td>إيميل/CRM</td>
+        </tr>
+        <tr>
+          <td><strong>✅ عقود موقّعة</strong></td>
+          <td style="text-align:center;color:#6ee7b7">0</td>
+          <td style="text-align:center;color:#6ee7b7">0-1</td>
+          <td style="text-align:center;color:#6ee7b7">1-2</td>
+          <td style="text-align:center;color:#6ee7b7">1-2</td>
+          <td>CRM</td>
+        </tr>
+        <tr>
+          <td><strong>💼 متابعو LinkedIn الجدد</strong></td>
+          <td style="text-align:center;color:#fca5a5">20-40</td>
+          <td style="text-align:center;color:#fca5a5">40-80</td>
+          <td style="text-align:center;color:#fca5a5">30-60</td>
+          <td style="text-align:center;color:#fca5a5">20-40</td>
+          <td>LinkedIn Analytics</td>
+        </tr>
+        <tr>
+          <td><strong>👁️ مشاهدات المنشورات</strong></td>
+          <td style="text-align:center">1,000+</td>
+          <td style="text-align:center">3,000+</td>
+          <td style="text-align:center">5,000+</td>
+          <td style="text-align:center">4,000+</td>
+          <td>LinkedIn Analytics</td>
+        </tr>
+        <tr style="background:var(--surface2)">
+          <td><strong>🎯 الهدف التراكمي نهاية الشهر</strong></td>
+          <td colspan="4" style="text-align:center;color:#fef08a;font-weight:700;font-size:14px">3-5 عقود جديدة · 100+ متابع LinkedIn · 15+ lead نشط في pipeline</td>
+          <td>—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ RULES ══ -->
+<hr>
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-icon" style="background:#1e293b">⚡</div>
+    <div><h2>10 قواعد لا تتنازل عنها</h2><p>هذه الشهر — بدونها الخطة لا تعمل</p></div>
+  </div>
+  <div class="grid-2">
+    <div class="action-card" style="border-right:3px solid #dc2626">
+      <h4>1️⃣ تواصل يومياً بدون استثناء</h4>
+      <p style="font-size:12px;color:var(--text2)">حتى في أيام المشاغل — 3 رسائل يومياً أفضل من 30 في يوم وصفر في أسبوع.</p>
+    </div>
+    <div class="action-card" style="border-right:3px solid #ea580c">
+      <h4>2️⃣ اتصل ولا تكتفِ بالرسائل</h4>
+      <p style="font-size:12px;color:var(--text2)">الاتصال الهاتفي يُحوّل 5x أكثر من واتساب في B2B. استخدم الرسائل للتمهيد فقط.</p>
+    </div>
+    <div class="action-card" style="border-right:3px solid #d97706">
+      <h4>3️⃣ لا تبيع في التواصل الأول</h4>
+      <p style="font-size:12px;color:var(--text2)">الهدف الأول = موعد. الموعد الأول = فهم المشكلة. البيع يأتي في الثاني أو الثالث.</p>
+    </div>
+    <div class="action-card" style="border-right:3px solid #16a34a">
+      <h4>4️⃣ تابع حتى 5 مرات قبل الاستسلام</h4>
+      <p style="font-size:12px;color:var(--text2)">80% من المبيعات تُغلق بعد 4+ تواصلات. "لا رد" ليس "لا" — قد يكون مشغولاً فقط.</p>
+    </div>
+    <div class="action-card" style="border-right:3px solid #1d4ed8">
+      <h4>5️⃣ خصّص كل عرض</h4>
+      <p style="font-size:12px;color:var(--text2)">عرض يذكر اسم الشركة وتحدياتهم تحديداً يُغلق 3x أكثر من العرض العام.</p>
+    </div>
+    <div class="action-card" style="border-right:3px solid #7c3aed">
+      <h4>6️⃣ ضع دائماً "خطوة تالية" واضحة</h4>
+      <p style="font-size:12px;color:var(--text2)">كل محادثة تنتهي بسؤال: "متى نتكلم مرة ثانية؟" أو "أُرسل لك العرض اليوم أم الغد؟"</p>
+    </div>
+    <div class="action-card" style="border-right:3px solid #0e7490">
+      <h4>7️⃣ سجّل كل شيء</h4>
+      <p style="font-size:12px;color:var(--text2)">Excel بسيط أفضل من لا شيء. من تحدثت معه؟ ماذا قال؟ ماذا تفعل معه القادم؟</p>
+    </div>
+    <div class="action-card" style="border-right:3px solid #ca8a04">
+      <h4>8️⃣ انشر محتوى 3x أسبوعياً على LinkedIn</h4>
+      <p style="font-size:12px;color:var(--text2)">المحتوى المنتظم يجعل leads يتواصلون أنت بدلاً من أن تبحث عنهم. بناء تراكمي.</p>
+    </div>
+    <div class="action-card" style="border-right:3px solid #be123c">
+      <h4>9️⃣ اطلب الإحالة من كل عميل راضٍ</h4>
+      <p style="font-size:12px;color:var(--text2)">بعد أول شهر ناجح مع عميل — اسأله مباشرة: "هل تعرف شركة أخرى يمكننا مساعدتها؟"</p>
+    </div>
+    <div class="action-card" style="border-right:3px solid #047857">
+      <h4>🔟 قيّم كل أسبوع واضبط</h4>
+      <p style="font-size:12px;color:var(--text2)">ما يصلح ضاعف عليه. ما لا يصلح — أوقفه فوراً. لا تلتزم بالخطة إذا الواقع يقول غير ذلك.</p>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<footer>
+  <strong>خطة 30 يوماً لزيادة مبيعات يافا جلوبال</strong><br>
+  مُولَّدة بواسطة نظام <strong>Ignify AI</strong> — مبنية على بيانات yafaglobal.sa + تحليل السوق السعودي<br>
+  <span style="font-size:11px;opacity:.5;margin-top:4px;display:block">هذه الخطة أداة تنفيذية — النتائج تتوقف على الالتزام والتطبيق اليومي</span>
+</footer>
+
+</body>
+</html>

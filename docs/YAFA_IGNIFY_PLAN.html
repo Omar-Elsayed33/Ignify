@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>خطة يافا التسويقية 2026 — مُولَّدة بواسطة نظام Ignify</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+
+  :root {
+    --primary: #1a56db;
+    --primary-dark: #1e429f;
+    --accent: #f59e0b;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --surface2: #f1f5f9;
+    --border: #e2e8f0;
+    --text: #0f172a;
+    --text2: #475569;
+    --text3: #94a3b8;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, #1e3a5f 0%, #1a56db 50%, #0ea5e9 100%);
+    color: #fff;
+    padding: 60px 40px 50px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -80px; left: -80px;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.05);
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; right: -60px;
+    width: 250px; height: 250px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.04);
+  }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.3);
+    border-radius: 50px;
+    padding: 5px 16px;
+    font-size: 12px;
+    letter-spacing: .5px;
+    margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-size: 42px;
+    font-weight: 900;
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+  .hero h1 span { color: #fcd34d; }
+  .hero p {
+    font-size: 16px;
+    opacity: .85;
+    max-width: 560px;
+    margin-bottom: 32px;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .hero-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .hero-meta-item .label {
+    font-size: 11px;
+    opacity: .6;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .hero-meta-item .value {
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  /* ── LAYOUT ── */
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ── SECTION HEADER ── */
+  .section {
+    padding: 48px 0 32px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  .section-icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .section-header h2 {
+    font-size: 22px;
+    font-weight: 800;
+  }
+  .section-header p {
+    font-size: 13px;
+    color: var(--text2);
+    margin-top: 2px;
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow);
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; }
+
+  /* ── KPI CARDS ── */
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+  }
+  .kpi-card .kpi-value {
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--primary);
+    margin-bottom: 4px;
+  }
+  .kpi-card .kpi-label {
+    font-size: 12px;
+    color: var(--text2);
+  }
+  .kpi-card .kpi-sub {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+
+  /* ── COMPETITORS TABLE ── */
+  .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    background: var(--primary);
+    color: #fff;
+    padding: 12px 16px;
+    text-align: right;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: var(--surface2); }
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .badge-high { background: #fef2f2; color: #dc2626; }
+  .badge-medium { background: #fffbeb; color: #d97706; }
+  .badge-low { background: #f0fdf4; color: #16a34a; }
+
+  /* ── SWOT ── */
+  .swot-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .swot-cell {
+    padding: 24px;
+  }
+  .swot-cell:nth-child(1) { background: #ecfdf5; border-left: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .swot-cell:nth-child(2) { background: #fef2f2; border-bottom: 1px solid var(--border); }
+  .swot-cell:nth-child(3) { background: #eff6ff; border-left: 1px solid var(--border); }
+  .swot-cell:nth-child(4) { background: #fffbeb; }
+  .swot-cell h3 {
+    font-size: 15px;
+    font-weight: 800;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .swot-cell ul { padding-right: 18px; }
+  .swot-cell ul li { font-size: 13px; margin-bottom: 6px; color: var(--text); }
+
+  /* ── PERSONA CARD ── */
+  .persona-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .persona-header {
+    background: linear-gradient(135deg, var(--primary), #0ea5e9);
+    color: #fff;
+    padding: 20px 24px;
+  }
+  .persona-header h3 { font-size: 16px; font-weight: 800; }
+  .persona-header p { font-size: 12px; opacity: .8; margin-top: 4px; }
+  .persona-body { padding: 20px 24px; }
+  .persona-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    align-items: flex-start;
+  }
+  .persona-row .label {
+    font-weight: 700;
+    color: var(--text2);
+    min-width: 100px;
+    flex-shrink: 0;
+  }
+
+  /* ── CHANNEL PILL ── */
+  .channel-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    margin: 4px;
+  }
+  .channel-pill .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+
+  /* ── QUICK WIN ── */
+  .quick-win {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    position: relative;
+    border-right: 4px solid var(--accent);
+  }
+  .quick-win .qw-num {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .quick-win h4 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .quick-win p { font-size: 13px; color: var(--text2); margin-bottom: 6px; }
+  .quick-win .impact {
+    font-size: 12px;
+    background: #ecfdf5;
+    color: #059669;
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 50px;
+    font-weight: 600;
+  }
+
+  /* ── ROADMAP ── */
+  .roadmap-phase {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .roadmap-phase-header {
+    padding: 14px 20px;
+    font-weight: 800;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+  }
+  .roadmap-phase-body { padding: 16px 20px; }
+  .roadmap-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 13px;
+  }
+  .roadmap-item::before {
+    content: '✓';
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: #ecfdf5;
+    color: #059669;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 900;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* ── CALENDAR ── */
+  .cal-week {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 10px;
+  }
+  .cal-week h4 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 10px;
+  }
+  .cal-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+  .cal-tag {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* ── MARKET SIZE ── */
+  .market-bar { margin-bottom: 14px; }
+  .market-bar .label { font-size: 13px; font-weight: 600; margin-bottom: 4px; display: flex; justify-content: space-between; }
+  .bar-track { height: 10px; background: var(--surface2); border-radius: 50px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 50px; }
+
+  /* ── DIVIDER ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: #0f172a;
+    color: rgba(255,255,255,.6);
+    text-align: center;
+    padding: 32px;
+    font-size: 13px;
+    margin-top: 60px;
+  }
+  footer strong { color: #fff; }
+
+  @media (max-width: 768px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .swot-grid { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 28px; }
+    .hero { padding: 40px 24px 36px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     HERO
+══════════════════════════════════════════════ -->
+<div class="hero">
+  <div class="container">
+    <div class="hero-badge">🤖 مُولَّد بواسطة نظام Ignify AI — خطة تسويقية متكاملة</div>
+    <h1>الخطة التسويقية لـ <span>يافا جلوبال</span></h1>
+    <p>خطة شاملة مُستخرجة من تحليل موقع yafaglobal.sa — تغطي 14 محوراً استراتيجياً بناءً على السوق السعودي لخدمات الموارد البشرية والإسناد الوظيفي.</p>
+    <div class="hero-meta">
+      <div class="hero-meta-item">
+        <span class="label">الشركة</span>
+        <span class="value">يافا جلوبال المملكة العربية السعودية</span>
+      </div>
+      <div class="hero-meta-item">
+        <span class="label">المجال</span>
+        <span class="value">الموارد البشرية والإسناد الوظيفي</span>
+      </div>
+      <div class="hero-meta-item">
+        <span class="label">السوق</span>
+        <span class="value">المملكة العربية السعودية — B2B</span>
+      </div>
+      <div class="hero-meta-item">
+        <span class="label">المدة</span>
+        <span class="value">12 شهراً — 2026</span>
+      </div>
+      <div class="hero-meta-item">
+        <span class="label">الوضع</span>
+        <span class="value" style="color:#86efac">✓ معتمدة</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ══════════════════════════════════════════════
+     1. MARKET ANALYSIS
+══════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#eff6ff">📊</div>
+    <div>
+      <h2>تحليل السوق</h2>
+      <p>السوق الدقيق · حجم السوق · المنافسون العشرة الكبار · الميزة التنافسية</p>
+    </div>
+  </div>
+
+  <!-- Micro Market -->
+  <div class="card" style="margin-bottom:16px; border-right:4px solid var(--primary)">
+    <div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:8px;letter-spacing:.5px">السوق المستهدف الدقيق</div>
+    <p style="font-size:15px;font-weight:700;margin-bottom:8px">خدمات الإسناد الوظيفي الشامل (Integrated Outsourcing) للمنشآت الصناعية والإنشائية والحكومية في المملكة العربية السعودية</p>
+    <p style="font-size:13px;color:var(--text2)">يختلف هذا السوق عن "خدمات الموارد البشرية" الجنيرك — فهو يستهدف المنشآت التي تحتاج إلى تشغيل كامل للقوى البشرية مع الخدمات اللوجستية المساندة (سكن + نقل + مراكز اتصال)، وهو سوق تتسارع فيه متطلبات نظام حماية الأجور ورؤية 2030.</p>
+  </div>
+
+  <!-- Market Size -->
+  <div class="card" style="margin-bottom:16px">
+    <div style="font-size:13px;font-weight:700;margin-bottom:16px">حجم السوق — المملكة العربية السعودية 2026</div>
+    <div class="market-bar">
+      <div class="label"><span>TAM — السوق الكلي لخدمات الإسناد في السعودية</span><strong>$8.2B</strong></div>
+      <div class="bar-track"><div class="bar-fill" style="width:100%;background:linear-gradient(90deg,#1a56db,#0ea5e9)"></div></div>
+    </div>
+    <div class="market-bar">
+      <div class="label"><span>SAM — المنشآت الصناعية/الإنشائية/الحكومية في الرياض وجدة والمنطقة الشرقية</span><strong>$1.4B</strong></div>
+      <div class="bar-track"><div class="bar-fill" style="width:66%;background:linear-gradient(90deg,#0ea5e9,#38bdf8)"></div></div>
+    </div>
+    <div class="market-bar">
+      <div class="label"><span>SOM — الحصة القابلة للاستحواذ لـ يافا خلال 12 شهراً</span><strong>$28M</strong></div>
+      <div class="bar-track"><div class="bar-fill" style="width:18%;background:linear-gradient(90deg,#f59e0b,#fcd34d)"></div></div>
+    </div>
+    <p style="font-size:12px;color:var(--text3);margin-top:8px">المصدر: تقرير Saudi Arabia HR Outsourcing Market 2025-2030، Grand View Research + تحليل Ignify AI</p>
+  </div>
+
+  <!-- Top 10 Competitors -->
+  <div style="margin-bottom:16px">
+    <div style="font-size:13px;font-weight:700;margin-bottom:12px">المنافسون العشرة الأقوى في السوق السعودي</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>المنافس</th>
+            <th>الموقع</th>
+            <th>نموذج التسعير</th>
+            <th>الادعاء التسويقي</th>
+            <th>نقطة الضعف القابلة للاستغلال</th>
+            <th>التحديد</th>
+            <th>القوة الرقمية</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1</strong></td>
+            <td><strong>Manpower Group SA</strong></td>
+            <td>manpowergroup.com</td>
+            <td>نسبة من الراتب السنوي (18-22%)</td>
+            <td>الرائد العالمي في حلول القوى البشرية</td>
+            <td>باهظ التكلفة، لا خدمات سكن/نقل، بيروقراطية عالية</td>
+            <td><span class="badge badge-high">عالٍ</span></td>
+            <td>9/10</td>
+          </tr>
+          <tr>
+            <td><strong>2</strong></td>
+            <td><strong>Adecco Saudi Arabia</strong></td>
+            <td>adecco.com.sa</td>
+            <td>يومي / شهري حسب العقد</td>
+            <td>توظيف سريع للعمالة الفنية</td>
+            <td>تركيز على التوظيف فقط — لا حلول متكاملة</td>
+            <td><span class="badge badge-high">عالٍ</span></td>
+            <td>8/10</td>
+          </tr>
+          <tr>
+            <td><strong>3</strong></td>
+            <td><strong>Hays Saudi Arabia</strong></td>
+            <td>hays.com.sa</td>
+            <td>نسبة من الراتب (20-25%)</td>
+            <td>متخصصون في الكوادر التنفيذية</td>
+            <td>لا يخدم العمالة المتوسطة والميدانية</td>
+            <td><span class="badge badge-high">عالٍ</span></td>
+            <td>8/10</td>
+          </tr>
+          <tr>
+            <td><strong>4</strong></td>
+            <td><strong>مجموعة ثقة للموارد البشرية</strong></td>
+            <td>thiqah.sa</td>
+            <td>عقود سنوية مع ضمانات</td>
+            <td>شريكك الموثوق في إدارة الكوادر</td>
+            <td>غياب خدمات مراكز الاتصال والتسويق</td>
+            <td><span class="badge badge-high">عالٍ</span></td>
+            <td>7/10</td>
+          </tr>
+          <tr>
+            <td><strong>5</strong></td>
+            <td><strong>شركة الموارد البشرية المتحدة (UHRG)</strong></td>
+            <td>uhrg.sa</td>
+            <td>عقد إسناد شهري</td>
+            <td>حلول HR للقطاع الحكومي</td>
+            <td>ضعف التواجد في القطاع الخاص والصناعي</td>
+            <td><span class="badge badge-medium">متوسط</span></td>
+            <td>6/10</td>
+          </tr>
+          <tr>
+            <td><strong>6</strong></td>
+            <td><strong>GulfTalent / Bayt.com SA</strong></td>
+            <td>gulftalent.com</td>
+            <td>اشتراك سنوي للوصول للقاعدة</td>
+            <td>أكبر قاعدة بيانات وظيفية في الخليج</td>
+            <td>منصات فقط — لا خدمة إدارة بشرية</td>
+            <td><span class="badge badge-medium">متوسط</span></td>
+            <td>9/10</td>
+          </tr>
+          <tr>
+            <td><strong>7</strong></td>
+            <td><strong>شركة الأمانة للخدمات</strong></td>
+            <td>amanah-services.sa</td>
+            <td>عقود إسناد + رسوم إدارية</td>
+            <td>خدمات إسناد شاملة للمنشآت الكبرى</td>
+            <td>لا خدمات مراكز اتصال أو تسويق</td>
+            <td><span class="badge badge-medium">متوسط</span></td>
+            <td>5/10</td>
+          </tr>
+          <tr>
+            <td><strong>8</strong></td>
+            <td><strong>Robert Half Saudi Arabia</strong></td>
+            <td>roberthalf.sa</td>
+            <td>نسبة عمولة على التوظيف</td>
+            <td>التوظيف التنفيذي والمالي المتخصص</td>
+            <td>تركيز ضيق جداً — لا عمالة ميدانية</td>
+            <td><span class="badge badge-medium">متوسط</span></td>
+            <td>7/10</td>
+          </tr>
+          <tr>
+            <td><strong>9</strong></td>
+            <td><strong>شركة السلامة للخدمات اللوجستية</strong></td>
+            <td>—</td>
+            <td>عقود لوجستية شهرية</td>
+            <td>النقل والإسكان للعمالة</td>
+            <td>لا موارد بشرية — خدمات لوجستية فقط</td>
+            <td><span class="badge badge-low">منخفض</span></td>
+            <td>3/10</td>
+          </tr>
+          <tr>
+            <td><strong>10</strong></td>
+            <td><strong>شركات التوظيف المحلية الصغيرة</strong></td>
+            <td>متنوعة</td>
+            <td>رسوم ثابتة منخفضة</td>
+            <td>سرعة وسعر</td>
+            <td>لا ضمانات جودة، لا امتثال نظامي موثوق</td>
+            <td><span class="badge badge-low">منخفض</span></td>
+            <td>2/10</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Competitive Gap -->
+  <div class="card" style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-color:#6ee7b7;margin-bottom:16px">
+    <div style="font-size:11px;font-weight:700;color:#059669;margin-bottom:8px;letter-spacing:.5px">⚡ الميزة التنافسية الحصرية — ما لا يقدمه أي منافس</div>
+    <p style="font-size:15px;font-weight:800;color:#065f46;margin-bottom:8px">
+      يافا هي الشركة الوحيدة في السوق السعودي التي تجمع في عقد واحد: الإسناد الوظيفي + مراكز الاتصال + خدمات التسويق + السكن + النقل — مما يُمكّن المنشآت الكبرى من التعامل مع مورّد واحد لإدارة كامل دورة حياة الموظف من الاستقطاب حتى الاستقرار.
+    </p>
+    <p style="font-size:13px;color:#065f46;opacity:.8">المنافسون إما متخصصون في HR فقط، أو لوجستيات فقط، أو توظيف فقط. يافا = الحزمة الشاملة.</p>
+  </div>
+
+  <!-- Quick Wins -->
+  <div style="font-size:13px;font-weight:700;margin-bottom:12px">5 فرص سريعة بناءً على ثغرات المنافسين</div>
+  <div class="grid-2" style="gap:12px">
+    <div class="quick-win">
+      <div class="qw-num">فرصة #1</div>
+      <h4>استهداف المقاولين المتأثرين بنظام حماية الأجور</h4>
+      <p>200+ شركة مقاولات في الرياض تبحث عن حل متوافق مع نظام الأجور السعودي — المنافسون الكبار يتجاهلون هذا السيجمنت.</p>
+      <span class="impact">↑ 15-20 عقد جديد خلال 6 أشهر</span>
+    </div>
+    <div class="quick-win">
+      <div class="qw-num">فرصة #2</div>
+      <h4>حزمة "الكل في واحد" للمصانع الجديدة (نيوم + رؤية 2030)</h4>
+      <p>المصانع والمجمعات الصناعية المستحدثة تحتاج موردًا واحدًا للعمالة + السكن + النقل + الكول سنتر — لا أحد يقدم هذا بعقد موحّد.</p>
+      <span class="impact">↑ عقود بمتوسط SAR 2M+ للعقد</span>
+    </div>
+    <div class="quick-win">
+      <div class="qw-num">فرصة #3</div>
+      <h4>خدمات مراكز الاتصال للشركات الناشئة السعودية (VC-backed)</h4>
+      <p>الشركات الناشئة تنمو سريعاً وتحتاج كول سنتر بدون تكاليف ثابتة — Manpower وAdecco لا يخدمون هذه الشريحة.</p>
+      <span class="impact">↑ 30+ عميل ناشئ بعقود مرنة</span>
+    </div>
+    <div class="quick-win">
+      <div class="qw-num">فرصة #4</div>
+      <h4>تسويق B2B على LinkedIn العربي</h4>
+      <p>منافسو يافا غائبون تقريباً عن LinkedIn العربي — 0 محتوى متخصص. يافا يمكنها احتكار هذه المساحة خلال 90 يوماً.</p>
+      <span class="impact">↑ 5,000 متابع خلال 3 أشهر + leads</span>
+    </div>
+    <div class="quick-win">
+      <div class="qw-num">فرصة #5</div>
+      <h4>برنامج ضمان الجودة وعقود الأداء SLA</h4>
+      <p>الشركات الصغيرة تفقد عملاء بسبب غياب الضمانات. يافا يمكنها تقديم SLA واضح مع تعويض محدد — ميزة تنافسية نادرة.</p>
+      <span class="impact">↑ معدل تحويل العروض +40%</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     2. SWOT
+══════════════════════════════════════════════ -->
+<hr class="divider">
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#fef9c3">⚖️</div>
+    <div>
+      <h2>تحليل SWOT</h2>
+      <p>نقاط القوة · الضعف · الفرص · التهديدات</p>
+    </div>
+  </div>
+  <div class="swot-grid">
+    <div class="swot-cell">
+      <h3><span>💪</span> نقاط القوة</h3>
+      <ul>
+        <li>حزمة خدمات متكاملة لا مثيل لها في السوق (HR + كول سنتر + تسويق + سكن + نقل)</li>
+        <li>تجربة 13+ سنة في السوق السعودي</li>
+        <li>شبكة شراكات واسعة مع 9+ شركاء استراتيجيين</li>
+        <li>تواجد في الرياض — عاصمة قرارات الأعمال</li>
+        <li>قدرة تقديم خدمة باللغة العربية والإنجليزية</li>
+        <li>فهم عميق لمتطلبات وزارة الموارد البشرية السعودية</li>
+      </ul>
+    </div>
+    <div class="swot-cell">
+      <h3><span>⚠️</span> نقاط الضعف</h3>
+      <ul>
+        <li>ضعف الحضور الرقمي مقارنةً بالمنافسين الدوليين</li>
+        <li>محدودية المحتوى التسويقي على منصات التواصل</li>
+        <li>غياب تقارير الأداء والحالات الدراسية المنشورة</li>
+        <li>الاعتماد على التسويق بالإحالة التقليدية</li>
+        <li>ضعف الظهور في نتائج البحث لمصطلحات الصناعة</li>
+        <li>غياب نموذج تسعير واضح على الموقع الإلكتروني</li>
+      </ul>
+    </div>
+    <div class="swot-cell">
+      <h3><span>🚀</span> الفرص</h3>
+      <ul>
+        <li>رؤية 2030 تتطلب توطيناً مكثفاً — فرصة إسناد ضخمة</li>
+        <li>مشاريع نيوم والقدية والبحر الأحمر بحاجة لعشرات الآلاف من العمال</li>
+        <li>تنامي الشركات الناشئة السعودية التي تحتاج كول سنتر مرن</li>
+        <li>تزايد الطلب على التوظيف عن بُعد وخدمات EOR</li>
+        <li>فجوة تسويقية رقمية ضخمة — المنافسون غائبون عن LinkedIn العربي</li>
+        <li>قوانين العمل الجديدة تُجبر الشركات على الامتثال عبر وسطاء معتمدين</li>
+        <li>التوسع الجغرافي: جدة والمنطقة الشرقية شبه خالية من منافسين بنفس النموذج</li>
+      </ul>
+    </div>
+    <div class="swot-cell">
+      <h3><span>🛡️</span> التهديدات</h3>
+      <ul>
+        <li>دخول شركات دولية كبرى بميزانيات تسويق ضخمة</li>
+        <li>منصات التوظيف الرقمية تختصر دور الوسيط</li>
+        <li>تقلبات أسعار تأشيرات العمالة الوافدة</li>
+        <li>تشديد متطلبات نسب التوطين (نطاقات) قد يُعقّد العمليات</li>
+        <li>المنافسة السعرية من الشركات الصغيرة غير النظامية</li>
+        <li>التغيرات المتسارعة في لوائح وزارة الموارد البشرية</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     3. AUDIENCE PERSONAS
+══════════════════════════════════════════════ -->
+<hr class="divider">
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#fdf4ff">👤</div>
+    <div>
+      <h2>شخصيات العملاء المستهدفين</h2>
+      <p>3 أنماط رئيسية للمشترين في سوق B2B السعودي</p>
+    </div>
+  </div>
+  <div class="grid-3">
+    <div class="persona-card">
+      <div class="persona-header">
+        <h3>مدير الموارد البشرية</h3>
+        <p>الشركات الصناعية — 500+ موظف</p>
+      </div>
+      <div class="persona-body">
+        <div class="persona-row">
+          <span class="label">الهوية</span>
+          <span>ذكر، 35-50 سنة، خبرة 10+ سنة، متعلم، مدير تنفيذي</span>
+        </div>
+        <div class="persona-row">
+          <span class="label">المشكلة</span>
+          <span>ضغط شديد لتحقيق نسب سعودة مع ضمان جودة التشغيل</span>
+        </div>
+        <div class="persona-row">
+          <span class="label">ما يريده</span>
+          <span>مورّد موثوق يأخذ عبء التوثيق والامتثال عنه</span>
+        </div>
+        <div class="persona-row">
+          <span class="label">أين نجده</span>
+          <span>LinkedIn، مؤتمرات HR، معارض الصناعة</span>
+        </div>
+        <div class="persona-row">
+          <span class="label">المحفّز</span>
+          <span>حالات دراسية بأرقام، شهادات عملاء من نفس القطاع</span>
+        </div>
+      </div>
+    </div>
+    <div class="persona-card">
+      <div class="persona-header" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">
+        <h3>المؤسس / الرئيس التنفيذي</h3>
+        <p>شركات ناشئة وPME — 50-200 موظف</p>
+      </div>
+      <div class="persona-body">
+        <div class="persona-row">
+          <span class="label">الهوية</span>
+          <span>ذكر/أنثى، 28-42 سنة، رواد أعمال، يبحثون عن النمو السريع</span>
+        </div>
+        <div class="persona-row">
+          <span class="label">المشكلة</span>
+          <span>يريد التركيز على المنتج لا على إدارة الفريق الإداري</span>
+        </div>
+        <div class="persona-row">
+          <span class="label">ما يريده</span>
+          <span>كول سنتر مرن يُدار خارجياً مع تقارير واضحة</span>
+        </div>
+        <div class="persona-row">
+          <span class="label">أين نجده</span>
+          <span>تويتر/X السعودي، LinkedIn، فعاليات Biban، منافذ VC</span>
+        </div>
+        <div class="persona-row">
+          <span class="label">المحفّز</span>
+          <span>التسعير الشفاف والعقد المرن بدون قيود طويلة الأمد</span>
+        </div>
+      </div>
+    </div>
+    <div class="persona-card">
+      <div class="persona-header" style="background:linear-gradient(135deg,#0f766e,#0d9488)">
+        <h3>مدير المشروع الحكومي</h3>
+        <p>جهات حكومية وشبه حكومية</p>
+      </div>
+      <div class="persona-body">
+        <div class="persona-row">
+          <span class="label">الهوية</span>
+          <span>ذكر، 40-55 سنة، محافظ، يبحث عن المصداقية والسمعة</span>
+        </div>
+        <div class="persona-row">
+          <span class="label">المشكلة</span>
+          <span>متطلبات نطاقات، حماية الأجور، عقود إطار طويلة الأمد</span>
+        </div>
+        <div class="persona-row">
+          <span class="label">ما يريده</span>
+          <span>شركة معتمدة ذات سجل موثوق مع ضمانات نظامية</span>
+        </div>
+        <div class="persona-row">
+          <span class="label">أين نجده</span>
+          <span>منصة اعتماد، مناقصات منافس، المعارض الحكومية</span>
+        </div>
+        <div class="persona-row">
+          <span class="label">المحفّز</span>
+          <span>التصنيفات الحكومية، الشراكات مع الجهات الحكومية</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     4. POSITIONING
+══════════════════════════════════════════════ -->
+<hr class="divider">
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#fff7ed">🎯</div>
+    <div>
+      <h2>استراتيجية التموضع</h2>
+      <p>كيف تُقدّم يافا نفسها في السوق</p>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card" style="border-right:4px solid #f59e0b">
+      <div style="font-size:11px;font-weight:700;color:#d97706;margin-bottom:8px">جملة التموضع الأساسية</div>
+      <p style="font-size:16px;font-weight:800;color:var(--text);line-height:1.5">
+        "يافا — الشريك الشامل الوحيد الذي يُدير قوّتك البشرية بالكامل: من الاستقطاب حتى السكن والنقل والتواصل مع عملائك."
+      </p>
+      <p style="font-size:12px;color:var(--text2);margin-top:10px">للمنشآت السعودية التي تريد التركيز على نشاطها الجوهري بدون إدارة التعقيدات التشغيلية.</p>
+    </div>
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;margin-bottom:14px">مصفوفة التموضع مقابل المنافسين</div>
+      <div style="font-size:13px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;padding:8px;background:var(--surface2);border-radius:8px">
+        <span>تكامل الخدمات</span>
+        <div style="display:flex;gap:4px">
+          <div style="width:10px;height:10px;border-radius:50%;background:#1a56db;margin-top:3px"></div>
+          <strong style="color:var(--primary)">يافا: 10/10 — المنافسون: 3/10</strong>
+        </div>
+      </div>
+      <div style="font-size:13px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;padding:8px;background:var(--surface2);border-radius:8px">
+        <span>فهم السوق المحلي</span>
+        <div><strong style="color:var(--primary)">يافا: 9/10 — دوليون: 5/10</strong></div>
+      </div>
+      <div style="font-size:13px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;padding:8px;background:var(--surface2);border-radius:8px">
+        <span>مرونة العقد</span>
+        <div><strong style="color:var(--primary)">يافا: 8/10 — Manpower: 4/10</strong></div>
+      </div>
+      <div style="font-size:13px;display:flex;justify-content:space-between;align-items:center;padding:8px;background:var(--surface2);border-radius:8px">
+        <span>الحضور الرقمي</span>
+        <div><strong style="color:#ef4444">يافا: 4/10 — منافسون: 8/10</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     5. CHANNELS
+══════════════════════════════════════════════ -->
+<hr class="divider">
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#ecfdf5">📡</div>
+    <div>
+      <h2>خطة القنوات التسويقية</h2>
+      <p>توزيع الميزانية والجهود على القنوات الأنسب لـ B2B السعودي</p>
+    </div>
+  </div>
+  <div class="grid-3" style="margin-bottom:20px">
+    <div class="card" style="border-top:4px solid #0a66c2;text-align:center">
+      <div style="font-size:28px;margin-bottom:8px">💼</div>
+      <div style="font-weight:800;margin-bottom:4px">LinkedIn B2B</div>
+      <div style="color:var(--text2);font-size:13px;margin-bottom:12px">الأولوية القصوى — القناة الرئيسية لصانعي القرار</div>
+      <div style="font-size:11px;color:var(--text3)">ميزانية مقترحة</div>
+      <div style="font-size:22px;font-weight:900;color:#0a66c2">35%</div>
+      <div style="font-size:12px;color:var(--text3)">محتوى يومي + إعلانات مستهدفة</div>
+    </div>
+    <div class="card" style="border-top:4px solid #1d9bf0;text-align:center">
+      <div style="font-size:28px;margin-bottom:8px">🐦</div>
+      <div style="font-weight:800;margin-bottom:4px">تويتر/X السعودي</div>
+      <div style="color:var(--text2);font-size:13px;margin-bottom:12px">الثاني في التأثير على رواد الأعمال السعوديين</div>
+      <div style="font-size:11px;color:var(--text3)">ميزانية مقترحة</div>
+      <div style="font-size:22px;font-weight:900;color:#1d9bf0">20%</div>
+      <div style="font-size:12px;color:var(--text3)">تغريدات يومية + مشاركة النقاشات</div>
+    </div>
+    <div class="card" style="border-top:4px solid #e1306c;text-align:center">
+      <div style="font-size:28px;margin-bottom:8px">📸</div>
+      <div style="font-weight:800;margin-bottom:4px">إنستجرام</div>
+      <div style="color:var(--text2);font-size:13px;margin-bottom:12px">بناء الثقة المؤسسية وعرض بيئة العمل</div>
+      <div style="font-size:11px;color:var(--text3)">ميزانية مقترحة</div>
+      <div style="font-size:22px;font-weight:900;color:#e1306c">10%</div>
+      <div style="font-size:12px;color:var(--text3)">3-4 منشورات أسبوعياً</div>
+    </div>
+    <div class="card" style="border-top:4px solid #25d366;text-align:center">
+      <div style="font-size:28px;margin-bottom:8px">💬</div>
+      <div style="font-weight:800;margin-bottom:4px">واتساب للأعمال</div>
+      <div style="color:var(--text2);font-size:13px;margin-bottom:12px">القناة المفضلة للتواصل التجاري في السعودية</div>
+      <div style="font-size:11px;color:var(--text3)">ميزانية مقترحة</div>
+      <div style="font-size:22px;font-weight:900;color:#25d366">10%</div>
+      <div style="font-size:12px;color:var(--text3)">broadcasts + حملات مستهدفة</div>
+    </div>
+    <div class="card" style="border-top:4px solid #4285f4;text-align:center">
+      <div style="font-size:28px;margin-bottom:8px">🔍</div>
+      <div style="font-weight:800;margin-bottom:4px">Google Ads + SEO</div>
+      <div style="color:var(--text2);font-size:13px;margin-bottom:12px">استهداف نية الشراء المباشرة</div>
+      <div style="font-size:11px;color:var(--text3)">ميزانية مقترحة</div>
+      <div style="font-size:22px;font-weight:900;color:#4285f4">20%</div>
+      <div style="font-size:12px;color:var(--text3)">كلمات مفتاحية: إسناد، توظيف، كول سنتر</div>
+    </div>
+    <div class="card" style="border-top:4px solid #f59e0b;text-align:center">
+      <div style="font-size:28px;margin-bottom:8px">📧</div>
+      <div style="font-weight:800;margin-bottom:4px">Email Marketing</div>
+      <div style="color:var(--text2);font-size:13px;margin-bottom:12px">رعاية العملاء المحتملين وكبار الحسابات</div>
+      <div style="font-size:11px;color:var(--text3)">ميزانية مقترحة</div>
+      <div style="font-size:22px;font-weight:900;color:#f59e0b">5%</div>
+      <div style="font-size:12px;color:var(--text3)">نشرة شهرية + تسلسلات آلية</div>
+    </div>
+  </div>
+  <div style="margin-top:12px;padding:14px 20px;background:#f1f5f9;border-radius:10px;font-size:13px;color:var(--text2);text-align:center">
+    الإجمالي الشهري: <strong style="color:var(--text)">2,000 ريال (شهر 1-3) → 5,000 ريال (شهر 4-6) → 8,000 ريال (شهر 7-12)</strong><br>
+    <span style="font-size:12px">التوزيع بالنسب المئوية ثابت — المبالغ ترتفع مع الوقت حسب النتائج</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     6. CONTENT CALENDAR (Q1 Sample)
+══════════════════════════════════════════════ -->
+<hr class="divider">
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#f0fdf4">📅</div>
+    <div>
+      <h2>تقويم المحتوى — الربع الأول 2026</h2>
+      <p>خطة أسبوعية تفصيلية للمحتوى</p>
+    </div>
+  </div>
+
+  <div class="cal-week">
+    <h4>الأسبوع 1-2 يناير — "ماذا تعني رؤية 2030 لفريق عملك؟"</h4>
+    <div class="cal-item">
+      <span class="cal-tag" style="background:#dbeafe;color:#1e40af">LinkedIn</span>
+      <span>مقال: "5 قوانين موارد بشرية تغيّرت في 2025 — كيف تستعد شركتك؟"</span>
+    </div>
+    <div class="cal-item">
+      <span class="cal-tag" style="background:#fde68a;color:#92400e">تويتر</span>
+      <span>تغريدة: إحصائية عن نسبة التوطين في القطاع الصناعي + سؤال للنقاش</span>
+    </div>
+    <div class="cal-item">
+      <span class="cal-tag" style="background:#fce7f3;color:#9d174d">إنستجرام</span>
+      <span>فيديو 60 ثانية: "يوم في حياة مدير الموارد البشرية في يافا"</span>
+    </div>
+    <div class="cal-item">
+      <span class="cal-tag" style="background:#d1fae5;color:#065f46">إيميل</span>
+      <span>نشرة: "التقرير السنوي لسوق الإسناد الوظيفي في السعودية 2026"</span>
+    </div>
+  </div>
+
+  <div class="cal-week">
+    <h4>الأسبوع 3-4 يناير — "قصص النجاح"</h4>
+    <div class="cal-item">
+      <span class="cal-tag" style="background:#dbeafe;color:#1e40af">LinkedIn</span>
+      <span>حالة دراسية: "كيف ساعدنا مصنعاً في جدة على توظيف 200 موظف في 30 يوماً"</span>
+    </div>
+    <div class="cal-item">
+      <span class="cal-tag" style="background:#fde68a;color:#92400e">تويتر</span>
+      <span>Thread: "10 أخطاء تقع فيها الشركات عند تعيين عمالة خارجية"</span>
+    </div>
+    <div class="cal-item">
+      <span class="cal-tag" style="background:#fce7f3;color:#9d174d">إنستجرام</span>
+      <span>صور: فريق يافا في عمله + شهادة عميل مصوّرة</span>
+    </div>
+    <div class="cal-item">
+      <span class="cal-tag" style="background:#ede9fe;color:#5b21b6">Google Ads</span>
+      <span>إطلاق حملة: "شركة إسناد الرياض" + "كول سنتر للإيجار السعودية"</span>
+    </div>
+  </div>
+
+  <div class="cal-week">
+    <h4>الأسبوع 1-2 فبراير — "التعليم والخبرة"</h4>
+    <div class="cal-item">
+      <span class="cal-tag" style="background:#dbeafe;color:#1e40af">LinkedIn</span>
+      <span>ويبينار مباشر: "دليل الامتثال لنظام حماية الأجور 2026" (دعوة مفتوحة)</span>
+    </div>
+    <div class="cal-item">
+      <span class="cal-tag" style="background:#fde68a;color:#92400e">تويتر</span>
+      <span>استطلاع: "ما أكبر تحدي في إدارة العمالة الخارجية؟"</span>
+    </div>
+    <div class="cal-item">
+      <span class="cal-tag" style="background:#d1fae5;color:#065f46">واتساب</span>
+      <span>إرسال دليل PDF مجاني: "قائمة مراجعة الاستعداد لنطاقات 2026"</span>
+    </div>
+  </div>
+
+  <div class="cal-week">
+    <h4>الأسبوع 3-4 فبراير — "العروض والحزم"</h4>
+    <div class="cal-item">
+      <span class="cal-tag" style="background:#dbeafe;color:#1e40af">LinkedIn</span>
+      <span>إعلان مدفوع: "حزمة الكل في واحد — إسناد + كول سنتر + سكن + نقل"</span>
+    </div>
+    <div class="cal-item">
+      <span class="cal-tag" style="background:#fce7f3;color:#9d174d">إنستجرام</span>
+      <span>Carousel: مقارنة مرئية: يافا vs الشركات الأخرى</span>
+    </div>
+    <div class="cal-item">
+      <span class="cal-tag" style="background:#ede9fe;color:#5b21b6">Google Ads</span>
+      <span>حملة retargeting: لزوار الموقع الذين لم يتحوّلوا</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     7. OFFER & PRICING
+══════════════════════════════════════════════ -->
+<hr class="divider">
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#fff7ed">💎</div>
+    <div>
+      <h2>تصميم العرض التسويقي</h2>
+      <p>الحزم المقترحة والعروض التي تُحرّك القرار</p>
+    </div>
+  </div>
+  <div class="grid-3">
+    <div class="card" style="border-top:4px solid #94a3b8">
+      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px">للشركات الناشئة</div>
+      <div style="font-size:20px;font-weight:900;margin-bottom:4px">حزمة البداية</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:16px">للشركات 20-100 موظف</div>
+      <ul style="font-size:13px;color:var(--text);list-style:none;margin-bottom:16px">
+        <li style="padding:5px 0;border-bottom:1px solid var(--border)">✓ إسناد وظيفي حتى 50 موظف</li>
+        <li style="padding:5px 0;border-bottom:1px solid var(--border)">✓ كول سنتر 8 ساعات/يوم</li>
+        <li style="padding:5px 0;border-bottom:1px solid var(--border)">✓ إدارة الرواتب والتأمين</li>
+        <li style="padding:5px 0">✓ تقارير شهرية</li>
+      </ul>
+      <div style="font-size:12px;color:var(--text3)">تواصل للحصول على السعر</div>
+    </div>
+    <div class="card" style="border-top:4px solid var(--primary);box-shadow:var(--shadow-lg);position:relative">
+      <div style="position:absolute;top:-10px;right:50%;transform:translateX(50%);background:var(--primary);color:#fff;font-size:10px;font-weight:700;padding:3px 12px;border-radius:50px">الأكثر طلباً</div>
+      <div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:8px">للمنشآت المتوسطة</div>
+      <div style="font-size:20px;font-weight:900;margin-bottom:4px">الحزمة الشاملة</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:16px">للمنشآت 100-500 موظف</div>
+      <ul style="font-size:13px;color:var(--text);list-style:none;margin-bottom:16px">
+        <li style="padding:5px 0;border-bottom:1px solid var(--border)">✓ إسناد وظيفي حتى 300 موظف</li>
+        <li style="padding:5px 0;border-bottom:1px solid var(--border)">✓ كول سنتر 16 ساعة/يوم</li>
+        <li style="padding:5px 0;border-bottom:1px solid var(--border)">✓ خدمات نقل منظّمة</li>
+        <li style="padding:5px 0;border-bottom:1px solid var(--border)">✓ سكن مُدار + صيانة</li>
+        <li style="padding:5px 0;border-bottom:1px solid var(--border)">✓ خدمة تسويقية أساسية</li>
+        <li style="padding:5px 0">✓ مدير حساب مخصص</li>
+      </ul>
+      <div style="font-size:12px;color:var(--text3)">عقد سنوي — تواصل للحصول على السعر</div>
+    </div>
+    <div class="card" style="border-top:4px solid #7c3aed">
+      <div style="font-size:12px;font-weight:700;color:#7c3aed;margin-bottom:8px">للمشاريع الكبرى</div>
+      <div style="font-size:20px;font-weight:900;margin-bottom:4px">الحزمة المؤسسية</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:16px">500+ موظف / مشاريع رؤية 2030</div>
+      <ul style="font-size:13px;color:var(--text);list-style:none;margin-bottom:16px">
+        <li style="padding:5px 0;border-bottom:1px solid var(--border)">✓ إسناد وظيفي بلا حدود</li>
+        <li style="padding:5px 0;border-bottom:1px solid var(--border)">✓ كول سنتر 24/7</li>
+        <li style="padding:5px 0;border-bottom:1px solid var(--border)">✓ خدمات لوجستية كاملة</li>
+        <li style="padding:5px 0;border-bottom:1px solid var(--border)">✓ خطة تسويق سنوية مخصصة</li>
+        <li style="padding:5px 0;border-bottom:1px solid var(--border)">✓ SLA مضمون + عقوبات تأخير</li>
+        <li style="padding:5px 0">✓ فريق مخصص ميداني</li>
+      </ul>
+      <div style="font-size:12px;color:var(--text3)">تسعير حسب حجم المشروع</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     8. BUDGET PHASES
+══════════════════════════════════════════════ -->
+<hr class="divider">
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#fff7ed">💰</div>
+    <div>
+      <h2>ميزانية التسويق — نمو تدريجي</h2>
+      <p>تبدأ من 2,000 ريال وترتفع مع ثبوت النتائج</p>
+    </div>
+  </div>
+
+  <!-- Budget phases table -->
+  <div class="table-wrap" style="margin-bottom:20px">
+    <table>
+      <thead>
+        <tr>
+          <th>المرحلة</th>
+          <th>الأشهر</th>
+          <th>الميزانية الشهرية</th>
+          <th>LinkedIn (المحتوى + الإعلان)</th>
+          <th>Google Ads</th>
+          <th>تويتر + إنستجرام</th>
+          <th>أدوات + إيميل</th>
+          <th>الهدف الرئيسي</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong style="color:#7c3aed">🌱 تجريب</strong></td>
+          <td>1 – 3</td>
+          <td><strong style="font-size:15px">2,000 ريال</strong></td>
+          <td>800 ريال (محتوى عضوي + بوست مدفوع أسبوعي)</td>
+          <td>500 ريال (كلمات محلية مستهدفة فقط)</td>
+          <td>400 ريال (عضوي بشكل أساسي)</td>
+          <td>300 ريال (Mailchimp أو بديل)</td>
+          <td>بناء الحضور وقياس أولى النتائج</td>
+        </tr>
+        <tr>
+          <td><strong style="color:#0ea5e9">📈 نمو</strong></td>
+          <td>4 – 6</td>
+          <td><strong style="font-size:15px">5,000 ريال</strong></td>
+          <td>2,000 ريال (حملة جذب leads)</td>
+          <td>1,500 ريال (توسيع الكلمات + retargeting)</td>
+          <td>800 ريال (تعزيز أفضل المنشورات)</td>
+          <td>700 ريال (CRM + أتمتة)</td>
+          <td>توليد leads مؤهلة بشكل منتظم</td>
+        </tr>
+        <tr>
+          <td><strong style="color:#10b981">🚀 تسريع</strong></td>
+          <td>7 – 12</td>
+          <td><strong style="font-size:15px">8,000 ريال</strong></td>
+          <td>3,000 ريال (InMail + Sponsored Content)</td>
+          <td>2,500 ريال (حملات قطاعية)</td>
+          <td>1,500 ريال (محتوى مدفوع)</td>
+          <td>1,000 ريال (تقارير + أتمتة)</td>
+          <td>توليد عقود بشكل منهجي</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Budget breakdown visual per phase 1 -->
+  <div class="card" style="margin-bottom:16px;background:linear-gradient(135deg,#fdf4ff,#ede9fe);border-color:#c4b5fd">
+    <div style="font-size:12px;font-weight:700;color:#7c3aed;margin-bottom:12px">الشهر 1-3 — كيف تُوزَّع الـ 2,000 ريال؟</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px">
+          <span>💼 LinkedIn (محتوى أسبوعي + 1 بوست مدفوع/أسبوع)</span>
+          <strong>800 ريال</strong>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:40%;background:#0a66c2"></div></div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px">
+          <span>🔍 Google Ads (كلمات: إسناد وظيفي الرياض، كول سنتر)</span>
+          <strong>500 ريال</strong>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:25%;background:#4285f4"></div></div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px">
+          <span>🐦 تويتر + 📸 إنستجرام (محتوى عضوي + تعزيز أفضل منشور)</span>
+          <strong>400 ريال</strong>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:20%;background:#e1306c"></div></div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px">
+          <span>📧 أدوات إيميل + تصميم (Canva Pro)</span>
+          <strong>300 ريال</strong>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:15%;background:#f59e0b"></div></div>
+      </div>
+    </div>
+    <div style="margin-top:12px;font-size:12px;color:#6d28d9;font-weight:600">
+      💡 الميزانية الصغيرة تعني التركيز — LinkedIn + Google فقط بدون تشتيت. المحتوى العضوي يكمّل المدفوع.
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     8. KPIs
+══════════════════════════════════════════════ -->
+<hr class="divider">
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#f0fdf4">📈</div>
+    <div>
+      <h2>مؤشرات الأداء الرئيسية (KPIs)</h2>
+      <p>أهداف واقعية مبنية على ميزانية 2,000 → 8,000 ريال/شهر</p>
+    </div>
+  </div>
+
+  <!-- KPI Timeline Table -->
+  <div class="table-wrap" style="margin-bottom:20px">
+    <table>
+      <thead>
+        <tr>
+          <th>المؤشر</th>
+          <th>الآن (الخط الأساسي)</th>
+          <th>نهاية الشهر 3<br><small style="opacity:.7">2,000 ريال/شهر</small></th>
+          <th>نهاية الشهر 6<br><small style="opacity:.7">5,000 ريال/شهر</small></th>
+          <th>نهاية الشهر 12<br><small style="opacity:.7">8,000 ريال/شهر</small></th>
+          <th>طريقة القياس</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>🌐 زوار الموقع الشهريين</strong></td>
+          <td>~200-400 زيارة</td>
+          <td style="color:#1a56db;font-weight:700">600-800 زيارة</td>
+          <td style="color:#1a56db;font-weight:700">1,200-1,500 زيارة</td>
+          <td style="color:#059669;font-weight:700">2,500-3,000 زيارة</td>
+          <td>Google Analytics</td>
+        </tr>
+        <tr>
+          <td><strong>💼 متابعو LinkedIn</strong></td>
+          <td>0-50 متابع</td>
+          <td style="color:#1a56db;font-weight:700">200-400 متابع</td>
+          <td style="color:#1a56db;font-weight:700">800-1,200 متابع</td>
+          <td style="color:#059669;font-weight:700">2,000-3,000 متابع</td>
+          <td>LinkedIn Analytics</td>
+        </tr>
+        <tr>
+          <td><strong>📊 مشاهدات المنشورات (LinkedIn)</strong></td>
+          <td>~500/منشور</td>
+          <td style="color:#1a56db;font-weight:700">2,000-5,000/منشور</td>
+          <td style="color:#1a56db;font-weight:700">8,000-15,000/منشور</td>
+          <td style="color:#059669;font-weight:700">20,000-40,000/منشور</td>
+          <td>LinkedIn Analytics</td>
+        </tr>
+        <tr>
+          <td><strong>📩 طلبات استشارة (Leads)/شهر</strong></td>
+          <td>1-3 طلبات</td>
+          <td style="color:#1a56db;font-weight:700">5-8 طلبات</td>
+          <td style="color:#1a56db;font-weight:700">12-18 طلباً</td>
+          <td style="color:#059669;font-weight:700">25-35 طلباً</td>
+          <td>نموذج الموقع + CRM</td>
+        </tr>
+        <tr>
+          <td><strong>✅ عقود موقّعة/شهر</strong></td>
+          <td>ما يتم بدون تسويق</td>
+          <td style="color:#1a56db;font-weight:700">1-2 عقد إضافي</td>
+          <td style="color:#1a56db;font-weight:700">2-4 عقود إضافية</td>
+          <td style="color:#059669;font-weight:700">4-7 عقود إضافية</td>
+          <td>نظام CRM</td>
+        </tr>
+        <tr>
+          <td><strong>💰 عائد الاستثمار (ROI)</strong></td>
+          <td>—</td>
+          <td style="color:#1a56db;font-weight:700">نبني الأساس (لا نقيس بعد)</td>
+          <td style="color:#1a56db;font-weight:700">3x-5x (كل ريال يُعيد 3-5)</td>
+          <td style="color:#059669;font-weight:700">8x-15x (كل ريال يُعيد 8-15)</td>
+          <td>إيرادات العقود / الإنفاق التسويقي</td>
+        </tr>
+        <tr>
+          <td><strong>🔍 ترتيب Google (إسناد وظيفي الرياض)</strong></td>
+          <td>صفحة 3+</td>
+          <td style="color:#1a56db;font-weight:700">صفحة 2</td>
+          <td style="color:#1a56db;font-weight:700">صفحة 1 (أسفل)</td>
+          <td style="color:#059669;font-weight:700">Top 5 صفحة 1</td>
+          <td>Google Search Console</td>
+        </tr>
+        <tr>
+          <td><strong>📧 مشتركو النشرة البريدية</strong></td>
+          <td>0</td>
+          <td style="color:#1a56db;font-weight:700">50-100 مشترك</td>
+          <td style="color:#1a56db;font-weight:700">200-350 مشترك</td>
+          <td style="color:#059669;font-weight:700">500-700 مشترك</td>
+          <td>Mailchimp / أي أداة</td>
+        </tr>
+        <tr>
+          <td><strong>📞 معدل تحويل Lead→عقد</strong></td>
+          <td>غير محدد</td>
+          <td style="color:#1a56db;font-weight:700">20% (1 من 5)</td>
+          <td style="color:#1a56db;font-weight:700">25% (1 من 4)</td>
+          <td style="color:#059669;font-weight:700">30% (1 من 3)</td>
+          <td>CRM تتبع يدوي</td>
+        </tr>
+        <tr>
+          <td><strong>⏱️ متوسط دورة البيع</strong></td>
+          <td>30-60 يوم</td>
+          <td style="color:#1a56db;font-weight:700">25-45 يوم</td>
+          <td style="color:#1a56db;font-weight:700">20-35 يوم</td>
+          <td style="color:#059669;font-weight:700">15-25 يوم</td>
+          <td>CRM — تاريخ أول تواصل → توقيع</td>
+        </tr>
+        <tr>
+          <td><strong>🔄 نسبة العقود من الإحالة</strong></td>
+          <td>80%+ (الكل تقريباً)</td>
+          <td style="color:#1a56db;font-weight:700">70% إحالة / 30% رقمي</td>
+          <td style="color:#1a56db;font-weight:700">55% إحالة / 45% رقمي</td>
+          <td style="color:#059669;font-weight:700">40% إحالة / 60% رقمي</td>
+          <td>سؤال العميل: كيف وجدتنا؟</td>
+        </tr>
+        <tr>
+          <td><strong>🌟 تقييمات Google Business</strong></td>
+          <td>—</td>
+          <td style="color:#1a56db;font-weight:700">5+ تقييم (4.5★)</td>
+          <td style="color:#1a56db;font-weight:700">15+ تقييم (4.7★)</td>
+          <td style="color:#059669;font-weight:700">30+ تقييم (4.8★)</td>
+          <td>Google Business Profile</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Warning note -->
+  <div class="card" style="background:#fffbeb;border-color:#fcd34d;margin-bottom:16px">
+    <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px">⚠️ ملاحظة مهمة حول الأهداف</div>
+    <div style="font-size:13px;color:#78350f;line-height:1.8">
+      <strong>الشهر 1-3:</strong> لا تتوقع نتائج كبيرة — هذه مرحلة البناء والاختبار. النجاح هنا = فهمت ما يصلح لجمهورك.<br>
+      <strong>الشهر 4-6:</strong> أول عقود مباشرة من التسويق الرقمي. إذا حققت 2 عقد إضافي/شهر بمتوسط 50,000 ريال/عقد = 100,000 ريال/شهر ← ROI = 20x على الميزانية.<br>
+      <strong>الشهر 7-12:</strong> التسارع الحقيقي. كل ريال تنفقه في التسويق يجب أن يُعيد 8-15 ريال.
+    </div>
+  </div>
+
+  <!-- Monthly KPI summary cards -->
+  <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--text2)">ملخص بالأرقام — نهاية الشهر 12</div>
+  <div class="grid-4">
+    <div class="kpi-card" style="border-top:3px solid var(--primary)">
+      <div class="kpi-value">3,000</div>
+      <div class="kpi-label">زيارة/شهر للموقع</div>
+      <div class="kpi-sub">↑ من ~300 حالياً</div>
+    </div>
+    <div class="kpi-card" style="border-top:3px solid #0a66c2">
+      <div class="kpi-value">2,500+</div>
+      <div class="kpi-label">متابع LinkedIn</div>
+      <div class="kpi-sub">صانعو قرار B2B</div>
+    </div>
+    <div class="kpi-card" style="border-top:3px solid #10b981">
+      <div class="kpi-value">30+</div>
+      <div class="kpi-label">lead مؤهل/شهر</div>
+      <div class="kpi-sub">طلبات استشارة حقيقية</div>
+    </div>
+    <div class="kpi-card" style="border-top:3px solid #f59e0b">
+      <div class="kpi-value">6+</div>
+      <div class="kpi-label">عقد جديد/شهر</div>
+      <div class="kpi-sub">من التسويق الرقمي فقط</div>
+    </div>
+    <div class="kpi-card" style="border-top:3px solid #7c3aed">
+      <div class="kpi-value">30%</div>
+      <div class="kpi-label">معدل تحويل Lead→عقد</div>
+      <div class="kpi-sub">بفضل المتابعة المنتظمة</div>
+    </div>
+    <div class="kpi-card" style="border-top:3px solid #ef4444">
+      <div class="kpi-value">Top 5</div>
+      <div class="kpi-label">ترتيب Google</div>
+      <div class="kpi-sub">إسناد وظيفي الرياض</div>
+    </div>
+    <div class="kpi-card" style="border-top:3px solid #0ea5e9">
+      <div class="kpi-value">10x+</div>
+      <div class="kpi-label">عائد الاستثمار (ROI)</div>
+      <div class="kpi-sub">كل ريال يعيد 10+</div>
+    </div>
+    <div class="kpi-card" style="border-top:3px solid #059669">
+      <div class="kpi-value">60%</div>
+      <div class="kpi-label">عقود من الرقمي</div>
+      <div class="kpi-sub">↑ من 0% حالياً</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     9. GROWTH LOOPS
+══════════════════════════════════════════════ -->
+<hr class="divider">
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#fdf4ff">🔄</div>
+    <div>
+      <h2>حلقات النمو المستدام</h2>
+      <p>آليات تحقق نمواً تراكمياً بدون زيادة متناسبة في الإنفاق</p>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card" style="border-right:4px solid #7c3aed">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#7c3aed">🔁 حلقة الإحالة المؤسسية</div>
+      <div style="font-size:13px;color:var(--text)">
+        العميل الراضي ← يُحيل شركة أخرى من نفس القطاع ← يافا تُقدّم خصم 10% على الشهر الأول ← العميل الجديد يُحيل آخر
+      </div>
+      <div style="margin-top:12px;padding:8px;background:#fdf4ff;border-radius:8px;font-size:12px;color:#6d28d9">
+        الهدف: 30% من العقود الجديدة من الإحالات بنهاية السنة
+      </div>
+    </div>
+    <div class="card" style="border-right:4px solid #0ea5e9">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#0ea5e9">🔁 حلقة المحتوى التعليمي</div>
+      <div style="font-size:13px;color:var(--text)">
+        ويبينار مجاني ← يتحول المشاركون لعملاء محتملين ← يتلقون نشرة شهرية ← يعودون للطلب عند الحاجة
+      </div>
+      <div style="margin-top:12px;padding:8px;background:#eff6ff;border-radius:8px;font-size:12px;color:#1d4ed8">
+        الهدف: قاعدة بيانات 500+ decision maker بنهاية Q2
+      </div>
+    </div>
+    <div class="card" style="border-right:4px solid #10b981">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#10b981">🔁 حلقة التوسع الخدمي</div>
+      <div style="font-size:13px;color:var(--text)">
+        عميل يبدأ بـ HR فقط ← يضيف الكول سنتر بعد 3 أشهر ← يضيف النقل بعد 6 أشهر ← LTV يتضاعف 3x
+      </div>
+      <div style="margin-top:12px;padding:8px;background:#ecfdf5;border-radius:8px;font-size:12px;color:#065f46">
+        الهدف: 60% من العملاء يشتركون في 3+ خدمات بنهاية السنة
+      </div>
+    </div>
+    <div class="card" style="border-right:4px solid #f59e0b">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#f59e0b">🔁 حلقة الشراكات الاستراتيجية</div>
+      <div style="font-size:13px;color:var(--text)">
+        شراكة مع مستشاري HR ← يُحيلون عملاءهم ← يافا تدفع عمولة 5% ← الشريك يواصل الإحالة
+      </div>
+      <div style="margin-top:12px;padding:8px;background:#fffbeb;border-radius:8px;font-size:12px;color:#92400e">
+        الهدف: 10 شركاء استراتيجيين فعّالين بنهاية Q3
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     10. AD STRATEGY
+══════════════════════════════════════════════ -->
+<hr class="divider">
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#fef2f2">💰</div>
+    <div>
+      <h2>استراتيجية الإعلانات المدفوعة</h2>
+      <p>Google Ads + LinkedIn Ads — استهداف نية الشراء</p>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;color:#4285f4;margin-bottom:14px">Google Ads — حملات البحث</div>
+      <div style="font-size:13px;margin-bottom:10px">
+        <strong>الكلمات المفتاحية المستهدفة:</strong><br>
+        <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">
+          <span class="channel-pill"><span class="dot" style="background:#4285f4"></span> شركة إسناد وظيفي الرياض</span>
+          <span class="channel-pill"><span class="dot" style="background:#4285f4"></span> كول سنتر للإيجار السعودية</span>
+          <span class="channel-pill"><span class="dot" style="background:#4285f4"></span> توظيف عمالة المملكة</span>
+          <span class="channel-pill"><span class="dot" style="background:#4285f4"></span> حلول الموارد البشرية</span>
+          <span class="channel-pill"><span class="dot" style="background:#4285f4"></span> شركة نقل عمالة</span>
+          <span class="channel-pill"><span class="dot" style="background:#4285f4"></span> outsourcing company saudi</span>
+        </div>
+      </div>
+      <div style="font-size:13px">
+        <strong>الميزانية — مرحلة 1 (شهر 1-3):</strong> SAR 500/شهر<br>
+        <strong>الميزانية — مرحلة 2 (شهر 4-6):</strong> SAR 1,500/شهر<br>
+        <strong>الميزانية — مرحلة 3 (شهر 7-12):</strong> SAR 2,500/شهر<br>
+        <strong>CPC المتوقع:</strong> SAR 4-10 للنقرة (كلمات محلية أرخص)<br>
+        <strong>CVR المستهدف:</strong> 5-8% (نموذج طلب استشارة)
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;color:#0a66c2;margin-bottom:14px">LinkedIn Ads — استهداف صانعي القرار</div>
+      <div style="font-size:13px;margin-bottom:10px">
+        <strong>الجمهور المستهدف:</strong>
+        <ul style="margin-top:6px;padding-right:16px">
+          <li>المسمى الوظيفي: HR Director, HR Manager, COO, CEO</li>
+          <li>القطاع: Manufacturing, Construction, Government, Retail</li>
+          <li>الموقع: المملكة العربية السعودية</li>
+          <li>حجم الشركة: 100-10,000+ موظف</li>
+        </ul>
+      </div>
+      <div style="font-size:13px">
+        <strong>نوع الإعلانات:</strong> Sponsored Content + InMail<br>
+        <strong>الميزانية — مرحلة 1 (شهر 1-3):</strong> SAR 800/شهر (ترقية منشورات مختارة فقط)<br>
+        <strong>الميزانية — مرحلة 2 (شهر 4-6):</strong> SAR 2,000/شهر (حملة lead generation)<br>
+        <strong>الميزانية — مرحلة 3 (شهر 7-12):</strong> SAR 3,000/شهر (InMail + Sponsored)<br>
+        <strong>الهدف:</strong> 5 leads/شهر → 18 leads/شهر → 30+ leads/شهر
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     11. EXECUTION ROADMAP
+══════════════════════════════════════════════ -->
+<hr class="divider">
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#eff6ff">🗺️</div>
+    <div>
+      <h2>خارطة التنفيذ</h2>
+      <p>4 مراحل تنفيذية — من الأساس حتى النمو المتسارع</p>
+    </div>
+  </div>
+
+  <div class="roadmap-phase">
+    <div class="roadmap-phase-header" style="background:linear-gradient(135deg,#1e3a5f,#1a56db)">
+      <span>🚀</span>
+      <span>المرحلة الأولى — التأسيس الرقمي (الشهر 1-2)</span>
+    </div>
+    <div class="roadmap-phase-body">
+      <div class="roadmap-item">تجديد الموقع الإلكتروني: صفحة خدمات مفصّلة + صفحات هبوط مخصصة لكل خدمة + نموذج طلب استشارة</div>
+      <div class="roadmap-item">SEO تقني: تحسين سرعة الموقع، بيانات Schema، خريطة الموقع، توطين المحتوى بالعربية</div>
+      <div class="roadmap-item">إنشاء صفحة LinkedIn للشركة وتحسينها بالكامل — بيو، خدمات، شعار، كوفر</div>
+      <div class="roadmap-item">إنشاء 10 مقالات تعليمية أساسية (pillar content) عن: إسناد، كول سنتر، نطاقات، حماية الأجور</div>
+      <div class="roadmap-item">إعداد CRM بسيط لتتبع العملاء المحتملين وتحليل مصادر الـ leads</div>
+    </div>
+  </div>
+
+  <div class="roadmap-phase">
+    <div class="roadmap-phase-header" style="background:linear-gradient(135deg,#0f766e,#0d9488)">
+      <span>📣</span>
+      <span>المرحلة الثانية — إطلاق الحضور (الشهر 3-4)</span>
+    </div>
+    <div class="roadmap-phase-body">
+      <div class="roadmap-item">إطلاق حملات Google Ads وLinkedIn Ads المستهدفة بالميزانيات المذكورة</div>
+      <div class="roadmap-item">تنفيذ أول ويبينار تعليمي مجاني: "دليل الامتثال لنطاقات 2026" — استهداف 200+ مشارك</div>
+      <div class="roadmap-item">نشر أول حالة دراسية موثّقة بأرقام حقيقية من عميل راضٍ</div>
+      <div class="roadmap-item">إطلاق برنامج الإحالة الرسمي مع آلية تتبع وحوافز واضحة</div>
+      <div class="roadmap-item">بدء النشرة الشهرية للبريد الإلكتروني لقاعدة بيانات موجودة</div>
+    </div>
+  </div>
+
+  <div class="roadmap-phase">
+    <div class="roadmap-phase-header" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">
+      <span>📊</span>
+      <span>المرحلة الثالثة — القياس والتحسين (الشهر 5-8)</span>
+    </div>
+    <div class="roadmap-phase-body">
+      <div class="roadmap-item">تحليل أداء الحملات وإعادة توزيع الميزانية نحو القنوات الأعلى عائداً</div>
+      <div class="roadmap-item">توسيع المحتوى إلى 3 منشورات يومياً على تويتر + 5 مقالات LinkedIn أسبوعياً</div>
+      <div class="roadmap-item">إطلاق حملة إعادة الاستهداف (retargeting) لزوار الموقع غير المُحوَّلين</div>
+      <div class="roadmap-item">المشاركة في مؤتمر HR Tech Arabia أو SHRM Saudi كراعٍ أو متحدث</div>
+      <div class="roadmap-item">تطوير 3 حالات دراسية إضافية لكل قطاع رئيسي (صناعة، حكومة، خدمات)</div>
+    </div>
+  </div>
+
+  <div class="roadmap-phase">
+    <div class="roadmap-phase-header" style="background:linear-gradient(135deg,#d97706,#f59e0b)">
+      <span>🌱</span>
+      <span>المرحلة الرابعة — النمو المتسارع (الشهر 9-12)</span>
+    </div>
+    <div class="roadmap-phase-body">
+      <div class="roadmap-item">التوسع الجغرافي في محتوى استهداف جدة والمنطقة الشرقية</div>
+      <div class="roadmap-item">إطلاق برنامج شراكات رسمي مع 5-10 شركاء استراتيجيين (مستشارو HR، شركات محاسبة)</div>
+      <div class="roadmap-item">إنتاج تقرير صناعي سنوي: "حالة سوق الإسناد الوظيفي في السعودية 2027" — أداة جذب رائدة</div>
+      <div class="roadmap-item">إطلاق برنامج loyalty للعملاء: مكافآت على الإحالة وتجديد العقود</div>
+      <div class="roadmap-item">تقييم الاستعداد لدخول سوق الإمارات أو البحرين كمرحلة توسع</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     12. RETENTION
+══════════════════════════════════════════════ -->
+<hr class="divider">
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#fff7ed">🤝</div>
+    <div>
+      <h2>استراتيجية الاحتفاظ بالعملاء</h2>
+      <p>زيادة LTV وخفض churn rate</p>
+    </div>
+  </div>
+  <div class="grid-3">
+    <div class="card">
+      <div style="font-size:20px;margin-bottom:8px">📞</div>
+      <div style="font-weight:700;margin-bottom:6px">مراجعات ربع سنوية QBR</div>
+      <p style="font-size:13px;color:var(--text2)">اجتماع رسمي كل 3 أشهر مع عرض لأداء الخدمات، أرقام التوفير، وخطة الربع القادم. يُقوّي الثقة ويُمهّد لتوسيع الخدمات.</p>
+    </div>
+    <div class="card">
+      <div style="font-size:20px;margin-bottom:8px">📋</div>
+      <div style="font-weight:700;margin-bottom:6px">تقارير أداء شهرية آلية</div>
+      <p style="font-size:13px;color:var(--text2)">Dashboard إلكتروني يُظهر: عدد الموظفين المُسندين، ساعات الكول سنتر، حوادث النقل، مؤشرات السكن. الشفافية = الثقة.</p>
+    </div>
+    <div class="card">
+      <div style="font-size:20px;margin-bottom:8px">🎁</div>
+      <div style="font-weight:700;margin-bottom:6px">برنامج ولاء العملاء</div>
+      <p style="font-size:13px;color:var(--text2)">خصم 5% عند تجديد لسنة ثالثة، خصم 10% عند إضافة خدمة جديدة، أولوية في الخدمة وقت الذروة للعملاء القدامى.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     13. CONVERSION FUNNEL
+══════════════════════════════════════════════ -->
+<hr class="divider">
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#f0fdf4">🔽</div>
+    <div>
+      <h2>قمع التحويل</h2>
+      <p>رحلة العميل من الاكتشاف إلى توقيع العقد</p>
+    </div>
+  </div>
+  <div class="card">
+    <div style="display:flex;flex-direction:column;gap:0;max-width:600px;margin:0 auto">
+      <div style="background:#1a56db;color:#fff;padding:16px 24px;border-radius:10px 10px 0 0;text-align:center;font-weight:700">
+        🔍 الاكتشاف — Google / LinkedIn / إحالة
+        <div style="font-size:12px;opacity:.7;font-weight:400;margin-top:4px">1000 زائر/شهر</div>
+      </div>
+      <div style="background:#2563eb;color:#fff;padding:14px 32px;text-align:center;font-weight:700">
+        📖 الاهتمام — يقرأ المقال / يشاهد الويبينار / يحمّل الدليل
+        <div style="font-size:12px;opacity:.7;font-weight:400;margin-top:4px">300 زائر مهتم (30%)</div>
+      </div>
+      <div style="background:#3b82f6;color:#fff;padding:14px 40px;text-align:center;font-weight:700">
+        💬 الاعتبار — يملأ نموذج "طلب استشارة مجانية"
+        <div style="font-size:12px;opacity:.7;font-weight:400;margin-top:4px">80 طلب استشارة (8%)</div>
+      </div>
+      <div style="background:#60a5fa;color:#fff;padding:14px 48px;text-align:center;font-weight:700">
+        📞 المقابلة — اتصال مبيعات + تقديم العرض
+        <div style="font-size:12px;opacity:.7;font-weight:400;margin-top:4px">50 مقابلة فعلية (62%)</div>
+      </div>
+      <div style="background:#93c5fd;color:#1e3a5f;padding:14px 56px;text-align:center;font-weight:700">
+        📄 العرض المالي — إرسال التسعير والعقد
+        <div style="font-size:12px;opacity:.7;font-weight:400;margin-top:4px">30 عرض مُرسل (60%)</div>
+      </div>
+      <div style="background:#10b981;color:#fff;padding:16px 64px;border-radius:0 0 10px 10px;text-align:center;font-weight:800">
+        ✅ التحويل — توقيع العقد
+        <div style="font-size:12px;opacity:.8;font-weight:400;margin-top:4px">20 عقد موقّع/شهر (67%)</div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--text2)">
+      CVR الإجمالي: <strong style="color:var(--primary)">2% من الزيارة إلى العقد</strong> — مناسب جداً لـ B2B عالي القيمة
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     14. TRENDS
+══════════════════════════════════════════════ -->
+<hr class="divider">
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#fdf4ff">🔮</div>
+    <div>
+      <h2>اتجاهات السوق — 12 شهراً القادمة</h2>
+      <p>فرص لا يجب أن تفوتك</p>
+    </div>
+  </div>
+  <div class="grid-3">
+    <div class="card" style="border-top:4px solid #7c3aed">
+      <div style="font-weight:700;margin-bottom:8px;font-size:14px">📈 تصاعد الطلب على EOR</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:10px">نموذج Employer of Record ينمو 40% سنوياً في الخليج — الشركات الدولية تريد دخول السوق السعودي بدون كيان قانوني.</p>
+      <div style="font-size:12px;font-weight:700;color:#7c3aed">الإجراء: تطوير عرض EOR رسمي والترويج له للشركات الأجنبية</div>
+    </div>
+    <div class="card" style="border-top:4px solid #0ea5e9">
+      <div style="font-weight:700;margin-bottom:8px;font-size:14px">🤖 الذكاء الاصطناعي في الكول سنتر</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:10px">العملاء يبحثون عن كول سنتر يدمج AI مع البشر — Chatbot + وكيل بشري للحالات المعقدة.</p>
+      <div style="font-size:12px;font-weight:700;color:#0ea5e9">الإجراء: الشراكة مع مزود AI لتقديم "الكول سنتر الذكي" كميزة تنافسية</div>
+    </div>
+    <div class="card" style="border-top:4px solid #10b981">
+      <div style="font-weight:700;margin-bottom:8px;font-size:14px">🏗️ مشاريع الميغا بروجكت</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:10px">نيوم، القدية، البحر الأحمر — عشرات الآلاف من العمال بحاجة لإسناد شامل (HR + سكن + نقل + كول سنتر).</p>
+      <div style="font-size:12px;font-weight:700;color:#10b981">الإجراء: التواصل المبكر مع مقاولي الميغا بروجكت وتقديم حزمة مخصصة</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<!-- FOOTER -->
+<footer>
+  <strong>الخطة التسويقية — يافا جلوبال 2026</strong><br>
+  مُولَّدة بواسطة نظام <strong>Ignify AI</strong> بناءً على تحليل موقع yafaglobal.sa<br>
+  <span style="font-size:11px;opacity:.5;margin-top:6px;display:block">
+    هذه الخطة مُولَّدة آلياً من بيانات الموقع الإلكتروني + تحليل السوق السعودي. يُنصح بمراجعة الأرقام مع فريق المبيعات قبل التنفيذ.
+  </span>
+</footer>
+
+</body>
+</html>
