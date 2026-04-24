@@ -63,9 +63,14 @@ def get_access_token(account: SocialAccount) -> str | None:
     """Read the decrypted access token for a SocialAccount.
 
     Handles both pre-migration plaintext rows and encrypted rows transparently
-    via `core.crypto.decrypt_token`.
+    via `core.crypto.decrypt_token`. Never log the return value.
     """
     return decrypt_token(account.access_token_encrypted)
+
+
+def get_refresh_token(account: SocialAccount) -> str | None:
+    """Read the decrypted refresh token for a SocialAccount (if persisted)."""
+    return decrypt_token(getattr(account, "refresh_token_encrypted", None))
 
 
 async def upsert_account(
@@ -77,12 +82,18 @@ async def upsert_account(
     name: str,
     access_token: str,
     refresh_token: str | None = None,
-    expires_at: datetime | None = None,  # noqa: ARG001  (column not yet present)
+    expires_at: datetime | None = None,
 ) -> SocialAccount:
-    """Upsert a SocialAccount row. Access token is encrypted at rest via Fernet."""
+    """Upsert a SocialAccount row.
+
+    Both access and refresh tokens are encrypted at rest via Fernet before being
+    written to the DB. `expires_at` (when set) is stored so a background job can
+    refresh tokens proactively instead of waiting for a 401.
+    """
     from sqlalchemy import and_, select
 
-    ciphertext = encrypt_token(access_token)
+    access_ct = encrypt_token(access_token)
+    refresh_ct = encrypt_token(refresh_token) if refresh_token else None
 
     result = await db.execute(
         select(SocialAccount).where(
@@ -96,7 +107,13 @@ async def upsert_account(
     acct = result.scalar_one_or_none()
     if acct:
         acct.name = name
-        acct.access_token_encrypted = ciphertext
+        acct.access_token_encrypted = access_ct
+        # Only overwrite refresh_token if we actually received a new one —
+        # some OAuth responses omit it on refresh and we want to keep the old one.
+        if refresh_ct is not None:
+            acct.refresh_token_encrypted = refresh_ct
+        if expires_at is not None:
+            acct.token_expires_at = expires_at
         acct.is_active = True
     else:
         acct = SocialAccount(
@@ -104,7 +121,9 @@ async def upsert_account(
             platform=platform,
             account_id=account_id,
             name=name,
-            access_token_encrypted=ciphertext,
+            access_token_encrypted=access_ct,
+            refresh_token_encrypted=refresh_ct,
+            token_expires_at=expires_at,
             is_active=True,
         )
         db.add(acct)

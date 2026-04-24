@@ -42,8 +42,36 @@ def _pkce_pair() -> tuple[str, str]:
     return verifier, challenge
 
 
-# Separate state→verifier store so oauth_state.extra can remain immutable.
-_pkce_verifiers: dict[str, str] = {}
+# PKCE code_verifier is bound to the state token and stored in Redis for the
+# same 10-minute TTL as oauth_state. Using Redis (not an in-memory dict) makes
+# OAuth resilient to backend restarts and multi-replica deployments.
+from redis.exceptions import RedisError  # noqa: E402
+
+from app.integrations.social.oauth_state import _client as _oauth_redis  # noqa: E402
+
+_PKCE_KEY_PREFIX = "oauth_pkce:"
+_PKCE_TTL_SECONDS = 600
+
+
+def _pkce_store(state: str, verifier: str) -> None:
+    try:
+        _oauth_redis().set(
+            _PKCE_KEY_PREFIX + state,
+            verifier,
+            nx=True,
+            ex=_PKCE_TTL_SECONDS,
+        )
+    except RedisError:
+        # Fail loudly — PKCE is a security primitive; silently degrading to
+        # in-memory defeats the whole point.
+        raise RuntimeError("OAuth PKCE store unavailable — try again")
+
+
+def _pkce_pop(state: str) -> str | None:
+    try:
+        return _oauth_redis().getdel(_PKCE_KEY_PREFIX + state)
+    except RedisError:
+        return None
 
 
 class XConnector:
@@ -57,7 +85,7 @@ class XConnector:
 
     def build_auth_url(self, state: str) -> str:
         verifier, challenge = _pkce_pair()
-        _pkce_verifiers[state] = verifier
+        _pkce_store(state, verifier)
         params = {
             "response_type": "code",
             "client_id": settings.X_CLIENT_ID,
@@ -71,7 +99,7 @@ class XConnector:
 
     async def exchange_code(self, code: str, state: str | None = None) -> TokenBundle:
         # State-bound PKCE verifier is required by X's OAuth 2.0 flow.
-        verifier = _pkce_verifiers.pop(state, None) if state else None
+        verifier = _pkce_pop(state) if state else None
         if not verifier:
             raise RuntimeError("PKCE verifier missing — OAuth state not linked to this flow")
 

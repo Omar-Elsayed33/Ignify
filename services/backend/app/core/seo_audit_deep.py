@@ -20,6 +20,7 @@ from bs4 import BeautifulSoup
 
 from app.core.llm import get_llm
 from app.core.seo_audit import audit_url
+from app.core.url_safety import UnsafeURLError, validate_public_url
 
 log = logging.getLogger(__name__)
 
@@ -207,6 +208,16 @@ async def deep_audit(url: str, language: str = "ar") -> dict[str, Any]:
     """Full audit: homepage + up to 4 internal pages + site files + LLM recs."""
     if not url.startswith(("http://", "https://")):
         url = "https://" + url
+    try:
+        url = validate_public_url(url)
+    except UnsafeURLError as e:
+        # Short-circuit: the user asked us to audit a private/internal address.
+        return {
+            "url": url,
+            "error": f"unsafe_url: {e}",
+            "recommendations": [],
+            "page_audits": [],
+        }
     origin = _base_origin(url)
 
     # 1. Audit the homepage first (we need the HTML to discover links anyway)

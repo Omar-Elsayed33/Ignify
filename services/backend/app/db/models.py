@@ -146,6 +146,10 @@ class CampaignStatus(str, enum.Enum):
 class SocialPostStatus(str, enum.Enum):
     draft = "draft"
     scheduled = "scheduled"
+    # `publishing` is a transient claim state: the scheduler atomically moves
+    # a row from `scheduled → publishing` before enqueueing the Celery task,
+    # preventing two workers from publishing the same row twice (P1-5).
+    publishing = "publishing"
     published = "published"
     failed = "failed"
 
@@ -638,6 +642,8 @@ class SocialAccount(Base):
     account_id: Mapped[str] = mapped_column(String(255), nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     access_token_encrypted: Mapped[Optional[str]] = mapped_column(String(2000), nullable=True)
+    refresh_token_encrypted: Mapped[Optional[str]] = mapped_column(String(2000), nullable=True)
+    token_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 

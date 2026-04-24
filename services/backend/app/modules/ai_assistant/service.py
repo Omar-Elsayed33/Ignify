@@ -28,11 +28,22 @@ _FETCH_TIMEOUT = 20.0
 # ─── Website scraping ────────────────────────────────────────────────────────
 
 async def _fetch_html(url: str) -> str:
+    from app.core.url_safety import UnsafeURLError, validate_public_url
+
     if not url.startswith(("http://", "https://")):
         url = "https://" + url
     try:
+        url = validate_public_url(url)
+    except UnsafeURLError as exc:
+        # Don't silently swallow: log and return empty so the caller falls back.
+        logger.warning("_fetch_html refused unsafe URL %s: %s", url, exc)
+        return ""
+    try:
         async with httpx.AsyncClient(
-            timeout=_FETCH_TIMEOUT, follow_redirects=True, headers={"User-Agent": _UA}
+            timeout=_FETCH_TIMEOUT,
+            follow_redirects=True,
+            max_redirects=5,
+            headers={"User-Agent": _UA},
         ) as client:
             resp = await client.get(url)
             resp.raise_for_status()
@@ -304,7 +315,14 @@ def _rgb_to_hex(rgb: tuple[int, int, int]) -> str:
 
 async def extract_brand_from_logo(logo_url: str) -> dict[str, Any]:
     """Download a logo and pick dominant colors. Safe fallback on any failure."""
+    from app.core.url_safety import UnsafeURLError, validate_public_url
+
     if not logo_url:
+        return {}
+    try:
+        logo_url = validate_public_url(logo_url)
+    except UnsafeURLError as exc:
+        logger.warning("extract_brand_from_logo refused unsafe URL %s: %s", logo_url, exc)
         return {}
     try:
         from PIL import Image  # type: ignore

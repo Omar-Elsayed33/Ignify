@@ -95,7 +95,7 @@ def _to_account_response(acct: SocialAccount) -> dict[str, Any]:
         "page_name": acct.name,
         "page_id": acct.account_id,
         "connected_at": acct.created_at,
-        "expires_at": None,
+        "expires_at": getattr(acct, "token_expires_at", None),
     }
 
 

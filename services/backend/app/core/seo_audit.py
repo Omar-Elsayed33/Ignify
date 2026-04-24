@@ -127,13 +127,27 @@ def _suggest_title(current: str, word_count: int) -> str:
 
 async def audit_url(url: str) -> dict[str, Any]:
     """Fetch `url` and produce an on-page audit report with STRUCTURED issues."""
+    from app.core.url_safety import UnsafeURLError, validate_public_url
+
     issues: list[dict] = []
     score = 100
+
+    try:
+        url = validate_public_url(url)
+    except UnsafeURLError as e:
+        return {
+            "score": 0,
+            "issues": [_issue("unsafe_url", str(e))],
+            "title": "", "meta_description": "",
+            "h1": [], "h2": [], "word_count": 0,
+            "images_without_alt": 0, "links_count": 0,
+        }
 
     try:
         async with httpx.AsyncClient(
             timeout=20.0,
             follow_redirects=True,
+            max_redirects=5,
             headers={"User-Agent": "Mozilla/5.0 Ignify-SEO-Bot/1.0"},
         ) as c:
             resp = await c.get(url)

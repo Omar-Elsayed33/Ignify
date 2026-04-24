@@ -22,7 +22,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from app.core.config import settings
 from app.db.models import SocialAccount, SocialPlatform
 
-from .base import PublishResult, TokenBundle, get_access_token
+from .base import PublishResult, TokenBundle, get_access_token, get_refresh_token
 
 AUTH_URL = "https://www.linkedin.com/oauth/v2/authorization"
 TOKEN_URL = "https://www.linkedin.com/oauth/v2/accessToken"
@@ -103,9 +103,45 @@ class LinkedInConnector:
         )
 
     async def refresh(self, account: SocialAccount) -> TokenBundle | None:
-        # We don't currently persist refresh_token (no column yet); return None.
-        # TODO once migration adds refresh_token: POST grant_type=refresh_token.
-        return None
+        """Exchange the stored refresh_token for a new access_token.
+
+        Returns None if the account has no refresh_token stored (old row, or
+        LinkedIn chose not to issue one — rare). The caller is expected to
+        persist the returned TokenBundle via `upsert_account()`, which will
+        only overwrite `refresh_token_encrypted` if a new value is returned.
+        """
+        refresh_token = get_refresh_token(account)
+        if not refresh_token:
+            return None
+
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            resp = await client.post(
+                TOKEN_URL,
+                data={
+                    "grant_type": "refresh_token",
+                    "refresh_token": refresh_token,
+                    "client_id": settings.LINKEDIN_CLIENT_ID,
+                    "client_secret": settings.LINKEDIN_CLIENT_SECRET,
+                },
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+            )
+            resp.raise_for_status()
+            td = resp.json()
+
+        expires_in = td.get("expires_in")
+        expires_at = (
+            datetime.now(timezone.utc) + timedelta(seconds=int(expires_in))
+            if expires_in
+            else None
+        )
+        return TokenBundle(
+            access_token=td["access_token"],
+            # LinkedIn may or may not rotate the refresh token on refresh.
+            # Pass whatever they returned; upsert_account() preserves the old
+            # one if this is None.
+            refresh_token=td.get("refresh_token"),
+            expires_at=expires_at,
+        )
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=20))
     async def publish(

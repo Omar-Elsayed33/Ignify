@@ -12,6 +12,8 @@ from typing import Any
 
 import httpx
 
+from app.core.url_safety import UnsafeURLError, validate_public_url
+
 log = logging.getLogger(__name__)
 
 _UA = "Mozilla/5.0 (compatible; Ignify-Bot/1.0; +https://ignify.ai)"
@@ -25,17 +27,32 @@ def _attr(tag: Any, attr: str = "content") -> str:
 
 
 async def scrape_public_page(url: str) -> dict[str, Any]:
-    """Fetch a public URL and extract title/OG metadata + headings & blog links."""
+    """Fetch a public URL and extract title/OG metadata + headings & blog links.
+
+    The URL must pass SSRF safety checks (public, non-loopback, non-RFC1918)
+    before we make any outbound request.
+    """
     if not url:
         return {"error": "no_url", "fetched_at": datetime.now(timezone.utc).isoformat()}
+
+    try:
+        safe_url = validate_public_url(url)
+    except UnsafeURLError as e:
+        log.warning("scrape_public_page refused unsafe URL: %s (%s)", url, e)
+        return {
+            "url": url,
+            "error": f"unsafe_url: {e}",
+            "fetched_at": datetime.now(timezone.utc).isoformat(),
+        }
 
     try:
         async with httpx.AsyncClient(
             timeout=20.0,
             follow_redirects=True,
+            max_redirects=5,
             headers={"User-Agent": _UA, "Accept-Language": "en,ar;q=0.9"},
         ) as c:
-            r = await c.get(url)
+            r = await c.get(safe_url)
     except Exception as e:  # noqa: BLE001
         log.info("scrape_public_page fetch failed for %s: %s", url, e)
         return {
@@ -43,6 +60,20 @@ async def scrape_public_page(url: str) -> dict[str, Any]:
             "error": f"fetch_failed: {e}",
             "fetched_at": datetime.now(timezone.utc).isoformat(),
         }
+
+    # Defense against SSRF-via-redirect: if the server 302s us to a private IP,
+    # refuse to process the response body.
+    final_url = str(r.url)
+    if final_url != safe_url:
+        try:
+            validate_public_url(final_url)
+        except UnsafeURLError as e:
+            log.warning("scrape_public_page redirected to unsafe URL %s: %s", final_url, e)
+            return {
+                "url": url,
+                "error": f"unsafe_redirect: {e}",
+                "fetched_at": datetime.now(timezone.utc).isoformat(),
+            }
 
     if r.status_code != 200:
         return {

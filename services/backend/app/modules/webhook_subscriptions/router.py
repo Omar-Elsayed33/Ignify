@@ -27,6 +27,8 @@ from pydantic import BaseModel, Field, HttpUrl
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
+from app.core.url_safety import UnsafeURLError, validate_public_url
 from app.db.models import Webhook
 from app.dependencies import CurrentUser, DbSession
 
@@ -107,11 +109,21 @@ async def create_webhook(
     if not data.events:
         raise HTTPException(status_code=400, detail="events_required")
 
+    # SSRF protection: the tenant controls the URL. Validate it points to a
+    # public IP and (in production) uses HTTPS before we ever persist it.
+    # This prevents a tenant from registering `http://redis:6379/...` as a
+    # webhook target and turning our backend into an internal-network scanner.
+    require_https = not settings.DEBUG
+    try:
+        safe_url = validate_public_url(str(data.url), require_https=require_https)
+    except UnsafeURLError as e:
+        raise HTTPException(status_code=422, detail=f"invalid_webhook_url: {e}") from None
+
     secret = "whsec_" + secrets.token_urlsafe(28)
     row = Webhook(
         tenant_id=user.tenant_id,
         created_by=user.id,
-        url=str(data.url),
+        url=safe_url,
         events=list(data.events),
         secret=secret,
         is_active=True,
@@ -140,6 +152,12 @@ async def delete_webhook(webhook_id: uuid.UUID, user: CurrentUser, db: DbSession
 
 
 # ── Dispatch helper ────────────────────────────────────────────────────────────
+# Delivery discipline — keep these small. A single tenant with 10 webhooks
+# shouldn't block the caller. For volume, move dispatch to Celery in Phase 3.
+_DISPATCH_TIMEOUT_SECONDS = 5.0
+_DISPATCH_MAX_RETRIES = 0  # No retry in inline dispatch; Celery will add retries later.
+
+
 async def dispatch_event(
     db: AsyncSession,
     *,
@@ -147,7 +165,15 @@ async def dispatch_event(
     event: str,
     payload: dict[str, Any],
 ) -> None:
-    """Fire-and-forget POST to every active webhook subscribed to `event` for this tenant."""
+    """Fire-and-forget POST to every active webhook subscribed to `event` for this tenant.
+
+    Each delivery:
+    - Re-validates the destination URL (defense-in-depth for rows created before
+      SSRF checks were added or if DNS rebinding attempts were made since).
+    - Signs the body with HMAC-SHA256 using the per-webhook secret.
+    - Records the response status code; failures leave status_code=0.
+    - Never logs the secret.
+    """
     if event not in SUPPORTED_EVENTS:
         logger.warning("dispatch_event: unknown event %r (tenant=%s)", event, tenant_id)
         return
@@ -161,14 +187,32 @@ async def dispatch_event(
     if not hooks:
         return
 
-    body = json.dumps({"event": event, "payload": payload, "ts": datetime.now(timezone.utc).isoformat()}).encode()
+    body = json.dumps(
+        {"event": event, "payload": payload, "ts": datetime.now(timezone.utc).isoformat()}
+    ).encode()
+    require_https = not settings.DEBUG
 
-    async with httpx.AsyncClient(timeout=10.0) as client:
+    # follow_redirects=False prevents redirect-based SSRF at delivery time.
+    # A legit webhook receiver doesn't need to redirect our POSTs.
+    async with httpx.AsyncClient(
+        timeout=_DISPATCH_TIMEOUT_SECONDS, follow_redirects=False
+    ) as client:
         for hook in hooks:
+            try:
+                safe_url = validate_public_url(hook.url, require_https=require_https)
+            except UnsafeURLError as e:
+                logger.warning(
+                    "webhook delivery skipped — url failed safety check webhook_id=%s err=%s",
+                    hook.id, e,
+                )
+                hook.last_delivery_at = datetime.now(timezone.utc)
+                hook.last_status_code = 0
+                continue
+
             sig = hmac.new(hook.secret.encode(), body, hashlib.sha256).hexdigest()
             try:
                 resp = await client.post(
-                    hook.url,
+                    safe_url,
                     content=body,
                     headers={
                         "Content-Type": "application/json",
@@ -179,7 +223,10 @@ async def dispatch_event(
                 hook.last_delivery_at = datetime.now(timezone.utc)
                 hook.last_status_code = resp.status_code
             except Exception as e:  # noqa: BLE001
-                logger.warning("webhook delivery failed url=%s err=%s", hook.url, e)
+                # Never include the secret in logs. The URL alone is fine.
+                logger.warning(
+                    "webhook delivery failed webhook_id=%s err=%s", hook.id, e,
+                )
                 hook.last_delivery_at = datetime.now(timezone.utc)
                 hook.last_status_code = 0
     await db.flush()
