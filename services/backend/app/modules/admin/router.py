@@ -497,6 +497,88 @@ async def cost_stats(db: DbSession, days: int = 30):
     return CostStatsResponse(by_agent=by_agent, by_tenant=by_tenant, total_cost_usd=total)
 
 
+# ── Risk monitoring: top spenders + at-risk tenants ──────────────────────────
+
+
+@router.get("/risk/top-spenders", dependencies=[superadmin_dep])
+async def risk_top_spenders(db: DbSession, limit: int = 20):
+    """Phase 6 P5: top tenants ranked by `usage_pct` (spend / budget).
+
+    Surfaces any tenant that's:
+    - ≥ 100% of their AI budget (blocked — action needed)
+    - 80-99% (soft-warning — may need reach-out or budget top-up)
+    - 50-79% (healthy growth — fine, just informational)
+
+    Ordered descending by pct so the riskiest tenants are at the top.
+    """
+    from app.db.models import TenantOpenRouterConfig
+
+    result = await db.execute(
+        select(
+            TenantOpenRouterConfig.tenant_id,
+            Tenant.name.label("tenant_name"),
+            TenantOpenRouterConfig.monthly_limit_usd.label("limit_usd"),
+            TenantOpenRouterConfig.usage_usd.label("usage_usd"),
+        )
+        .join(Tenant, Tenant.id == TenantOpenRouterConfig.tenant_id)
+        .order_by(
+            # Sort by usage percentage descending — highest risk first.
+            (TenantOpenRouterConfig.usage_usd
+             / func.greatest(TenantOpenRouterConfig.monthly_limit_usd, 0.01))
+            .desc()
+        )
+        .limit(limit)
+    )
+    rows = result.all()
+
+    items = []
+    for r in rows:
+        limit_usd = float(r.limit_usd or 0)
+        usage_usd = float(r.usage_usd or 0)
+        pct = (usage_usd / limit_usd) if limit_usd > 0 else 0.0
+        if pct >= 1.0:
+            bucket = "blocked"
+        elif pct >= 0.80:
+            bucket = "soft_warning"
+        elif pct >= 0.50:
+            bucket = "healthy_growth"
+        else:
+            bucket = "low_usage"
+        items.append({
+            "tenant_id": str(r.tenant_id),
+            "tenant_name": r.tenant_name,
+            "limit_usd": round(limit_usd, 2),
+            "usage_usd": round(usage_usd, 4),
+            "usage_pct": round(pct * 100, 1),
+            "bucket": bucket,
+        })
+    return {"tenants": items, "thresholds": {"blocked": 100, "soft_warning": 80, "healthy_growth": 50}}
+
+
+@router.get("/risk/tenant/{tenant_id}/spend", dependencies=[superadmin_dep])
+async def risk_tenant_spend(tenant_id: str, db: DbSession, days: int = 30):
+    """Per-feature + per-model spend breakdown for a single tenant.
+
+    Answers "where is this tenant's money going?" — used when investigating
+    a tenant near or over their budget. Wraps `ai_budget.tenant_spend_breakdown`.
+    """
+    import uuid as _uuid
+    from app.core.ai_budget import get_status, tenant_spend_breakdown
+
+    try:
+        tid = _uuid.UUID(tenant_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="invalid_tenant_id") from None
+
+    breakdown = await tenant_spend_breakdown(db, tid, days=days)
+    status = await get_status(db, tid)
+    return {
+        "tenant_id": str(tid),
+        "budget_status": status.to_dict(),
+        "spend_breakdown": breakdown,
+    }
+
+
 # ── Agents: Graph Introspection ──
 
 

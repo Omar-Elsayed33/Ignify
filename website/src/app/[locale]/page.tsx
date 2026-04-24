@@ -4,6 +4,7 @@ import React from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { motion } from "framer-motion";
+import TrustSection from "@/components/TrustSection";
 import {
   ArrowRight,
   Sparkles,
@@ -357,6 +358,12 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* TRUST — "No fake promises" section. Intentionally placed between
+          "what we do" and "how it works" so a skeptical visitor who's
+          reached this point has our differentiator clearly stated before
+          they weigh pricing. */}
+      <TrustSection />
 
       {/* CUSTOMER JOURNEY — 5 steps, BIG and OBVIOUS */}
       <section className="py-24 lg:py-32 bg-surface-container-low relative overflow-hidden">

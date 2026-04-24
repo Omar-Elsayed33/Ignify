@@ -33,6 +33,32 @@ router = APIRouter(prefix="/creative-gen", tags=["creative-gen"])
 async def generate(data: CreativeGenerateRequest, user: CurrentUser, db: DbSession):
     if not user.tenant_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tenant")
+
+    # Phase 6 P5: AI cost safety. Replicate image gens are cheap individually
+    # (~$0.02) but a tenant could batch thousands and burn the dollar budget
+    # even with images-per-month quota remaining.
+    from app.core.ai_budget import (
+        AIBudgetExceeded,
+        check as _budget_check,
+        estimate_feature,
+    )
+    try:
+        await _budget_check(
+            db, user.tenant_id,
+            estimated_cost_usd=estimate_feature("creative_gen.image"),
+            feature="creative_gen.image",
+        )
+    except AIBudgetExceeded as e:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail={
+                "code": f"ai_budget_{e.reason}",
+                "message": "Monthly AI budget reached — upgrade your plan to continue.",
+                "limit_usd": round(e.limit_usd, 2),
+                "usage_usd": round(e.usage_usd, 4),
+            },
+        ) from None
+
     plan_ctx = await fetch_plan_context(db, user.tenant_id, data.plan_id, data.language)
     effective_idea = f"{plan_ctx}\n\nCreative brief: {data.idea}" if plan_ctx else data.idea
     try:

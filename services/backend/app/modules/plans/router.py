@@ -24,6 +24,7 @@ from app.modules.plans.schemas import (
     PlanResponse,
     PlanUpdateSection,
 )
+from app.modules.plans.service import PlanModeNotAllowed
 from app.modules.plans.service import (
     _build_business_profile,
     _persist_plan,
@@ -300,6 +301,22 @@ async def generate(data: PlanGenerateRequest, user: CurrentUser, db: DbSession):
                 "limit_usd": round(e.limit_usd, 2),
                 "usage_usd": round(e.usage_usd, 4),
                 "estimated_cost_usd": round(e.estimated_cost_usd, 4),
+            },
+        ) from None
+    except PlanModeNotAllowed as e:
+        # Phase 6 P4: tier-gated plan mode. 403 with a code the frontend can
+        # route to the pricing page highlighting the tier that unlocks this mode.
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "plan_mode_not_available",
+                "message": (
+                    f"Your current tier ({e.plan_slug}) doesn't include "
+                    f"{e.requested_mode.title()} mode. Upgrade to unlock it."
+                ),
+                "current_plan": e.plan_slug,
+                "requested_mode": e.requested_mode,
+                "allowed_modes": e.allowed,
             },
         ) from None
     except HTTPException:

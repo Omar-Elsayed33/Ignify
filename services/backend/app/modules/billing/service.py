@@ -25,6 +25,19 @@ from app.db.models import (
 
 # ── Plan catalog defaults ───────────────────────────────────────────────────
 
+# Phase 6 P3: pricing restructured to be cost-defensible at scale.
+#
+# Key change: every tier now declares three things that actually cost us money:
+#   - plans_per_month  → how many full strategy runs (14-agent pipeline)
+#   - deep_plans_per_month → subset of plans_per_month that can use Deep mode
+#   - ai_budget_usd    → hard dollar cap enforced by core.ai_budget.check()
+#
+# The dollar cap is what keeps a single tenant from running $590 of LLM spend
+# against a $99 subscription. It's enforced server-side, independent of the
+# per-resource quotas below.
+#
+# Sizing principle: ai_budget_usd ~ 20–25% of price_monthly (gross margin
+# target ≥ 75% on AI cost alone, before other infra).
 DEFAULT_PLANS: list[dict[str, Any]] = [
     {
         "code": "free",
@@ -38,10 +51,16 @@ DEFAULT_PLANS: list[dict[str, Any]] = [
         "max_channels": 1,
         "max_credits": 100,
         "features": ["basic_content", "1_channel"],
-        # `videos: 0` because video generation is feature-flagged off (Phase 3 P3-1);
-        # customers aren't charged for a feature that doesn't work. Will be bumped
-        # when VIDEO_GEN_ENABLED=1 and the renderer ships.
-        "limits": {"articles": 5, "images": 10, "videos": 0, "ai_tokens": 50_000},
+        "limits": {
+            "plans": 1,              # one plan/month — just enough to evaluate
+            "deep_plans": 0,         # no Deep mode on Free — too expensive
+            "articles": 5,
+            "images": 10,
+            "videos": 0,             # video gen disabled platform-wide
+            "ai_tokens": 50_000,
+            "ai_budget_usd": 0.50,   # caps LLM spend; Fast plan ~$0.01 × ~30
+        },
+        "plan_modes_allowed": ["fast"],
         "coming_soon": [],
         "popular": False,
     },
@@ -57,7 +76,41 @@ DEFAULT_PLANS: list[dict[str, Any]] = [
         "max_channels": 3,
         "max_credits": 1000,
         "features": ["basic_content", "ai_creative", "social_scheduler", "3_channels"],
-        "limits": {"articles": 30, "images": 100, "videos": 0, "ai_tokens": 500_000},
+        "limits": {
+            "plans": 5,
+            "deep_plans": 0,         # Starter stays Fast + Medium only
+            "articles": 30,
+            "images": 100,
+            "videos": 0,
+            "ai_tokens": 500_000,
+            "ai_budget_usd": 6.00,   # ~20% of $29 — covers ~15 Medium + buffer
+        },
+        "plan_modes_allowed": ["fast", "medium"],
+        "coming_soon": [],
+        "popular": False,
+    },
+    {
+        "code": "growth",
+        "slug": "growth",
+        "name_en": "Growth",
+        "name_ar": "النمو",
+        "price_usd": 59.0,
+        "price_egp": 2999.0,
+        "price_monthly": 59.0,
+        "max_users": 5,
+        "max_channels": 5,
+        "max_credits": 2500,
+        "features": ["basic_content", "ai_creative", "social_scheduler", "seo", "analytics", "5_channels"],
+        "limits": {
+            "plans": 10,
+            "deep_plans": 3,         # first tier with Deep access — limited
+            "articles": 75,
+            "images": 250,
+            "videos": 0,
+            "ai_tokens": 1_500_000,
+            "ai_budget_usd": 12.00,  # ~20% of $59 — covers 3 Deep + plenty of Medium
+        },
+        "plan_modes_allowed": ["fast", "medium", "deep"],
         "coming_soon": [],
         "popular": False,
     },
@@ -81,10 +134,17 @@ DEFAULT_PLANS: list[dict[str, Any]] = [
             "seo",
             "10_channels",
         ],
-        # `ai_video` removed from `features` until renderer ships. Listed in
-        # `coming_soon` so the pricing page can show it greyed with a "soon" tag.
+        "limits": {
+            "plans": 25,
+            "deep_plans": 8,
+            "articles": 150,
+            "images": 500,
+            "videos": 0,
+            "ai_tokens": 3_000_000,
+            "ai_budget_usd": 22.00,  # ~22% of $99 — matches DEEP_MODE_MONTHLY_CAP spend
+        },
+        "plan_modes_allowed": ["fast", "medium", "deep"],
         "coming_soon": ["ai_video"],
-        "limits": {"articles": 150, "images": 500, "videos": 0, "ai_tokens": 3_000_000},
         "popular": True,
     },
     {
@@ -109,13 +169,17 @@ DEFAULT_PLANS: list[dict[str, Any]] = [
             "priority_support",
             "unlimited_channels",
         ],
-        "coming_soon": ["ai_video"],
         "limits": {
-            "articles": -1,
+            "plans": 100,
+            "deep_plans": 25,
+            "articles": -1,           # unlimited
             "images": -1,
             "videos": 0,
             "ai_tokens": 20_000_000,
+            "ai_budget_usd": 70.00,   # ~23% of $299 — supports agency resellers
         },
+        "plan_modes_allowed": ["fast", "medium", "deep"],
+        "coming_soon": ["ai_video"],
         "popular": False,
     },
 ]
@@ -200,6 +264,9 @@ def _row_to_plan_item(plan: Plan, currency: Optional[str] = None) -> dict[str, A
         # rather than listing them as active capabilities.
         "coming_soon": meta.get("coming_soon", []) or [],
         "limits": meta.get("limits", {}) or {},
+        # Phase 6 P3: which plan-generation modes are allowed on this tier.
+        # Frontend locks out Deep mode for Free/Starter, Medium+Deep for Free.
+        "plan_modes_allowed": meta.get("plan_modes_allowed", ["fast", "medium", "deep"]),
         "popular": bool(meta.get("popular", False)),
         "is_active": bool(getattr(plan, "is_active", True)),
     }

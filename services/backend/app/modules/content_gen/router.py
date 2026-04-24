@@ -76,6 +76,38 @@ _TARGET_TO_POST_TYPE = {
 async def generate(data: ContentGenerateRequest, user: CurrentUser, db: DbSession):
     if not user.tenant_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tenant")
+
+    # Phase 6 P5: AI cost safety. `enforce_quota` above counts article rows,
+    # but dollar-spend is a separate concern — a tenant can have articles
+    # quota remaining while being out of AI budget. Gate on both.
+    from app.core.ai_budget import (
+        AIBudgetExceeded,
+        check as _budget_check,
+        estimate_feature,
+    )
+    est = estimate_feature("content_gen.generate") * max(1, data.variants)
+    try:
+        await _budget_check(
+            db, user.tenant_id,
+            estimated_cost_usd=est,
+            feature="content_gen.generate",
+        )
+    except AIBudgetExceeded as e:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail={
+                "code": f"ai_budget_{e.reason}",
+                "message": (
+                    "Monthly AI budget reached — upgrade your plan to continue."
+                    if e.reason == "limit_reached"
+                    else "This request would exceed your remaining AI budget."
+                ),
+                "limit_usd": round(e.limit_usd, 2),
+                "usage_usd": round(e.usage_usd, 4),
+                "estimated_cost_usd": round(e.estimated_cost_usd, 4),
+            },
+        ) from None
+
     plan_ctx = await fetch_plan_context(db, user.tenant_id, data.plan_id, data.language)
     effective_brief = f"{plan_ctx}\n\n{data.brief}" if plan_ctx else data.brief
 

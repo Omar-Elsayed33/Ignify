@@ -17,8 +17,23 @@ from app.agents.strategy.subagents.content_calendar import ContentCalendar
 from app.agents.strategy.subagents.kpi_setter import KPISetter
 from app.agents.strategy.subagents.market_analyzer import MarketAnalyzer
 from app.agents.tracing import AgentTracer
-from app.db.models import AgentRun, BrandSettings, MarketingPlan, Tenant
+from app.db.models import AgentRun, BrandSettings, MarketingPlan, Plan, Tenant
 from app.modules.plan_versioning.service import snapshot_plan
+
+
+class PlanModeNotAllowed(Exception):
+    """Raised when a tenant's current subscription tier doesn't include the
+    requested plan_mode. Translated to HTTP 403 by the router so the frontend
+    can show an upgrade CTA targeted at the mode (e.g. "Upgrade to Growth to
+    unlock Deep mode")."""
+    def __init__(self, *, plan_slug: str, requested_mode: str, allowed: list[str]) -> None:
+        self.plan_slug = plan_slug
+        self.requested_mode = requested_mode
+        self.allowed = allowed
+        super().__init__(
+            f"Plan mode '{requested_mode}' not available on tier '{plan_slug}'. "
+            f"Allowed: {allowed}"
+        )
 
 
 _SECTION_TO_SUBAGENT = {
@@ -187,6 +202,29 @@ async def generate_plan(
     urgency_days: int = 30,
     plan_mode: str = "fast",
 ) -> MarketingPlan:
+    # Phase 6 P4: plan-mode access by tier. Free/Starter tenants who hit the
+    # /generate endpoint with plan_mode=deep should get a clear "upgrade" error,
+    # not a confusing "budget exceeded" or a successful expensive run.
+    # We look up the tenant's plan slug and allowed modes from the billing catalog.
+    from app.modules.billing.service import DEFAULT_PLANS
+    tenant_row = await db.execute(
+        select(Tenant).where(Tenant.id == tenant_id)
+    )
+    _tenant = tenant_row.scalar_one_or_none()
+    if _tenant is not None and _tenant.plan_id is not None:
+        plan_row = await db.execute(select(Plan).where(Plan.id == _tenant.plan_id))
+        _plan_db = plan_row.scalar_one_or_none()
+        if _plan_db is not None:
+            _slug = _plan_db.slug
+            _catalog = next((p for p in DEFAULT_PLANS if p["slug"] == _slug), None)
+            allowed = (_catalog or {}).get(
+                "plan_modes_allowed", ["fast", "medium", "deep"]
+            )
+            if plan_mode.lower() not in [m.lower() for m in allowed]:
+                raise PlanModeNotAllowed(
+                    plan_slug=_slug, requested_mode=plan_mode, allowed=allowed
+                )
+
     # Phase 5 P1: AI cost gate. Reject unaffordable plan requests BEFORE we
     # spin up a 3-minute agent run. Surfaces as HTTP 402 with a machine-readable
     # reason code so the frontend can route the user to the upgrade CTA.
