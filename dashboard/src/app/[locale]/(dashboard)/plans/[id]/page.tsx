@@ -15,6 +15,7 @@ import { api, BASE_URL, getAccessToken } from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
 import Skeleton, { SkeletonStatCard, SkeletonText } from "@/components/Skeleton";
 import RealismWarnings, { type RealismWarning } from "@/components/RealismWarnings";
+import ThisWeekActions from "@/components/ThisWeekActions";
 import * as Tabs from "@radix-ui/react-tabs";
 import {
   AlertCircle,
@@ -1581,6 +1582,15 @@ export default function PlanDetailPage({
               {aiNotes?.warnings?.length ? (
                 <div className="mb-6">
                   <RealismWarnings warnings={aiNotes.warnings} />
+                </div>
+              ) : null}
+
+              {/* Phase 9 P2: plain-language "this week" extract from the
+                  execution_roadmap section. Business owners wake up on Monday
+                  wanting to know what to DO — not browse 14 strategy tabs. */}
+              {plan?.execution_roadmap ? (
+                <div className="mb-6">
+                  <ThisWeekActions roadmap={plan.execution_roadmap} />
                 </div>
               ) : null}
 

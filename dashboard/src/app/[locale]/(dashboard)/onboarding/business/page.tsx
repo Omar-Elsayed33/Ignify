@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { api, ApiError } from "@/lib/api";
 import { Loader2, Plus, X, Globe } from "lucide-react";
 import AIAssistButton from "@/components/AIAssistButton";
 import OnboardingProgress from "@/components/OnboardingProgress";
 import { useToast } from "@/components/Toaster";
+import { WhyWeAskField } from "@/components/WhyWeAsk";
 
 const INDUSTRIES = ["ecommerce", "restaurant", "clinic", "real_estate", "services", "saas", "other"] as const;
 const COUNTRIES = ["EG", "SA", "AE", "KW", "QA", "BH", "OM", "other"] as const;
@@ -16,6 +17,7 @@ const LANGS = ["ar", "en", "both"] as const;
 export default function BusinessProfilePage() {
   const t = useTranslations("onboarding");
   const tAI = useTranslations("aiAssist");
+  const locale = useLocale();
   const router = useRouter();
   const toast = useToast();
 
@@ -161,6 +163,7 @@ export default function BusinessProfilePage() {
               </option>
             ))}
           </select>
+          <WhyWeAskField fieldKey="industry" locale={locale} />
         </div>
 
         <div>
@@ -176,6 +179,7 @@ export default function BusinessProfilePage() {
               </option>
             ))}
           </select>
+          <WhyWeAskField fieldKey="country" locale={locale} />
         </div>
       </div>
 
@@ -208,6 +212,7 @@ export default function BusinessProfilePage() {
           placeholder={t("business.descriptionPlaceholder")}
           className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
         />
+        <WhyWeAskField fieldKey="description" locale={locale} />
       </div>
 
       <div>
@@ -219,6 +224,7 @@ export default function BusinessProfilePage() {
           placeholder={t("business.audiencePlaceholder")}
           className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
         />
+        <WhyWeAskField fieldKey="target_audience" locale={locale} />
       </div>
 
       <div>
