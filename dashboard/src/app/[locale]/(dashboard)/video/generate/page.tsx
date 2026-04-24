@@ -97,6 +97,11 @@ export default function VideoGeneratePage() {
   });
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Phase 7 P4c: distinguish "feature is off right now" from generic errors.
+  // Backend returns HTTP 503 with code=video_generation_unavailable when
+  // VIDEO_GEN_ENABLED=false. Frontend must render a "Coming soon" state,
+  // not a red error toast that invites the user to retry forever.
+  const [comingSoon, setComingSoon] = useState<{ eta?: string } | null>(null);
   const [activeStep, setActiveStep] = useState(0);
   const [result, setResult] = useState<GenerateResponse | null>(null);
   const [runId, setRunId] = useState<string | null>(null);
@@ -187,7 +192,14 @@ export default function VideoGeneratePage() {
       );
       setRunId(res.run_id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("errors.failed"));
+      // Special-case the "feature off" signal so users don't chase a phantom bug.
+      const anyErr = err as { code?: string; data?: { detail?: { code?: string; eta?: string } } };
+      const code = anyErr?.code ?? anyErr?.data?.detail?.code;
+      if (code === "video_generation_unavailable") {
+        setComingSoon({ eta: anyErr?.data?.detail?.eta });
+      } else {
+        setError(err instanceof Error ? err.message : t("errors.failed"));
+      }
       setGenerating(false);
     }
   }
@@ -237,6 +249,32 @@ export default function VideoGeneratePage() {
             <div className="mb-4 flex items-center gap-3 rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
               <AlertCircle className="h-4 w-4 shrink-0" />
               {error}
+            </div>
+          )}
+
+          {/* Phase 7 P4c: "Coming soon" state when backend returns 503 with
+              code=video_generation_unavailable. Replaces the red error toast
+              that used to render on the same condition. */}
+          {comingSoon && (
+            <div className="mb-4 rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 p-6">
+              <div className="flex items-start gap-4">
+                <div className="rounded-xl bg-primary/10 p-3 text-primary">
+                  <Loader2 className="h-6 w-6" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-base font-bold text-on-surface">
+                    توليد الفيديو قادم قريباً
+                  </h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-on-surface-variant">
+                    أتممنا بناء السيناريو والصوت، وما زلنا نُنهي الـRenderer النهائي.
+                    لن يتم خصم أي رصيد من باقتك حتى تعمل الميزة بالكامل
+                    {comingSoon.eta ? ` — ETA: ${comingSoon.eta}` : ""}.
+                  </p>
+                  <p className="mt-2 text-xs text-on-surface-variant">
+                    في هذه الأثناء، استخدم مولد المحتوى + مولد الصور لإنشاء مواد التسويق.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 

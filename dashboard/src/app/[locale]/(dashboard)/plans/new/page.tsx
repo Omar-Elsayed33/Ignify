@@ -211,6 +211,42 @@ export default function NewPlanPage() {
     loadReadiness();
   }, []);
 
+  // Phase 7 P1.2: fetch the tenant's plan-mode entitlements so we can DISABLE
+  // the Deep/Medium cards for Free/Starter tenants instead of letting them
+  // select and fail with a backend 403. One API call, cached for the
+  // page's lifetime.
+  const [allowedModes, setAllowedModes] = useState<PlanMode[]>([
+    "fast",
+    "medium",
+    "deep",
+  ]);
+  const [entitlementPlanSlug, setEntitlementPlanSlug] = useState<string | null>(null);
+  useEffect(() => {
+    (async () => {
+      try {
+        const ent = await api.get<{
+          plan_slug: string | null;
+          plan_modes_allowed: PlanMode[];
+        }>("/api/v1/billing/entitlements");
+        if (ent?.plan_modes_allowed?.length) {
+          setAllowedModes(ent.plan_modes_allowed);
+          setEntitlementPlanSlug(ent.plan_slug);
+          // If the default (`fast`) isn't in the list for some reason, pick
+          // whatever the first allowed mode is. Also snap back to an allowed
+          // mode if the user somehow pre-selected a locked one.
+          setForm((f) =>
+            ent.plan_modes_allowed.includes(f.plan_mode)
+              ? f
+              : { ...f, plan_mode: ent.plan_modes_allowed[0] }
+          );
+        }
+      } catch {
+        // Fall back to permissive defaults; backend gate is still the
+        // final authority if this fetch fails.
+      }
+    })();
+  }, []);
+
   const [form, setForm] = useState<GenerateForm>({
     title: "",
     period_days: 30,
@@ -713,16 +749,24 @@ export default function NewPlanPage() {
                     ).map(({ mode, icon, color, name_ar, name_en, models_ar, models_en, use_ar, use_en, sub_ar, sub_en }) => {
                       const active = form.plan_mode === mode;
                       const isAr = locale === "ar";
+                      // Phase 7 P1.2: lock modes the current tier doesn't include.
+                      const locked = !allowedModes.includes(mode);
                       return (
                         <button
                           key={mode}
                           type="button"
-                          onClick={() => setForm((f) => ({ ...f, plan_mode: mode }))}
+                          onClick={() => {
+                            if (locked) return;
+                            setForm((f) => ({ ...f, plan_mode: mode }));
+                          }}
+                          aria-disabled={locked}
                           className={clsx(
-                            "flex flex-col gap-2 rounded-2xl border-2 p-4 text-start transition-all",
-                            active
-                              ? "border-primary bg-primary/5 shadow-soft"
-                              : "border-transparent bg-surface-container-low hover:bg-surface-container"
+                            "relative flex flex-col gap-2 rounded-2xl border-2 p-4 text-start transition-all",
+                            locked
+                              ? "cursor-not-allowed border-transparent bg-surface-container-low opacity-55"
+                              : active
+                                ? "border-primary bg-primary/5 shadow-soft"
+                                : "border-transparent bg-surface-container-low hover:bg-surface-container"
                           )}
                         >
                           <div className={clsx("flex items-center gap-2 font-headline font-bold text-on-surface", color)}>
@@ -741,10 +785,33 @@ export default function NewPlanPage() {
                           <p className="text-[11px] text-on-surface-variant opacity-75">
                             {isAr ? sub_ar : sub_en}
                           </p>
-                          {active && (
+                          {active && !locked && (
                             <div className="flex items-center gap-1 mt-1">
                               <Check className="h-3 w-3 text-primary" />
                               <span className="text-[11px] font-bold text-primary">{t("form.mode.selected")}</span>
+                            </div>
+                          )}
+                          {locked && (
+                            <div className="mt-1 flex items-center gap-1">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-3 w-3 text-on-surface-variant"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <rect x="5" y="11" width="14" height="10" rx="2" />
+                                <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                              </svg>
+                              <Link
+                                href="/billing"
+                                className="text-[11px] font-semibold text-primary underline decoration-dotted underline-offset-2"
+                              >
+                                {isAr ? "رقّ خطتك لتفعيل هذا الوضع" : "Upgrade to unlock"}
+                              </Link>
                             </div>
                           )}
                         </button>

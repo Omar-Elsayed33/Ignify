@@ -20,14 +20,34 @@ logger = logging.getLogger(__name__)
 
 PROVISIONING_BASE = "https://openrouter.ai/api/v1/keys"
 
-# Monthly AI credit limits per plan slug (USD)
-PLAN_AI_LIMITS: dict[str, float] = {
-    "free": 1.00,
-    "starter": 2.50,
-    "pro": 8.00,
-    "agency": 22.00,
-}
-DEFAULT_LIMIT = 2.50
+DEFAULT_LIMIT = 0.50  # matches Free-tier dollar cap — safer fallback than $2.50
+
+
+def _plan_budget_from_catalog(plan_slug: str | None) -> float | None:
+    """Read `limits.ai_budget_usd` from DEFAULT_PLANS — the single source of
+    truth after Phase 6. Returns None if the slug isn't in the catalog so the
+    caller can fall back to DEFAULT_LIMIT.
+
+    Local import avoids a module-load cycle (billing.service imports crypto
+    which imports config which is loaded before this module).
+    """
+    if not plan_slug:
+        return None
+    try:
+        from app.modules.billing.service import DEFAULT_PLANS
+    except Exception:  # pragma: no cover — shouldn't happen at runtime
+        return None
+    for p in DEFAULT_PLANS:
+        if p.get("slug") == plan_slug:
+            limits = p.get("limits", {}) or {}
+            v = limits.get("ai_budget_usd")
+            if isinstance(v, (int, float)):
+                return float(v)
+    return None
+
+
+# Kept for back-compat with any external callers — now derived from catalog.
+PLAN_AI_LIMITS: dict[str, float] = {}  # populated lazily by limit_for_plan
 
 
 def _manager_key() -> str:
@@ -43,9 +63,14 @@ def _headers() -> dict[str, str]:
 
 
 def limit_for_plan(plan_slug: str | None) -> float:
-    if not plan_slug:
-        return DEFAULT_LIMIT
-    return PLAN_AI_LIMITS.get(plan_slug, DEFAULT_LIMIT)
+    """Return the monthly AI dollar budget for a plan slug.
+
+    Phase 7 P1: reads from billing.DEFAULT_PLANS so there's exactly one source
+    of truth. If a slug isn't in the catalog, falls back to DEFAULT_LIMIT
+    ($0.50 — matches Free tier, fail-safe).
+    """
+    v = _plan_budget_from_catalog(plan_slug)
+    return v if v is not None else DEFAULT_LIMIT
 
 
 async def provision_key(tenant_id: str, tenant_name: str, plan_slug: str | None) -> dict[str, Any]:

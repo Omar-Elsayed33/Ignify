@@ -99,13 +99,22 @@ async function request<T>(
     const errorData = await response.json().catch(() => ({}));
     const raw = errorData.detail ?? errorData.message ?? "Request failed";
     // FastAPI HTTPException(detail={...}) nests an object; coerce safely to string.
-    const msg =
-      typeof raw === "string"
+    // Phase 7 P4a: backend now returns detail as {code, message, ...} for
+    // budget / quota / plan-mode / approval errors. Prefer detail.message so
+    // ApiError.message is user-facing, and stash detail.code on the error
+    // instance so toast handlers can switch on it (e.g. render an upgrade CTA
+    // for ai_budget_* codes).
+    const isStructured =
+      raw && typeof raw === "object" && (raw.code || raw.message);
+    const msg = isStructured
+      ? (typeof raw.message === "string" ? raw.message : `HTTP ${response.status}`)
+      : typeof raw === "string"
         ? raw
         : typeof raw?.detail === "string"
           ? raw.detail
           : `HTTP ${response.status}`;
-    throw new ApiError(response.status, msg, errorData);
+    const code = isStructured && typeof raw.code === "string" ? raw.code : null;
+    throw new ApiError(response.status, msg, errorData, code);
   }
 
   if (response.status === 204) {
@@ -119,10 +128,35 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     message: string,
-    public data?: unknown
+    public data?: unknown,
+    /**
+     * Structured error code from the backend. Present for:
+     * - ai_budget_limit_reached | ai_budget_would_exceed | ai_budget_deep_mode_cap
+     * - plan_mode_not_available
+     * - quota_exceeded
+     * - content_not_approved | content_post_not_found
+     * - video_generation_unavailable
+     * Callers switch on this to render tailored UX (upgrade CTA, approval
+     * prompt, coming-soon state) instead of a generic red toast.
+     */
+    public code: string | null = null
   ) {
     super(message);
     this.name = "ApiError";
+  }
+
+  /** Convenience: is this one of the ai_budget_* codes? */
+  get isBudgetError(): boolean {
+    return !!this.code && this.code.startsWith("ai_budget_");
+  }
+
+  /** Convenience: should the UI route the user to the upgrade page? */
+  get suggestsUpgrade(): boolean {
+    return (
+      this.isBudgetError ||
+      this.code === "plan_mode_not_available" ||
+      this.code === "quota_exceeded"
+    );
   }
 }
 

@@ -939,11 +939,26 @@ async def change_tenant_plan(tenant_id: uuid.UUID, data: TenantPlanUpdate, db: D
     dependencies=[superadmin_dep],
 )
 async def set_tenant_subscription(tenant_id: uuid.UUID, data: TenantSubscriptionUpdate, db: DbSession):
-    """Admin manually activates or deactivates a tenant's subscription."""
+    """Admin manually activates or deactivates a tenant's subscription.
+
+    Phase 7 P1: on activation, re-sync the tenant's AI budget to their current
+    plan. Prevents a re-activated tenant from sitting on an outdated
+    `monthly_limit_usd` that doesn't match their tier.
+    """
     tenant = (await db.execute(select(Tenant).where(Tenant.id == tenant_id))).scalar_one_or_none()
     if not tenant:
         raise HTTPException(status_code=404, detail="Tenant not found")
     tenant.subscription_active = data.subscription_active
+    if data.subscription_active:
+        from app.modules.ai_usage.service import sync_tenant_budget_to_plan
+        try:
+            await sync_tenant_budget_to_plan(db, tenant)
+        except Exception as e:  # noqa: BLE001
+            # Never block activation on budget sync — log + move on.
+            import logging
+            logging.getLogger(__name__).warning(
+                "budget sync failed on subscription activation tenant=%s: %s", tenant_id, e
+            )
     await db.commit()
     await db.refresh(tenant)
     return tenant

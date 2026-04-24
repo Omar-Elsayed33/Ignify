@@ -14,6 +14,7 @@ import EmptyState from "@/components/EmptyState";
 import { api, BASE_URL, getAccessToken } from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
 import Skeleton, { SkeletonStatCard, SkeletonText } from "@/components/Skeleton";
+import RealismWarnings, { type RealismWarning } from "@/components/RealismWarnings";
 import * as Tabs from "@radix-ui/react-tabs";
 import {
   AlertCircle,
@@ -1158,13 +1159,33 @@ export default function PlanDetailPage({
     );
   };
 
+  // Phase 7 P3: parallel-fetch the AI realism warnings so the reviewer sees
+  // them next to the plan without blocking the initial load on a second call.
+  const [aiNotes, setAiNotes] = useState<
+    { warnings: RealismWarning[]; has_errors: boolean } | null
+  >(null);
+
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await api.get<MarketingPlan>(`/api/v1/plans/${id}`);
-        setPlan(data);
+        // Kick both fetches off in parallel — ai-notes is optional so we
+        // don't let its failure stall plan rendering.
+        const [planResp, notesResp] = await Promise.allSettled([
+          api.get<MarketingPlan>(`/api/v1/plans/${id}`),
+          api.get<{ warnings: RealismWarning[]; has_errors: boolean }>(
+            `/api/v1/plans/${id}/ai-notes`
+          ),
+        ]);
+        if (planResp.status === "fulfilled") {
+          setPlan(planResp.value);
+        } else {
+          throw planResp.reason;
+        }
+        if (notesResp.status === "fulfilled") {
+          setAiNotes(notesResp.value);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : t("errorLoad"));
       } finally {
@@ -1554,6 +1575,15 @@ export default function PlanDetailPage({
 
               <div className="flex gap-6">
                 <div className="min-w-0 flex-1">
+              {/* Phase 7 P3: AI realism notes surface above the tabs so a
+                  reviewer sees them in the same glance as the plan header.
+                  Component renders nothing if warnings list is empty. */}
+              {aiNotes?.warnings?.length ? (
+                <div className="mb-6">
+                  <RealismWarnings warnings={aiNotes.warnings} />
+                </div>
+              ) : null}
+
               <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
                 {/* Pills tab nav */}
                 <Tabs.List className="mb-8 flex flex-wrap gap-2">

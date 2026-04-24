@@ -114,16 +114,51 @@ async def sync_tenant_usage(db: AsyncSession, config: TenantOpenRouterConfig) ->
 
 
 async def update_tenant_plan_limit(db: AsyncSession, tenant_id: uuid.UUID, plan_slug: str) -> None:
-    """Called when a tenant upgrades/downgrades — updates sub-key limit on OpenRouter."""
-    result = await db.execute(select(TenantOpenRouterConfig).where(TenantOpenRouterConfig.tenant_id == tenant_id))
+    """Sync a tenant's monthly AI budget with their plan's `ai_budget_usd`.
+
+    Phase 7 P1: called on every plan assignment / subscription approval /
+    tier change. Previously this bailed out silently if no
+    `TenantOpenRouterConfig` row existed, which left newly-approved tenants
+    with no budget config at all. Now we create the row on demand.
+
+    This function is idempotent and safe to call multiple times.
+    """
+    result = await db.execute(
+        select(TenantOpenRouterConfig).where(TenantOpenRouterConfig.tenant_id == tenant_id)
+    )
     config = result.scalar_one_or_none()
-    if not config:
-        return
     new_limit = limit_for_plan(plan_slug)
-    config.monthly_limit_usd = new_limit
+    if config is None:
+        # Tenant has no AI config yet (fresh tenant, or config never
+        # auto-provisioned). Create a row so the check() gate has something
+        # to read against on the next AI action.
+        config = TenantOpenRouterConfig(
+            tenant_id=tenant_id,
+            monthly_limit_usd=new_limit,
+        )
+        db.add(config)
+    else:
+        config.monthly_limit_usd = new_limit
     if config.openrouter_key_id:
+        # Update the remote OpenRouter sub-key limit to match.
         await update_key_limit(config.openrouter_key_id, new_limit)
     await db.flush()
+
+
+async def sync_tenant_budget_to_plan(db: AsyncSession, tenant: Tenant) -> None:
+    """Resolve the tenant's current plan and call `update_tenant_plan_limit`.
+
+    Convenience helper for places that already have a Tenant ORM object
+    (admin subscription toggle, offline-payment approval). Does nothing if
+    the tenant has no plan assigned yet.
+    """
+    if tenant.plan_id is None:
+        return
+    plan_row = await db.execute(select(Plan).where(Plan.id == tenant.plan_id))
+    plan = plan_row.scalar_one_or_none()
+    if plan is None:
+        return
+    await update_tenant_plan_limit(db, tenant.id, plan.slug)
 
 
 async def delete_tenant_ai_key(db: AsyncSession, tenant_id: uuid.UUID) -> None:

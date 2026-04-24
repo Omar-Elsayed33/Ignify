@@ -68,6 +68,62 @@ async def get_subscription(user: CurrentUser, db: DbSession):
     return await get_subscription_status(db, user.tenant_id)
 
 
+@router.get("/entitlements")
+async def get_entitlements(user: CurrentUser, db: DbSession):
+    """Phase 7 P1.2: returns the current tenant's capability matrix.
+
+    Response shape:
+        {
+          "plan_slug": "pro",
+          "plan_name_ar": "احترافي",
+          "plan_name_en": "Pro",
+          "subscription_active": true,
+          "features": [...],
+          "coming_soon": [...],
+          "limits": {...},
+          "plan_modes_allowed": ["fast", "medium", "deep"]
+        }
+
+    Used by the frontend to disable/lock UI elements the tenant's tier
+    doesn't include — plan-mode cards, feature buttons, etc. Faster than
+    calling /billing/plans and filtering client-side.
+    """
+    if not user.tenant_id:
+        raise HTTPException(status_code=403, detail="No tenant")
+
+    from app.db.models import Plan, Tenant
+    from app.modules.billing.service import DEFAULT_PLANS
+    from sqlalchemy import select as _select
+
+    tenant_row = await db.execute(_select(Tenant).where(Tenant.id == user.tenant_id))
+    tenant = tenant_row.scalar_one_or_none()
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+
+    plan_slug = None
+    if tenant.plan_id is not None:
+        plan_row = await db.execute(_select(Plan).where(Plan.id == tenant.plan_id))
+        plan = plan_row.scalar_one_or_none()
+        if plan is not None:
+            plan_slug = plan.slug
+
+    # Fall back to the Free entitlements for tenants with no assigned plan.
+    catalog_entry = next(
+        (p for p in DEFAULT_PLANS if p["slug"] == plan_slug),
+        next((p for p in DEFAULT_PLANS if p["slug"] == "free"), {}),
+    )
+    return {
+        "plan_slug": catalog_entry.get("slug"),
+        "plan_name_ar": catalog_entry.get("name_ar"),
+        "plan_name_en": catalog_entry.get("name_en"),
+        "subscription_active": bool(tenant.subscription_active),
+        "features": catalog_entry.get("features", []),
+        "coming_soon": catalog_entry.get("coming_soon", []),
+        "limits": catalog_entry.get("limits", {}),
+        "plan_modes_allowed": catalog_entry.get("plan_modes_allowed", ["fast"]),
+    }
+
+
 @router.post("/checkout", response_model=CheckoutResponse)
 async def create_checkout(
     data: CheckoutRequest, user: CurrentUser, db: DbSession
