@@ -114,7 +114,7 @@ def publish_scheduled_post(self, post_id: str) -> dict:
     return asyncio.run(_publish_async(post_id))
 
 
-async def _scan_due() -> dict:
+async def _scan_due(tenant_id: UUID | None = None) -> dict:
     """Atomically claim due posts and enqueue one publish task per claim.
 
     Race-safe by design: the UPDATE ... WHERE status='scheduled' RETURNING id
@@ -122,27 +122,45 @@ async def _scan_due() -> dict:
     A duplicate Beat fire (or a second replica's Beat) runs the same UPDATE
     and gets back an empty result — no tasks enqueued, no duplicate publish.
 
-    Stuck `publishing` rows: if a worker crashes after claiming but before
-    transitioning to `published`/`failed`, the row stays `publishing`. That is
-    acceptable for Phase 1 — the user can manually retry. Phase 2 adds a
-    watchdog that times out stale `publishing` rows back to `failed`.
+    Parameters
+    ----------
+    tenant_id : UUID | None
+        When set, the scan is scoped to a single tenant. Used by the
+        integration tests so they don't race with the always-running Beat
+        container. When None (the Beat-invoked path), we exclude any tenant
+        whose slug starts with ``pytest-`` — that keeps test rows off Beat's
+        radar without needing env var coordination. No production tenant
+        should ever have a ``pytest-`` slug.
     """
     now = datetime.now(timezone.utc)
     engine, maker = _task_session_maker()
     try:
         async with maker() as db:
-            # ATOMIC CLAIM: single UPDATE ... RETURNING id. Rows transition
-            # scheduled → publishing in one statement. No SELECT-then-UPDATE
-            # TOCTOU window.
+            # Base where-clause: due, scheduled, auto-mode.
+            where_clause = and_(
+                SocialPost.status == SocialPostStatus.scheduled,
+                SocialPost.scheduled_at <= now,
+                SocialPost.publish_mode == "auto",
+            )
+            if tenant_id is not None:
+                # Test-scoped path — only this tenant's rows.
+                where_clause = and_(where_clause, SocialPost.tenant_id == tenant_id)
+            else:
+                # Beat path — exclude pytest tenants so integration tests
+                # that manipulate the scheduler from a dedicated tenant
+                # don't collide with Beat's 60-second ticks.
+                from app.db.models import Tenant as _Tenant
+                from sqlalchemy import select as _select
+                pytest_tenants_subq = (
+                    _select(_Tenant.id).where(_Tenant.slug.like("pytest-%"))
+                ).scalar_subquery()
+                where_clause = and_(
+                    where_clause, SocialPost.tenant_id.notin_(pytest_tenants_subq)
+                )
+
             claim = await db.execute(
                 update(SocialPost)
-                .where(
-                    and_(
-                        SocialPost.status == SocialPostStatus.scheduled,
-                        SocialPost.scheduled_at <= now,
-                        SocialPost.publish_mode == "auto",
-                    )
-                )
+                .where(where_clause)
                 .values(
                     status=SocialPostStatus.publishing,
                     # Stamp so reap_stuck_publishing can age rows out if the
@@ -179,8 +197,13 @@ def scan_due_posts(self) -> dict:
 _STUCK_THRESHOLD_MINUTES = 15
 
 
-async def _reap_stuck_async() -> dict:
+async def _reap_stuck_async(tenant_id: UUID | None = None) -> dict:
     """Move rows stuck in `publishing` state older than the threshold back to `failed`.
+
+    Same Beat-vs-test isolation pattern as ``_scan_due``: when called from
+    Beat (``tenant_id=None``), we exclude any tenant whose slug starts with
+    ``pytest-`` so integration tests own their rows exclusively. Tests pass
+    their fixture's tenant.id explicitly.
 
     Conservative: only considers rows that were claimed (publishing_started_at
     set). Updates atomically using a single UPDATE ... RETURNING so we can log
@@ -190,15 +213,26 @@ async def _reap_stuck_async() -> dict:
     engine, maker = _task_session_maker()
     try:
         async with maker() as db:
+            where_clause = and_(
+                SocialPost.status == SocialPostStatus.publishing,
+                SocialPost.publishing_started_at.is_not(None),
+                SocialPost.publishing_started_at < cutoff,
+            )
+            if tenant_id is not None:
+                where_clause = and_(where_clause, SocialPost.tenant_id == tenant_id)
+            else:
+                from app.db.models import Tenant as _Tenant
+                from sqlalchemy import select as _select
+                pytest_tenants_subq = (
+                    _select(_Tenant.id).where(_Tenant.slug.like("pytest-%"))
+                ).scalar_subquery()
+                where_clause = and_(
+                    where_clause, SocialPost.tenant_id.notin_(pytest_tenants_subq)
+                )
+
             result = await db.execute(
                 update(SocialPost)
-                .where(
-                    and_(
-                        SocialPost.status == SocialPostStatus.publishing,
-                        SocialPost.publishing_started_at.is_not(None),
-                        SocialPost.publishing_started_at < cutoff,
-                    )
-                )
+                .where(where_clause)
                 .values(status=SocialPostStatus.failed)
                 .returning(SocialPost.id)
                 .execution_options(synchronize_session=False)

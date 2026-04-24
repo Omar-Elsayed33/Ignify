@@ -39,7 +39,7 @@ async def test_session() -> AsyncSession:
 
 
 @pytest.fixture
-async def test_tenant_id(test_session) -> uuid.UUID:
+async def tenant_id(test_session) -> uuid.UUID:
     result = await test_session.execute(
         text("SELECT id FROM tenants WHERE slug = :s"), {"s": _TEST_TENANT_SLUG}
     )
@@ -58,14 +58,14 @@ async def test_tenant_id(test_session) -> uuid.UUID:
 
 
 @pytest.fixture
-async def clean_posts(test_session, test_tenant_id):
+async def clean_posts(test_session, tenant_id):
     await test_session.execute(
-        text("DELETE FROM social_posts WHERE tenant_id = :t"), {"t": test_tenant_id}
+        text("DELETE FROM social_posts WHERE tenant_id = :t"), {"t": tenant_id}
     )
     await test_session.commit()
     yield
     await test_session.execute(
-        text("DELETE FROM social_posts WHERE tenant_id = :t"), {"t": test_tenant_id}
+        text("DELETE FROM social_posts WHERE tenant_id = :t"), {"t": tenant_id}
     )
     await test_session.commit()
 
@@ -93,17 +93,17 @@ async def _make_publishing_post(
 
 class TestReapStuckPublishing:
     async def test_old_publishing_row_reaped(
-        self, test_session, test_tenant_id, clean_posts
+        self, test_session, tenant_id, clean_posts
     ):
         from app.modules.social_scheduler.tasks import _reap_stuck_async
 
         # 30 minutes ago — well past the 15-min threshold.
         pid = await _make_publishing_post(
             test_session,
-            test_tenant_id,
+            tenant_id,
             publishing_started_at=datetime.now(timezone.utc) - timedelta(minutes=30),
         )
-        result = await _reap_stuck_async()
+        result = await _reap_stuck_async(tenant_id=tenant_id)
 
         assert result["reaped"] == 1
         assert str(pid) in result["post_ids"]
@@ -115,17 +115,17 @@ class TestReapStuckPublishing:
         assert check.first().status == "failed"
 
     async def test_recent_publishing_row_left_alone(
-        self, test_session, test_tenant_id, clean_posts
+        self, test_session, tenant_id, clean_posts
     ):
         from app.modules.social_scheduler.tasks import _reap_stuck_async
 
         # 2 minutes ago — still within threshold.
         pid = await _make_publishing_post(
             test_session,
-            test_tenant_id,
+            tenant_id,
             publishing_started_at=datetime.now(timezone.utc) - timedelta(minutes=2),
         )
-        result = await _reap_stuck_async()
+        result = await _reap_stuck_async(tenant_id=tenant_id)
         assert result["reaped"] == 0
 
         check = await test_session.execute(
@@ -134,7 +134,7 @@ class TestReapStuckPublishing:
         assert check.first().status == "publishing"
 
     async def test_row_without_timestamp_not_reaped(
-        self, test_session, test_tenant_id, clean_posts
+        self, test_session, tenant_id, clean_posts
     ):
         """Defensive: a row might be in `publishing` but have no timestamp
         (legacy row, or a bug). We'd rather leak than delete data so we leave
@@ -142,9 +142,9 @@ class TestReapStuckPublishing:
         from app.modules.social_scheduler.tasks import _reap_stuck_async
 
         pid = await _make_publishing_post(
-            test_session, test_tenant_id, publishing_started_at=None
+            test_session, tenant_id, publishing_started_at=None
         )
-        result = await _reap_stuck_async()
+        result = await _reap_stuck_async(tenant_id=tenant_id)
         assert result["reaped"] == 0
 
         check = await test_session.execute(
@@ -153,13 +153,13 @@ class TestReapStuckPublishing:
         assert check.first().status == "publishing"
 
     async def test_published_and_scheduled_rows_untouched(
-        self, test_session, test_tenant_id, clean_posts
+        self, test_session, tenant_id, clean_posts
     ):
         from app.modules.social_scheduler.tasks import _reap_stuck_async
 
         # Published + 30min old publishing_started_at (stale, but status is final)
         published = SocialPost(
-            tenant_id=test_tenant_id,
+            tenant_id=tenant_id,
             content="already published",
             status=SocialPostStatus.published,
             publish_mode="auto",
@@ -167,7 +167,7 @@ class TestReapStuckPublishing:
             publishing_started_at=datetime.now(timezone.utc) - timedelta(minutes=30),
         )
         scheduled = SocialPost(
-            tenant_id=test_tenant_id,
+            tenant_id=tenant_id,
             content="waiting",
             status=SocialPostStatus.scheduled,
             publish_mode="auto",
@@ -176,21 +176,21 @@ class TestReapStuckPublishing:
         test_session.add_all([published, scheduled])
         await test_session.commit()
 
-        result = await _reap_stuck_async()
+        result = await _reap_stuck_async(tenant_id=tenant_id)
         assert result["reaped"] == 0
 
     async def test_idempotent_on_second_run(
-        self, test_session, test_tenant_id, clean_posts
+        self, test_session, tenant_id, clean_posts
     ):
         from app.modules.social_scheduler.tasks import _reap_stuck_async
 
         pid = await _make_publishing_post(
             test_session,
-            test_tenant_id,
+            tenant_id,
             publishing_started_at=datetime.now(timezone.utc) - timedelta(minutes=30),
         )
-        first = await _reap_stuck_async()
-        second = await _reap_stuck_async()
+        first = await _reap_stuck_async(tenant_id=tenant_id)
+        second = await _reap_stuck_async(tenant_id=tenant_id)
         assert first["reaped"] == 1
         assert second["reaped"] == 0  # already moved to failed
         assert str(pid) in first["post_ids"]

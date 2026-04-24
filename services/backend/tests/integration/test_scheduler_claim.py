@@ -47,7 +47,7 @@ async def test_session() -> AsyncSession:
 
 
 @pytest.fixture
-async def test_tenant_id(test_session) -> uuid.UUID:
+async def tenant_id(test_session) -> uuid.UUID:
     """Create or reuse a dedicated test tenant. Cleaned up between runs by
     matching on the unique slug."""
     from app.db.models import Plan
@@ -76,17 +76,17 @@ async def test_tenant_id(test_session) -> uuid.UUID:
 
 
 @pytest.fixture
-async def clean_test_posts(test_session, test_tenant_id):
+async def clean_test_posts(test_session, tenant_id):
     """Remove any scheduler-test posts left over from prior runs."""
     await test_session.execute(
         text("DELETE FROM social_posts WHERE tenant_id = :t"),
-        {"t": test_tenant_id},
+        {"t": tenant_id},
     )
     await test_session.commit()
     yield
     await test_session.execute(
         text("DELETE FROM social_posts WHERE tenant_id = :t"),
-        {"t": test_tenant_id},
+        {"t": tenant_id},
     )
     await test_session.commit()
 
@@ -115,20 +115,20 @@ async def _make_post(
 
 class TestAtomicClaim:
     async def test_claim_transitions_scheduled_to_publishing(
-        self, test_session, test_tenant_id, clean_test_posts
+        self, test_session, tenant_id, clean_test_posts
     ):
         # Seed 3 due posts.
         from app.modules.social_scheduler.tasks import _scan_due
 
         ids = []
         for _ in range(3):
-            ids.append(await _make_post(test_session, test_tenant_id))
+            ids.append(await _make_post(test_session, tenant_id))
 
         # Patch delay() so we don't actually enqueue Celery tasks.
         with patch(
             "app.modules.social_scheduler.tasks.publish_scheduled_post.delay"
         ) as fake_delay:
-            result = await _scan_due()
+            result = await _scan_due(tenant_id=tenant_id)
 
         assert result["enqueued"] == 3
         assert fake_delay.call_count == 3
@@ -138,7 +138,7 @@ class TestAtomicClaim:
             text(
                 "SELECT id, status FROM social_posts WHERE tenant_id = :t ORDER BY id"
             ),
-            {"t": test_tenant_id},
+            {"t": tenant_id},
         )
         records = list(rows)
         assert len(records) == 3
@@ -146,17 +146,17 @@ class TestAtomicClaim:
             f"Expected all publishing, got: {[(r.id, r.status) for r in records]}"
 
     async def test_second_scan_claims_nothing_after_first(
-        self, test_session, test_tenant_id, clean_test_posts
+        self, test_session, tenant_id, clean_test_posts
     ):
         from app.modules.social_scheduler.tasks import _scan_due
 
-        await _make_post(test_session, test_tenant_id)
+        await _make_post(test_session, tenant_id)
 
         with patch(
             "app.modules.social_scheduler.tasks.publish_scheduled_post.delay"
         ) as fake_delay:
-            first = await _scan_due()
-            second = await _scan_due()
+            first = await _scan_due(tenant_id=tenant_id)
+            second = await _scan_due(tenant_id=tenant_id)
 
         assert first["enqueued"] == 1
         assert second["enqueued"] == 0, \
@@ -164,7 +164,7 @@ class TestAtomicClaim:
         assert fake_delay.call_count == 1
 
     async def test_concurrent_scans_never_double_claim(
-        self, test_session, test_tenant_id, clean_test_posts
+        self, test_session, tenant_id, clean_test_posts
     ):
         """The critical test: simulate two Beat fires happening at the same time.
         Across both calls, each post_id must appear in exactly ONE enqueued list."""
@@ -172,7 +172,7 @@ class TestAtomicClaim:
 
         # Seed 5 posts.
         for _ in range(5):
-            await _make_post(test_session, test_tenant_id)
+            await _make_post(test_session, tenant_id)
 
         enqueued_in_a: list[str] = []
         enqueued_in_b: list[str] = []
@@ -189,7 +189,7 @@ class TestAtomicClaim:
                 "app.modules.social_scheduler.tasks.publish_scheduled_post.delay",
                 side_effect=capture,
             ):
-                return await _scan_due()
+                return await _scan_due(tenant_id=tenant_id)
 
         a, b = await asyncio.gather(
             scan_with_capture(capture_a),
@@ -206,63 +206,63 @@ class TestAtomicClaim:
         assert len(enqueued_in_a) + len(enqueued_in_b) == 5
 
     async def test_manual_mode_never_claimed(
-        self, test_session, test_tenant_id, clean_test_posts
+        self, test_session, tenant_id, clean_test_posts
     ):
         from app.modules.social_scheduler.tasks import _scan_due
 
         # A manual-mode post due 1 min ago — must NOT be auto-published.
-        await _make_post(test_session, test_tenant_id, publish_mode="manual")
+        await _make_post(test_session, tenant_id, publish_mode="manual")
 
         with patch(
             "app.modules.social_scheduler.tasks.publish_scheduled_post.delay"
         ) as fake_delay:
-            result = await _scan_due()
+            result = await _scan_due(tenant_id=tenant_id)
 
         assert result["enqueued"] == 0
         fake_delay.assert_not_called()
 
     async def test_future_scheduled_never_claimed(
-        self, test_session, test_tenant_id, clean_test_posts
+        self, test_session, tenant_id, clean_test_posts
     ):
         from app.modules.social_scheduler.tasks import _scan_due
 
         future = datetime.now(timezone.utc) + timedelta(hours=1)
-        await _make_post(test_session, test_tenant_id, scheduled_at=future)
+        await _make_post(test_session, tenant_id, scheduled_at=future)
 
         with patch(
             "app.modules.social_scheduler.tasks.publish_scheduled_post.delay"
         ) as fake_delay:
-            result = await _scan_due()
+            result = await _scan_due(tenant_id=tenant_id)
 
         assert result["enqueued"] == 0
         fake_delay.assert_not_called()
 
     async def test_draft_never_claimed(
-        self, test_session, test_tenant_id, clean_test_posts
+        self, test_session, tenant_id, clean_test_posts
     ):
         from app.modules.social_scheduler.tasks import _scan_due
 
         await _make_post(
-            test_session, test_tenant_id, status=SocialPostStatus.draft
+            test_session, tenant_id, status=SocialPostStatus.draft
         )
         with patch(
             "app.modules.social_scheduler.tasks.publish_scheduled_post.delay"
         ) as fake_delay:
-            result = await _scan_due()
+            result = await _scan_due(tenant_id=tenant_id)
         assert result["enqueued"] == 0
         fake_delay.assert_not_called()
 
     async def test_already_published_never_reclaimed(
-        self, test_session, test_tenant_id, clean_test_posts
+        self, test_session, tenant_id, clean_test_posts
     ):
         from app.modules.social_scheduler.tasks import _scan_due
 
         await _make_post(
-            test_session, test_tenant_id, status=SocialPostStatus.published
+            test_session, tenant_id, status=SocialPostStatus.published
         )
         with patch(
             "app.modules.social_scheduler.tasks.publish_scheduled_post.delay"
         ) as fake_delay:
-            result = await _scan_due()
+            result = await _scan_due(tenant_id=tenant_id)
         assert result["enqueued"] == 0
         fake_delay.assert_not_called()
