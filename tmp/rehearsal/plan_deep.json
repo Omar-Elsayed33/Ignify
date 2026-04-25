@@ -1,0 +1,1 @@
+{"detail":{"code":"plan_mode_not_available","message":"Your current tier (starter) doesn't include Deep mode. Upgrade to unlock it.","current_plan":"starter","requested_mode":"deep","allowed_modes":["fast","medium"]}}
