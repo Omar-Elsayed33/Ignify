@@ -51,8 +51,32 @@ PLAN_AI_LIMITS: dict[str, float] = {}  # populated lazily by limit_for_plan
 
 
 def _manager_key() -> str:
-    """Return the provisioning manager key. Falls back to API key if not set."""
+    """Sync resolver — env-only fallback for paths without DB access.
+
+    Phase 12: prefer `get_manager_key_async(db)` from any code path that
+    has an AsyncSession. The DB-backed admin setting takes priority there;
+    this sync version stays as the bootstrap fallback (used only by
+    paths that legitimately can't await — currently none after we wire
+    the admin endpoints).
+    """
     return settings.OPENROUTER_MANAGER_KEY or settings.OPENROUTER_API_KEY
+
+
+async def get_manager_key_async(db) -> str:
+    """Async-aware manager-key resolver. Reads from admin_settings table
+    first (admin can rotate via UI without env redeploy), falls back to
+    OPENROUTER_MANAGER_KEY env var, then to OPENROUTER_API_KEY.
+
+    Use this from request handlers that already have an AsyncSession.
+    """
+    try:
+        from app.core.admin_settings import KEY_OPENROUTER_MANAGER, get_setting
+        db_value = await get_setting(db, KEY_OPENROUTER_MANAGER)
+        if db_value:
+            return db_value
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("admin_settings lookup failed, falling back to env: %s", exc)
+    return _manager_key()
 
 
 def _headers() -> dict[str, str]:
@@ -95,18 +119,22 @@ async def provision_key(
     tenant_id: str,
     tenant_name: str,  # kept for signature stability; no longer used in key name
     plan_slug: str | None,
+    db=None,
 ) -> dict[str, Any]:
     """Create a new sub-key for a tenant. Returns {key_id, key, limit}.
 
-    Returns empty dict silently when OPENROUTER_MANAGER_KEY is not configured.
+    Returns empty dict silently when no manager key is available (neither
+    DB-stored admin setting nor env var). `tenant_name` was previously used
+    in the key name; kept as argument for backward compat — used now only
+    as OpenRouter's `label` field.
 
-    `tenant_name` was previously used in the key name; we kept the argument
-    so existing callers don't break, but it's only used as the OpenRouter
-    `label` field (the human-readable note inside OpenRouter's UI — not
-    the key's canonical name).
+    Phase 12: when an `AsyncSession` is passed via `db`, prefer the
+    DB-stored admin setting for the manager key. Backward-compatible:
+    callers that don't pass `db` get the env-var fallback.
     """
-    if not _manager_key():
-        logger.info("OPENROUTER_MANAGER_KEY not set — skipping sub-key provisioning")
+    manager_key = await get_manager_key_async(db) if db is not None else _manager_key()
+    if not manager_key:
+        logger.info("OpenRouter manager key not set — skipping sub-key provisioning")
         return {}
     limit = limit_for_plan(plan_slug)
     payload = {
@@ -114,8 +142,12 @@ async def provision_key(
         "label": tenant_name[:64] if tenant_name else str(tenant_id),
         "limit": limit,
     }
+    headers = {
+        "Authorization": f"Bearer {manager_key}",
+        "Content-Type": "application/json",
+    }
     async with httpx.AsyncClient(timeout=15) as client:
-        resp = await client.post(PROVISIONING_BASE, json=payload, headers=_headers())
+        resp = await client.post(PROVISIONING_BASE, json=payload, headers=headers)
         if resp.status_code not in (200, 201):
             logger.error(
                 "OpenRouter provision failed",

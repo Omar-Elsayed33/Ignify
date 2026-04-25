@@ -25,7 +25,7 @@ from app.db.models import (
     User,
     UserRole,
 )
-from app.dependencies import DbSession, require_role
+from app.dependencies import CurrentUser, DbSession, require_role
 from app.modules.admin.schemas import (
     AIProviderCreate,
     AIProviderResponse,
@@ -111,6 +111,55 @@ async def update_tenant(tenant_id: uuid.UUID, data: TenantAdminUpdate, db: DbSes
         setattr(tenant, field, value)
     await db.flush()
     return tenant
+
+
+# ── OpenRouter Manager Key (admin-managed, DB-stored) ──
+#
+# Phase 12: the manager key (used to provision per-tenant OpenRouter
+# sub-keys) used to live in OPENROUTER_MANAGER_KEY env var. That
+# required a redeploy to rotate. Now stored encrypted in admin_settings
+# and rotatable from the admin UI in seconds. Env var stays as bootstrap
+# fallback (see core/openrouter_provisioning.get_manager_key_async).
+
+
+@router.get("/openrouter-manager-key", dependencies=[superadmin_dep])
+async def get_openrouter_manager_key_status(db: DbSession):
+    """Status check — never returns the secret value, only whether it's set
+    and when it was last updated. Used by the admin UI to render
+    "configured ✓" without ever sending the key over the wire on a GET.
+    """
+    from app.core.admin_settings import KEY_OPENROUTER_MANAGER, get_setting_status
+    return await get_setting_status(db, KEY_OPENROUTER_MANAGER)
+
+
+@router.put("/openrouter-manager-key", dependencies=[superadmin_dep])
+async def set_openrouter_manager_key(
+    payload: dict, user: CurrentUser, db: DbSession
+):
+    """Set or rotate the OpenRouter manager key.
+
+    Body: {"value": "<sk-or-...>"} or {"value": null} to clear.
+    The value is Fernet-encrypted before persistence — the plaintext is
+    never logged or echoed back. After this call, all future
+    `provision_key()` operations use the new key.
+    """
+    from app.core.admin_settings import KEY_OPENROUTER_MANAGER, set_setting
+
+    value = payload.get("value") if isinstance(payload, dict) else None
+    if value is not None and not isinstance(value, str):
+        raise HTTPException(status_code=400, detail="value must be a string or null")
+
+    await set_setting(
+        db,
+        KEY_OPENROUTER_MANAGER,
+        value,
+        is_secret=True,
+        updated_by=user.id,
+    )
+    await db.commit()
+    # Return only status, never the value.
+    from app.core.admin_settings import get_setting_status
+    return await get_setting_status(db, KEY_OPENROUTER_MANAGER)
 
 
 # ── AI Providers ──

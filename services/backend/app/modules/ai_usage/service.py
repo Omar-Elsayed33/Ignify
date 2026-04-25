@@ -40,9 +40,12 @@ async def provision_tenant_ai_key(db: AsyncSession, tenant: Tenant, plan: Option
         )
         db.add(config)
 
-    # Only call the provisioning API if no key is stored yet
+    # Only call the provisioning API if no key is stored yet.
+    # Phase 12: pass db so provision_key reads the manager key from the
+    # DB-stored admin setting first (env var fallback). Lets ops rotate
+    # the manager key from /admin without a redeploy.
     if not config.openrouter_key_encrypted:
-        provisioned = await provision_key(str(tenant.id), tenant.name, plan_slug)
+        provisioned = await provision_key(str(tenant.id), tenant.name, plan_slug, db=db)
         if provisioned.get("key"):
             config.openrouter_key_encrypted = encrypt_token(provisioned["key"])
             config.openrouter_key_id = provisioned["key_id"]

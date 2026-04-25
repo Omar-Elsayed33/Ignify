@@ -7,7 +7,12 @@ name: ignify-prod
 
 services:
   postgres:
-    image: postgres:16-alpine
+    # pgvector/pgvector:pg16 is Postgres 16 + the pgvector extension baked in.
+    # Alembic migrations issue `CREATE EXTENSION vector` for the knowledge-base
+    # embedding column; the vanilla postgres:16-alpine image does NOT ship
+    # pgvector, so migrations would fail on first boot.
+    # This matches the dev compose, keeping dev/prod parity.
+    image: pgvector/pgvector:pg16
     container_name: ignify-postgres
     restart: always
     environment:
@@ -57,7 +62,6 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ignify}
       REDIS_URL: redis://redis:6379/0
-      AGNO_RUNTIME_URL: http://agno-runtime:8001
       MINIO_ENDPOINT: minio:9000
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/2
@@ -68,14 +72,12 @@ services:
       redis:
         condition: service_healthy
 
-  agno-runtime:
-    build:
-      context: ../../services/agno-runtime
-      dockerfile: Dockerfile
-    container_name: ignify-agno
-    restart: always
-    env_file:
-      - .env.prod
+  # NOTE: Phase 11 (standardize-openrouter-provider-and-key-naming) removed
+  # the agno-runtime service entirely. The two routers that previously
+  # called it (campaigns/generate, seo/audit) now go through OpenRouter via
+  # app.core.llm_json. The `services/agno-runtime/` directory no longer
+  # exists on this repo; keeping the service block would fail `docker
+  # compose build` with "build context not found".
 
   worker:
     build:

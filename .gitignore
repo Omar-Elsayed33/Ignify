@@ -10,6 +10,15 @@ venv/
 .env.local
 .env.production
 *.env
+# Catches .env.prod, .env.staging, .env.anything — *.env above only matches
+# files ending in `.env`, not files ending in `.env.<suffix>`. The two
+# patterns together cover both shapes.
+.env.*
+# Re-allow committed *.example placeholder files. They contain only
+# placeholders (no real secrets), and they're the canonical reference for
+# what env vars exist.
+!.env.example
+!.env.*.example
 
 # Build
 .next/

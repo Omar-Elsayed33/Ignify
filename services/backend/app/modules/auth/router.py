@@ -109,7 +109,7 @@ async def update_me(data: ProfileUpdateRequest, user: CurrentUser, db: DbSession
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="current_password required to set new password",
             )
-        if not verify_password(data.current_password, db_user.hashed_password):
+        if not verify_password(data.current_password, db_user.password_hash):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="current_password_wrong",
@@ -119,7 +119,7 @@ async def update_me(data: ProfileUpdateRequest, user: CurrentUser, db: DbSession
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="password_too_short",
             )
-        db_user.hashed_password = hash_password(data.new_password)
+        db_user.password_hash = hash_password(data.new_password)
 
     await db.flush()
     return db_user
@@ -206,7 +206,7 @@ async def delete_my_account(data: AccountDeleteRequest, user: CurrentUser, db: D
     result = await db.execute(select(User).where(User.id == user.id))
     db_user = result.scalar_one()
 
-    if not verify_password(data.current_password, db_user.hashed_password):
+    if not verify_password(data.current_password, db_user.password_hash):
         raise HTTPException(status_code=400, detail="current_password_wrong")
 
     # Soft-delete: disable login by marking email as deleted; preserve row for 7-day grace.

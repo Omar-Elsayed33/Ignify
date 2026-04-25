@@ -1184,6 +1184,30 @@ class ApiKey(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
 
 
+class AdminSetting(Base):
+    """Platform-wide singleton key/value settings managed from the admin UI.
+
+    Phase 12: introduced so OPENROUTER_MANAGER_KEY can rotate without an
+    env-var deploy. The key may be set to an encrypted value; callers that
+    read sensitive settings should pass the raw `value` through
+    `app.core.crypto.decrypt_token()`.
+
+    Each row holds one setting. We use a generic key/value shape so future
+    admin-managed settings (Sentry DSN override, support phone, etc.) can
+    use the same table without further migrations.
+    """
+    __tablename__ = "admin_settings"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
+    key: Mapped[str] = mapped_column(String(128), nullable=False, unique=True, index=True)
+    value: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    is_secret: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    updated_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+
+
 class Webhook(Base):
     """Outgoing webhook subscriptions per tenant."""
     __tablename__ = "webhooks"

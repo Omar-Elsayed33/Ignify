@@ -37,8 +37,12 @@ class Settings(BaseSettings):
     # Auth
     SECRET_KEY: str = "change-me-in-production-super-secret-key"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 30
+    # Phase 12 (TOKEN_STORAGE_RISK.md §3): shortened access-token lifetime so
+    # an XSS-bound access token expires quickly. Refresh-token rotation on
+    # every refresh further limits replay window. Will be revisited when
+    # Option B (HttpOnly cookies) lands in Phase 13.
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60       # 1 hour (was 7 days)
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 14         # 2 weeks (was 30 days)
 
     # LLM Gateway — OpenRouter is the single gateway for all models
     # OPENROUTER_MANAGER_KEY: the "provisioning" key that creates/manages sub-keys.

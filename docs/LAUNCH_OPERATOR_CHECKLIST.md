@@ -33,7 +33,7 @@ The backend's `assert_safe_to_boot()` validator will refuse to start in producti
 | `DATABASE_URL` | Points to managed PG, not dev password | Use the managed-service connection string |
 | `REDIS_URL` | Managed Redis URL | — |
 | `OPENROUTER_API_KEY` | Valid OpenRouter master inference key | From openrouter.ai/keys |
-| `OPENROUTER_MANAGER_KEY` | Separate provisioning key with "Manage keys" scope | From openrouter.ai/keys |
+| ~~`OPENROUTER_MANAGER_KEY`~~ | **Removed in Phase 12** — manager key is now set via the admin UI at `/admin` and stored encrypted in the DB. Env var no longer needed. See `docs/SECURITY_SECRET_ROTATION.md` §1. | n/a |
 | `CORS_ORIGINS` | JSON array of production domains only | `["https://app.ignify.ai"]` |
 
 ### Required for first customer experience
