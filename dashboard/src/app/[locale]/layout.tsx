@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import Toaster from "@/components/Toaster";
 import ConfirmProvider from "@/components/ConfirmDialog";
+import PromptProvider from "@/components/PromptDialog";
 import SWRegister from "@/components/SWRegister";
 import LocaleHtmlAttrs from "@/components/LocaleHtmlAttrs";
 
@@ -27,8 +28,10 @@ export default async function LocaleLayout({
       <LocaleHtmlAttrs locale={locale} />
       <Toaster>
         <ConfirmProvider>
-          <SWRegister />
-          {children}
+          <PromptProvider>
+            <SWRegister />
+            {children}
+          </PromptProvider>
         </ConfirmProvider>
       </Toaster>
     </NextIntlClientProvider>

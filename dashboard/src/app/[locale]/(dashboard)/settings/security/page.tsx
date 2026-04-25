@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import DashboardHeader from "@/components/DashboardHeader";
 import { Skeleton } from "@/components/Skeleton";
 import EmptyState from "@/components/EmptyState";
@@ -8,6 +8,7 @@ import { useToast } from "@/components/Toaster";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { api, ApiError } from "@/lib/api";
 import { useLocale } from "next-intl";
+import * as Dialog from "@radix-ui/react-dialog";
 import { Shield, ShieldAlert, LogIn, LogOut, Pencil, Trash2, Plus, Download } from "lucide-react";
 
 interface AuditEntry {
@@ -53,6 +54,13 @@ export default function SecurityPage() {
   const [entries, setEntries] = useState<AuditEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Delete-account confirmation modal state
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deletePwd, setDeletePwd] = useState("");
+  const [deletePhrase, setDeletePhrase] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const pwdInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     (async () => {
       try {
@@ -95,18 +103,27 @@ export default function SecurityPage() {
       cancelLabel: isAr ? "إلغاء" : "Cancel",
     });
     if (!ok) return;
+    setDeletePwd("");
+    setDeletePhrase("");
+    setDeleteOpen(true);
+  };
 
-    const pwd = window.prompt(
-      isAr ? "أدخل كلمة مرورك للتأكيد:" : "Enter your password to confirm:"
-    );
-    if (!pwd) return;
-    const phrase = window.prompt(
-      isAr ? "اكتب 'حذف' للتأكيد النهائي:" : "Type 'DELETE' for final confirmation:"
-    );
-    if (!phrase) return;
-
+  const submitDeleteAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const expectedPhrase = isAr ? "حذف" : "DELETE";
+    if (deletePhrase !== expectedPhrase) {
+      toast.error(
+        isAr ? `اكتب "${expectedPhrase}" للتأكيد` : `Type "${expectedPhrase}" to confirm`
+      );
+      return;
+    }
+    setDeleting(true);
     try {
-      await api.delete("/api/v1/auth/me", { current_password: pwd, confirm_phrase: phrase });
+      await api.delete("/api/v1/auth/me", {
+        current_password: deletePwd,
+        confirm_phrase: deletePhrase,
+      });
+      setDeleteOpen(false);
       toast.success(isAr ? "تم إغلاق حسابك" : "Account closed");
       setTimeout(() => (window.location.href = "/login"), 1500);
     } catch (e) {
@@ -114,6 +131,8 @@ export default function SecurityPage() {
         isAr ? "فشل الحذف" : "Delete failed",
         e instanceof ApiError ? e.message : undefined
       );
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -231,6 +250,72 @@ export default function SecurityPage() {
           </div>
         </div>
       </div>
+
+      {/* Delete-account confirmation modal */}
+      <Dialog.Root
+        open={deleteOpen}
+        onOpenChange={(o) => {
+          if (!o && !deleting) setDeleteOpen(false);
+        }}
+      >
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm data-[state=open]:animate-in data-[state=open]:fade-in-0" />
+          <Dialog.Content
+            className="fixed start-1/2 top-1/2 z-[100] w-[92vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-surface-container-lowest p-6 shadow-[0_8px_30px_rgba(0,0,0,0.2)] ring-1 ring-outline/10 rtl:translate-x-1/2 data-[state=open]:animate-in data-[state=open]:zoom-in-95"
+            onOpenAutoFocus={(e) => {
+              e.preventDefault();
+              pwdInputRef.current?.focus();
+            }}
+          >
+            <Dialog.Title className="text-base font-bold text-red-600">
+              {isAr ? "تأكيد حذف الحساب" : "Confirm account deletion"}
+            </Dialog.Title>
+            <Dialog.Description className="mt-1.5 text-sm text-on-surface-variant">
+              {isAr
+                ? `أدخل كلمة مرورك ثم اكتب "حذف" للتأكيد النهائي.`
+                : `Enter your password, then type "DELETE" to confirm.`}
+            </Dialog.Description>
+            <form className="mt-4 space-y-3" onSubmit={submitDeleteAccount}>
+              <input
+                ref={pwdInputRef}
+                type="password"
+                value={deletePwd}
+                onChange={(e) => setDeletePwd(e.target.value)}
+                placeholder={isAr ? "كلمة المرور" : "Password"}
+                required
+                className="w-full rounded-2xl border border-outline/30 bg-surface-container-high px-4 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+              />
+              <input
+                type="text"
+                value={deletePhrase}
+                onChange={(e) => setDeletePhrase(e.target.value)}
+                placeholder={isAr ? 'اكتب "حذف"' : 'Type "DELETE"'}
+                required
+                className="w-full rounded-2xl border border-outline/30 bg-surface-container-high px-4 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+              />
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  disabled={deleting}
+                  onClick={() => setDeleteOpen(false)}
+                  className="rounded-2xl bg-surface-container-highest px-4 py-2 text-sm font-semibold text-on-surface transition-colors hover:bg-surface-variant disabled:opacity-50"
+                >
+                  {isAr ? "إلغاء" : "Cancel"}
+                </button>
+                <button
+                  type="submit"
+                  disabled={deleting || !deletePwd || deletePhrase !== (isAr ? "حذف" : "DELETE")}
+                  className="rounded-2xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                >
+                  {deleting
+                    ? isAr ? "جارٍ الحذف…" : "Deleting…"
+                    : isAr ? "حذف حسابي" : "Delete my account"}
+                </button>
+              </div>
+            </form>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   );
 }

@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { clsx } from "clsx";
+import { usePrompt } from "@/components/PromptDialog";
 import { useToast } from "@/components/Toaster";
 import {
   LineChart,
@@ -954,6 +955,7 @@ export default function PlanDetailPage({
   const router = useRouter();
   const locale = useLocale();
   const lang: "ar" | "en" = locale === "ar" ? "ar" : "en";
+  const prompt = usePrompt();
   const [pdfLang, setPdfLang] = useState<"ar" | "en">(
     (locale === "ar" ? "ar" : "en") as "ar" | "en"
   );
@@ -1084,12 +1086,16 @@ export default function PlanDetailPage({
 
   async function regenerate(section: "goals" | "personas" | "channels" | "calendar" | "kpis") {
     if (!plan) return;
-    const note = window.prompt(
-      lang === "ar"
-        ? "أضف ملاحظة اختيارية للذكاء الاصطناعي (مثل: استهدف الشركات لا الأفراد). اتركه فارغاً للتوليد بدون تغييرات."
-        : "Optional note for the AI (e.g., 'target companies not individuals'). Leave empty to regenerate as-is.",
-      ""
-    );
+    const note = await prompt({
+      title: lang === "ar" ? "ملاحظة للذكاء الاصطناعي" : "Note for AI",
+      description:
+        lang === "ar"
+          ? "أضف ملاحظة اختيارية (مثل: استهدف الشركات لا الأفراد). اتركه فارغاً للتوليد بدون تغييرات."
+          : "Optional note (e.g., 'target companies not individuals'). Leave empty to regenerate as-is.",
+      placeholder: lang === "ar" ? "ملاحظتك هنا…" : "Your note here…",
+      confirmLabel: lang === "ar" ? "إعادة توليد" : "Regenerate",
+      cancelLabel: lang === "ar" ? "إلغاء" : "Cancel",
+    });
     if (note === null) return; // user cancelled
     try {
       setRegenSection(section);
@@ -1108,12 +1114,16 @@ export default function PlanDetailPage({
 
   async function regenerateFullPlan() {
     if (!plan) return;
-    const note = window.prompt(
-      lang === "ar"
-        ? "أضف ملاحظة للذكاء الاصطناعي لإعادة توليد الخطة كاملة (مثل: استهدف الشركات لا الأفراد).\n\nسيتم استخدام: معلومات الشركة + الخطة الحالية + ملاحظتك."
-        : "Feedback note to regenerate the entire plan (e.g., 'target companies not individuals').\n\nContext used: business profile + current plan + your note.",
-      ""
-    );
+    const note = await prompt({
+      title: lang === "ar" ? "إعادة توليد الخطة كاملة" : "Regenerate Entire Plan",
+      description:
+        lang === "ar"
+          ? "أضف ملاحظة للذكاء الاصطناعي (مثل: استهدف الشركات لا الأفراد). سيتم استخدام: معلومات الشركة + الخطة الحالية + ملاحظتك."
+          : "Feedback note for the AI (e.g., 'target companies not individuals'). Context used: business profile + current plan + your note.",
+      placeholder: lang === "ar" ? "ملاحظتك هنا…" : "Your note here…",
+      confirmLabel: lang === "ar" ? "إعادة توليد الكل" : "Regenerate All",
+      cancelLabel: lang === "ar" ? "إلغاء" : "Cancel",
+    });
     if (note === null) return;
     try {
       setRegenSection("__full__");

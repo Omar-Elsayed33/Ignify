@@ -8,6 +8,7 @@ import EmptyState from "@/components/EmptyState";
 import { api } from "@/lib/api";
 import { useToast } from "@/components/Toaster";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { usePrompt } from "@/components/PromptDialog";
 import Skeleton from "@/components/Skeleton";
 import {
   AlertTriangle,
@@ -87,6 +88,7 @@ export default function SchedulerPage() {
   const t = useTranslations("scheduler");
   const toast = useToast();
   const confirm = useConfirm();
+  const prompt = usePrompt();
   const router = useRouter();
   const locale = useLocale();
   const isAr = locale === "ar";
@@ -236,10 +238,16 @@ export default function SchedulerPage() {
   }
 
   async function markPublished(id: string) {
-    const url = window.prompt(
-      "أدخل رابط المنشور بعد نشره يدوياً (اختياري):",
-      ""
-    );
+    const url = await prompt({
+      title: isAr ? "تأكيد النشر اليدوي" : "Confirm Manual Publish",
+      description: isAr
+        ? "أدخل رابط المنشور بعد نشره يدوياً (اختياري)"
+        : "Enter the post URL after publishing manually (optional)",
+      placeholder: "https://...",
+      inputType: "url",
+      confirmLabel: isAr ? "تأكيد النشر" : "Mark Published",
+      cancelLabel: isAr ? "إلغاء" : "Cancel",
+    });
     if (url === null) return;
     try {
       await api.post(`/api/v1/social-scheduler/scheduled/${id}/mark-published`, {
@@ -249,7 +257,7 @@ export default function SchedulerPage() {
         arr.map((p) => (p.id === id ? { ...p, status: "published", external_id: url } : p))
       );
     } catch {
-      toast.error("فشل التحديث");
+      toast.error(isAr ? "فشل التحديث" : "Update failed");
     }
   }
 
