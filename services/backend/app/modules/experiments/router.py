@@ -39,7 +39,7 @@ async def create(data: ExperimentCreate, user: CurrentUser, db: DbSession):
     try:
         exp = await create_experiment(db, user.tenant_id, user.id, data.model_dump())
     except Exception as e:  # noqa: BLE001
-        raise HTTPException(status_code=500, detail=f"Failed to create experiment: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create experiment")
     return exp
 
 

@@ -37,7 +37,7 @@ async def draft(data: InboxDraftRequest, user: CurrentUser, db: DbSession):
             channel_type=data.channel_type,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Inbox draft failed: {e}")
+        raise HTTPException(status_code=500, detail="Inbox draft failed")
 
 
 @router.get("/conversations", response_model=list[InboxConversationItem])

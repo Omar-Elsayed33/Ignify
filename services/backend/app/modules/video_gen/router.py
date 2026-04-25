@@ -87,7 +87,7 @@ async def generate(data: VideoGenerateRequest, user: CurrentUser, db: DbSession)
             brand_voice=data.brand_voice,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Video enqueue failed: {e}")
+        raise HTTPException(status_code=500, detail="Video enqueue failed")
     return result
 
 

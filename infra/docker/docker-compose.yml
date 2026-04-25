@@ -52,6 +52,12 @@ services:
       - "9001:9001"
     volumes:
       - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   # ─── Backend API ──────────────────────────────────────────
   backend:
@@ -77,6 +83,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/ops/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     volumes:
       - ../../services/backend:/app
 
@@ -138,6 +150,12 @@ services:
       NEXT_PUBLIC_APP_NAME: Ignify
     ports:
       - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO/dev/null", "http://localhost:3000"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     volumes:
       - ../../dashboard:/app
       - /app/node_modules
@@ -155,6 +173,12 @@ services:
       NEXT_PUBLIC_DASHBOARD_URL: http://localhost:3000
     ports:
       - "3010:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO/dev/null", "http://localhost:3000"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     volumes:
       - ../../website:/app
       - /app/node_modules
@@ -247,9 +271,12 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - backend
-      - dashboard
-      - website
+      backend:
+        condition: service_healthy
+      dashboard:
+        condition: service_healthy
+      website:
+        condition: service_healthy
 
 volumes:
   postgres_data:

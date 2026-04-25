@@ -49,6 +49,12 @@ services:
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   # Entrypoint auto-runs: alembic upgrade head + seed
   backend:
@@ -71,6 +77,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/ops/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # NOTE: Phase 11 (standardize-openrouter-provider-and-key-naming) removed
   # the agno-runtime service entirely. The two routers that previously
@@ -108,6 +120,12 @@ services:
     environment:
       NEXT_PUBLIC_API_URL: https://${APP_HOST}
       NEXT_PUBLIC_APP_NAME: Ignify
+    healthcheck:
+      test: ["CMD", "wget", "-qO/dev/null", "http://localhost:3000"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
 
   website:
     build:
@@ -119,6 +137,12 @@ services:
       NEXT_PUBLIC_API_URL: https://${APP_HOST}
       NEXT_PUBLIC_APP_NAME: Ignify
       NEXT_PUBLIC_DASHBOARD_URL: https://app.${APP_HOST}
+    healthcheck:
+      test: ["CMD", "wget", "-qO/dev/null", "http://localhost:3000"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
 
   whatsapp-connector:
     build:
@@ -186,17 +210,28 @@ services:
     image: nginx:alpine
     container_name: ignify-gateway
     restart: always
+    # envsubst replaces ${APP_HOST} in the template before nginx starts.
+    # APP_HOST is loaded from .env.prod (e.g. APP_HOST=ignify.ai).
+    command: >
+      /bin/sh -c
+      "envsubst '$$APP_HOST' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+      && nginx -g 'daemon off;'"
+    env_file:
+      - .env.prod
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/nginx.prod.conf.template:/etc/nginx/nginx.conf.template:ro
       - certbot_data:/var/www/certbot:ro
       - certbot_certs:/etc/nginx/ssl:ro
     depends_on:
-      - backend
-      - dashboard
-      - website
+      backend:
+        condition: service_healthy
+      dashboard:
+        condition: service_healthy
+      website:
+        condition: service_healthy
 
   certbot:
     image: certbot/certbot

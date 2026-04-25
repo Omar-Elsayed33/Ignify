@@ -106,7 +106,7 @@ async def generate_campaign(data: CampaignGenerateRequest, user: CurrentUser, db
     except ValueError:
         raise HTTPException(status_code=502, detail="AI returned invalid campaign plan. Try again.")
     except Exception as e:  # noqa: BLE001
-        raise HTTPException(status_code=502, detail=f"AI generation failed: {e}")
+        raise HTTPException(status_code=502, detail="AI generation failed")
 
     # Create campaign
     campaign = Campaign(

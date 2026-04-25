@@ -17,7 +17,7 @@ class PlanGenerateRequest(BaseModel):
     # Strategic inputs
     budget_monthly_usd: float | None = None
     budget_currency: str = Field("usd", pattern="^(usd|egp|sar|aed)$")
-    primary_goal: str | None = None
+    primary_goal: str | None = Field(None, max_length=1000)
     urgency_days: int = Field(30, ge=7, le=180)
 
 

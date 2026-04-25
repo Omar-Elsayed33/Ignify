@@ -101,7 +101,7 @@ async def get_weekly_report_pdf(
             tenant, metrics, insights, recommendations, lang=lang
         )
     except Exception as e:  # noqa: BLE001
-        raise HTTPException(status_code=500, detail=f"PDF generation failed: {e}")
+        raise HTTPException(status_code=500, detail="PDF generation failed")
 
     filename = f"weekly-report-{lang}.pdf"
     return Response(

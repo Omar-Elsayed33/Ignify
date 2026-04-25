@@ -100,7 +100,7 @@ async def generate(data: CreativeGenerateRequest, user: CurrentUser, db: DbSessi
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Creative generation failed: {e}")
+        raise HTTPException(status_code=500, detail="Creative generation failed")
     return result
 
 

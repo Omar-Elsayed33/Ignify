@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class CreativeGenerateRequest(BaseModel):
-    idea: str = Field(..., min_length=1)
+    idea: str = Field(..., min_length=1, max_length=2000)
     style: str = Field("photo", pattern="^(photo|illustration|3d|minimal|anime)$")
     dimensions: str = Field("1:1", pattern="^(1:1|9:16|16:9|4:5)$")
     language: str = Field("en", pattern="^(ar|en|both)$")

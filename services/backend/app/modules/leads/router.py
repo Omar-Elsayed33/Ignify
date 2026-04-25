@@ -138,7 +138,7 @@ async def qualify(lead_id: uuid.UUID, user: CurrentUser, db: DbSession):
     try:
         result = await leads_service.qualify_lead(db, user.tenant_id, lead_id)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Qualification failed: {e}")
+        raise HTTPException(status_code=500, detail="Qualification failed")
     if not result:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lead not found")
     return LeadQualifyResponse(**result)

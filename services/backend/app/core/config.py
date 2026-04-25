@@ -176,7 +176,10 @@ class Settings(BaseSettings):
     GOOGLE_CSE_ID: str = ""
     GOOGLE_CSE_API_KEY: str = ""
 
-    # Agno runtime (used by existing seo/competitor AI endpoints)
+    # Deprecated: agno-runtime service was removed in Phase 11. The legacy
+    # modules/content, modules/creative, and modules/conversations service
+    # files still call this URL but agno-runtime is not in the prod compose.
+    # TODO: migrate those 3 services to use app.core.llm_json (OpenRouter).
     AGNO_RUNTIME_URL: str = "http://localhost:8010"
 
     # Encryption — dedicated key for token-at-rest encryption, decoupled from

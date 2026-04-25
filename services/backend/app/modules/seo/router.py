@@ -501,8 +501,8 @@ async def integrations_connect(service: str, user: CurrentUser):
         )
     try:
         url = gi_mod.build_auth_url(user.tenant_id, service)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to build OAuth URL")
     return {"url": url}
 
 
@@ -517,7 +517,7 @@ async def integrations_oauth_callback(code: str, state: str):
             await db.commit()
         except Exception as e:  # noqa: BLE001
             await db.rollback()
-            raise HTTPException(status_code=400, detail=f"OAuth callback failed: {e}") from e
+            raise HTTPException(status_code=400, detail="OAuth callback failed") from e
     target = app_settings.GOOGLE_OAUTH_POST_REDIRECT
     sep = "&" if "?" in target else "?"
     return RedirectResponse(url=f"{target}{sep}connected={_service}")
@@ -534,8 +534,8 @@ async def integrations_disconnect(service: str, user: CurrentUser, db: DbSession
 async def integrations_sc_sites(user: CurrentUser, db: DbSession):
     try:
         sites = await gi_mod.sc_list_sites(db, user.tenant_id)
-    except Exception as e:  # noqa: BLE001
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail="Failed to list Search Console sites")
     return {"sites": sites}
 
 
@@ -556,7 +556,7 @@ async def integrations_sc_sync(user: CurrentUser, db: DbSession, days: int = 28)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:  # noqa: BLE001
-        raise HTTPException(status_code=500, detail=f"GSC sync failed: {e}")
+        raise HTTPException(status_code=500, detail="GSC sync failed")
     return data
 
 
@@ -564,8 +564,8 @@ async def integrations_sc_sync(user: CurrentUser, db: DbSession, days: int = 28)
 async def integrations_ga_properties(user: CurrentUser, db: DbSession):
     try:
         props = await gi_mod.ga_list_properties(db, user.tenant_id)
-    except Exception as e:  # noqa: BLE001
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail="Failed to list Analytics properties")
     return {"properties": props}
 
 
@@ -588,5 +588,5 @@ async def integrations_ga_sync(user: CurrentUser, db: DbSession, days: int = 28)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:  # noqa: BLE001
-        raise HTTPException(status_code=500, detail=f"GA sync failed: {e}")
+        raise HTTPException(status_code=500, detail="GA sync failed")
     return data

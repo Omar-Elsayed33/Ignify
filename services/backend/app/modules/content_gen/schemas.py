@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 
 class ContentGenerateRequest(BaseModel):
-    brief: str = Field(..., min_length=1)
+    brief: str = Field(..., min_length=1, max_length=5000)
     target: str = Field("post", pattern="^(post|blog|caption|ad_copy)$")
     channel: str = Field("", max_length=100)
     language: str = Field("ar", pattern="^(ar|en|both)$")
@@ -27,7 +27,7 @@ class ContentGenerateResponse(BaseModel):
 
 
 class BulkGenerateItem(BaseModel):
-    brief: str
+    brief: str = Field(..., max_length=5000)
     target: str = "post"
     channel: str = ""
     language: str = "ar"

@@ -134,7 +134,7 @@ async def generate(data: ContentGenerateRequest, user: CurrentUser, db: DbSessio
             for _ in range(data.variants):
                 variants.append(await _one())
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Content generation failed: {e}")
+            raise HTTPException(status_code=500, detail="Content generation failed")
         # Return the first variant in the primary fields, plus all as `variants` for frontend.
         primary = variants[0]
         return {**primary, "variants": variants}
@@ -153,7 +153,7 @@ async def generate(data: ContentGenerateRequest, user: CurrentUser, db: DbSessio
             plan_id=data.plan_id,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Content generation failed: {e}")
+        raise HTTPException(status_code=500, detail="Content generation failed")
     return result
 
 
@@ -217,7 +217,7 @@ async def bulk_generate_endpoint(
             concurrency=data.concurrency,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Bulk generation failed: {e}")
+        raise HTTPException(status_code=500, detail="Bulk generation failed")
     return BulkGenerateResponse(results=results)
 
 

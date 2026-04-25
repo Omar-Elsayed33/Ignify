@@ -38,18 +38,18 @@ from app.modules.plans.pdf_import import (
     build_plan_from_pdf,
     extract_pdf_text,
 )
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class _RegenerateSectionBody(BaseModel):
     section: str
     language: str = "ar"
-    note: str = ""
+    note: str = Field("", max_length=2000)
 
 
 class _RegenerateFullBody(BaseModel):
     language: str = "ar"
-    note: str = ""
+    note: str = Field("", max_length=2000)
 
 
 _NODE_NAMES = {
@@ -322,7 +322,7 @@ async def generate(data: PlanGenerateRequest, user: CurrentUser, db: DbSession):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Plan generation failed: {e}")
+        raise HTTPException(status_code=500, detail="Plan generation failed")
     return plan
 
 
@@ -585,7 +585,7 @@ async def regenerate_section(
             db, user.tenant_id, user.id, plan, data.section, data.language, note=data.note
         )
     except Exception as e:  # noqa: BLE001
-        raise HTTPException(status_code=500, detail=f"Regeneration failed: {e}")
+        raise HTTPException(status_code=500, detail="Regeneration failed")
     return plan
 
 
@@ -612,7 +612,7 @@ async def regenerate_full_plan(
     try:
         plan = await _regen_full(db, user.tenant_id, user.id, plan, data.language, note=data.note)
     except Exception as e:  # noqa: BLE001
-        raise HTTPException(status_code=500, detail=f"Regeneration failed: {e}")
+        raise HTTPException(status_code=500, detail="Regeneration failed")
     return plan
 
 
@@ -669,7 +669,7 @@ async def export_plan_pdf(
             brand_tagline=brand_tagline,
         )
     except Exception as e:  # noqa: BLE001
-        raise HTTPException(status_code=500, detail=f"PDF generation failed: {e}")
+        raise HTTPException(status_code=500, detail="PDF generation failed")
 
     # ASCII-safe fallback + UTF-8 filename* per RFC 5987 for non-Latin titles
     from urllib.parse import quote
@@ -791,5 +791,5 @@ async def pdf_import(
             period_days=data.period_days,
         )
     except Exception as e:  # noqa: BLE001
-        raise HTTPException(status_code=500, detail=f"PDF import failed: {e}")
+        raise HTTPException(status_code=500, detail="PDF import failed")
     return plan
